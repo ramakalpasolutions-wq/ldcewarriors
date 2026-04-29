@@ -63,7 +63,7 @@ const QUICK_LINKS = [
 
 const CONTACT_INFO = [
   { icon: '📧', label: 'Email', value: ' ldcewarriors@gmail.com', href: 'mailto: ldcewarriors@gmail.com' },
-  { icon: '📱', label: 'Phone', value: '+91 91542 42141', href: 'tel:+919912986746' },
+  { icon: '📱', label: 'Phone', value: '+91 99129 86746', href: 'tel:+919912986746' },
   { icon: '🕐', label: 'Support Hours', value: 'Mon–Sat, 9am–6pm IST', href: null },
   { icon: '📍', label: 'Location', value: 'NTR District,AP-521241', href: null },
 ]

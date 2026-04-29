@@ -287,7 +287,7 @@ export async function sendContactFormEmail({ name, email, mobile, subject, messa
 
     <p style="font-size:13px;color:#9CA3AF;margin-top:20px;">
       If urgent, reach us at
-      <a href="tel:+919912986746" style="color:#E8A838;text-decoration:none;font-weight:600;">+91 91542 42141</a>
+      <a href="tel:+919912986746" style="color:#E8A838;text-decoration:none;font-weight:600;">+91 99129 86746</a>
       or <a href="https://wa.me/919912986746" style="color:#E8A838;text-decoration:none;font-weight:600;">WhatsApp</a>
     </p>
   `
