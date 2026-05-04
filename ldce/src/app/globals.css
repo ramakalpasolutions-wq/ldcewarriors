@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* ─── Brand Colors — Navy + Gold ─── */
+  --body-bg: #F5F3EF;
+  --navbar-bg: #1B2A4A;
+  --navbar-text: #FFFFFF;
+  --main-text: #1A1D23;
+  --secondary-text: #6B7280;
+  --btn-cta: #E8A838;
+  --btn-cta-dark: #D4922A;
+  --btn-hover: #1B2A4A;
+  --btn-action: #2A9D8F;
+  --card-bg: #FFFFFF;
+  --border-color: #E5E7EB;
+
+  /* ─── Extended Palette ─── */
+  --accent-light: rgba(232, 168, 56, 0.08);
+  --accent-medium: rgba(232, 168, 56, 0.15);
+  --accent-glow: rgba(232, 168, 56, 0.25);
+  --navy-light: rgba(27, 42, 74, 0.06);
+  --navy-medium: rgba(27, 42, 74, 0.12);
+  --surface-hover: rgba(27, 42, 74, 0.04);
+  --surface-active: rgba(232, 168, 56, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: var(--body-bg);
+  color: var(--main-text);
+  font-family: 'DM Sans', sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--body-bg); }
+::-webkit-scrollbar-thumb { background: var(--btn-cta); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--btn-cta-dark); }
+
+/* ─── Selection ─── */
+::selection { background: rgba(232, 168, 56, 0.25); color: var(--main-text); }
+
+/* ─── Glass Morphism ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+}
+
+.glass-light {
+  background: rgba(27, 42, 74, 0.04);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(27, 42, 74, 0.08);
+}
+
+/* ─── Glow Effects ─── */
+.glow-gold {
+  box-shadow: 0 0 20px rgba(232, 168, 56, 0.2), 0 0 40px rgba(232, 168, 56, 0.08);
+}
+
+.glow-navy {
+  box-shadow: 0 0 20px rgba(27, 42, 74, 0.15), 0 0 40px rgba(27, 42, 74, 0.06);
+}
+
+.glow-teal {
+  box-shadow: 0 0 20px rgba(42, 157, 143, 0.2), 0 0 40px rgba(42, 157, 143, 0.08);
+}
+
+/* ─── Gradient Text ─── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--btn-cta), var(--btn-cta-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-navy {
+  background: linear-gradient(135deg, #1B2A4A, #243656);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Card Hover ─── */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Live Scroll ─── */
+.live-scroll-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.live-scroll-track {
+  display: flex;
+  flex-direction: column;
+  animation: scrollUp 25s linear infinite;
+}
+
+.live-scroll-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scrollUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+/* ─── Video Overlay ─── */
+.video-overlay {
+  background: linear-gradient(to top, rgba(245, 243, 239, 0.9) 0%, transparent 50%);
+}
+
+/* ─── Premium Badge ─── */
+.premium-badge {
+  background: linear-gradient(135deg, #E8A838, #D4922A);
+  animation: pulseGold 2s ease-in-out infinite;
+}
+
+@keyframes pulseGold {
+  0%, 100% { box-shadow: 0 0 10px rgba(232, 168, 56, 0.2); }
+  50% { box-shadow: 0 0 25px rgba(232, 168, 56, 0.5); }
+}
+
+/* ─── OTP Input ─── */
+.otp-input {
+  width: 50px;
+  height: 60px;
+  font-size: 1.5rem;
+  text-align: center;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--main-text);
+  transition: all 0.2s;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: var(--btn-cta);
+  box-shadow: 0 0 15px rgba(232, 168, 56, 0.15);
+}
+
+/* ─── Loading Shimmer ─── */
+.shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 50%, rgba(0,0,0,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── Section Divider ─── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+}
+
+/* ─── Grid Pattern ─── */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(27, 42, 74, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 42, 74, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ─── Animations ─── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(232, 168, 56, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(232, 168, 56, 0.4); }
+}
+
+/* ─── Responsive Utilities ─── */
+@layer utilities {
+  .animate-delay-100 { animation-delay: 0.1s; }
+  .animate-delay-200 { animation-delay: 0.2s; }
+  .animate-delay-300 { animation-delay: 0.3s; }
+  .animate-delay-400 { animation-delay: 0.4s; }
+  .animate-delay-500 { animation-delay: 0.5s; }
+}
+
+/* ─── Form Inputs ─── */
+.input-field {
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--main-text);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.input-field::placeholder {
+  color: var(--secondary-text);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--btn-cta);
+  box-shadow: 0 0 0 3px rgba(232, 168, 56, 0.12);
+}
+
+/* ─── Video Card ─── */
+.video-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Article Card ─── */
+.article-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Subscription Card ─── */
+.subscription-card {
+  background: linear-gradient(135deg, rgba(232, 168, 56, 0.06) 0%, var(--card-bg) 100%);
+  border: 1px solid rgba(232, 168, 56, 0.2);
+}
+
+/* ─── Admin Table ─── */
+.admin-table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1B2A4A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--body-bg);
+  padding: 12px 16px;
+}
+
+.admin-table td {
+  font-size: 14px;
+  color: var(--main-text);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.admin-table tr:hover td {
+  background: var(--surface-hover);
+}
+
+/* ─── Admin Sidebar ─── */
+.admin-sidebar {
+  background: #1B2A4A;
+  border-right: 1px solid rgba(232, 168, 56, 0.1);
+}
+
+/* ─── Button Styles ─── */
+.btn-primary {
+  background: #1B2A4A;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(27, 42, 74, 0.25);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #243656;
+  box-shadow: 0 6px 25px rgba(27, 42, 74, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  border: 1px solid rgba(27, 42, 74, 0.2);
+  color: #1B2A4A;
+  background: transparent;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--navy-light);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #E8A838, #D4922A);
+  color: #1B2A4A;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(232, 168, 56, 0.25);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-gold:hover {
+  box-shadow: 0 6px 25px rgba(232, 168, 56, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-teal {
+  background: #2A9D8F;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(42, 157, 143, 0.25);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-teal:hover {
+  background: #21867A;
+  box-shadow: 0 6px 25px rgba(42, 157, 143, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ─── Page Transitions ─── */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ─── Mobile Menu ─── */
+.mobile-menu {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu.open {
+  transform: translateX(0);
+}

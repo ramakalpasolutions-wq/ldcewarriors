@@ -1,0 +1,169 @@
+// prisma/schema.prisma — COMPLETE UPDATED FILE
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  fullName         String
+  email            String         @unique
+  mobile           String         @unique
+  password         String
+  addressLine      String?
+  addressCity      String?
+  addressState     String?
+  addressPincode   String?
+  isEmailVerified  Boolean        @default(false)
+  isMobileVerified Boolean        @default(false)
+  isActive         Boolean        @default(true)
+  role             String         @default("user")
+  deviceId         String?
+  profileImage     String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  otps          OTP[]
+  videoPlays    VideoPlay[]
+  subscriptions Subscription[]
+}
+
+model OTP {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  identifier String
+  otp        String
+  type       String
+  expiresAt  DateTime
+  isUsed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Topic {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  description       String?
+  slug              String   @unique
+  thumbnail         String?
+  thumbnailPublicId String?
+  order             Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  videos Video[]
+}
+
+model Video {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  description       String?
+  type              String
+  topicId           String?   @db.ObjectId
+  thumbnail         String
+  videoUrl          String
+  videoKey          String?
+  thumbnailPublicId String?
+  duration          String?
+  order             Int       @default(0)
+  isActive          Boolean   @default(true)
+  showOnHomepage    Boolean   @default(false)
+  playLimit         Int       @default(3)
+  views             Int       @default(0)
+  createdAt         DateTime  @default(now())
+
+  topic      Topic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  videoPlays VideoPlay[]
+}
+
+model VideoPlay {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  videoId    String   @db.ObjectId
+  playCount  Int      @default(0)
+  lastPlayed DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+}
+
+model Article {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  excerpt           String?
+  thumbnail         String?
+  thumbnailPublicId String?
+  docxUrl           String?
+  docxPublicId      String?
+  manualContent     String?
+  contentType       String   @default("manual")
+  category          String?
+  tags              String[]
+  showOnHomepage    Boolean  @default(false)
+  showInLiveScroll  Boolean  @default(false)
+  isPublished       Boolean  @default(true)
+  views             Int      @default(0)
+  author            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Hero {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String
+  title         String?
+  subtitle      String?
+  mediaUrl      String?
+  mediaPublicId String?
+  videoKey      String?  // ← R2 key for video type slides
+  referenceId   String?  @db.ObjectId
+  ctaText       String?
+  ctaLink       String?
+  order         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
+
+model Subscription {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String    @db.ObjectId
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  amount            Float
+  currency          String    @default("INR")
+  status            String    @default("pending")
+  startDate         DateTime?
+  endDate           DateTime?
+  couponCode        String?
+  discountAmount    Float     @default(0)
+  createdAt         DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  code          String    @unique
+  discountType  String    @default("percentage")
+  discountValue Float
+  maxUses       Int       @default(100)
+  usedCount     Int       @default(0)
+  expiryDate    DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+}
+
+model Setting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
