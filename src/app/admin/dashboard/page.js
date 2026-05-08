@@ -465,7 +465,7 @@ export default function AdminDashboard() {
             gap: isMobile ? '8px' : '12px',
           }}>
             {[
-              { label: 'Subscription Price',  value: '₹999 / 4 months',   icon: '💰' },
+              { label: 'Subscription Months',  value: '4 months',   icon: '📰' },
               { label: 'Play Limit (Premium)', value: '3 plays per video',  icon: '▶️' },
               { label: 'Device Limit',         value: '1 device per user',  icon: '📱' },
             ].map(item => (

@@ -63,7 +63,7 @@ const QUICK_LINKS = [
 
 const CONTACT_INFO = [
   { icon: '📧', label: 'Email', value: ' ldcewarriors@gmail.com', href: 'mailto: ldcewarriors@gmail.com' },
-  { icon: '📱', label: 'Phone', value: '+91 99129 86746', href: 'tel:+919912986746' },
+  { icon: '📱', label: 'Phone', value: '+91 91542 42141', href: 'tel:+919912986746' },
   { icon: '🕐', label: 'Support Hours', value: 'Mon–Sat, 9am–6pm IST', href: null },
   { icon: '📍', label: 'Location', value: 'NTR District,AP-521241', href: null },
 ]
@@ -234,13 +234,12 @@ export default function Footer() {
                 gap: '12px', marginBottom: '20px',
               }}>
                 <div style={{
-                  width: '48px', height: '48px', borderRadius: '14px',
+                  width: '60px', height: '60px', 
                   overflow: 'hidden',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-                  border: '2px solid rgba(232, 168, 56, 0.2)',
+                 
                   flexShrink: 0,
                 }}>
-                  <Image src="/logo2.jpeg" alt="LDCE Logo" width={48} height={48}
+                  <Image src="/image.png" alt="LDCE Logo" width={48} height={48}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <div>

@@ -2,8 +2,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
-import { uploadImage, deleteImage } from '@/lib/cloudinary'
-import { uploadVideoToR2, deleteVideoFromR2 } from '@/lib/r2'
+import { deleteImage } from '@/lib/cloudinary'
+import { deleteVideoFromR2 } from '@/lib/r2'
 
 function requireAdmin(req) {
   const token = req.cookies.get('adminToken')?.value
@@ -15,7 +15,9 @@ function requireAdmin(req) {
 export async function GET(req) {
   try {
     const admin = requireAdmin(req)
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { searchParams } = new URL(req.url)
     const type    = searchParams.get('type')
@@ -28,7 +30,9 @@ export async function GET(req) {
 
     const videos = await prisma.video.findMany({
       where,
-      include: { topic: { select: { id: true, name: true, slug: true } } },
+      include: {
+        topic: { select: { id: true, name: true, slug: true } },
+      },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       take: limit,
     })
@@ -42,116 +46,160 @@ export async function GET(req) {
     return NextResponse.json({ success: true, videos: mapped })
   } catch (error) {
     console.error('Admin GET videos:', error)
-    return NextResponse.json({ error: 'Failed to fetch videos' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch videos' },
+      { status: 500 }
+    )
   }
 }
 
+// ✅ Now receives JSON (no file uploads through Vercel)
 export async function POST(req) {
   try {
     const admin = requireAdmin(req)
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    const formData = await req.formData()
+    const body = await req.json()
+    const {
+      title,
+      description,
+      type,
+      topicId,
+      order = 0,
+      showOnHomepage = false,
+      playLimit = 3,
+      // Pre-uploaded file data
+      thumbnailUrl,
+      thumbnailPublicId,
+      videoUrl,
+      videoKey,
+    } = body
 
-    const title          = formData.get('title')?.trim()
-    const description    = formData.get('description')?.trim()
-    const type           = formData.get('type')           // 'free' | 'premium'
-    const topicId        = formData.get('topicId')        // may be empty
-    const order          = parseInt(formData.get('order') || '0')
-    const showOnHomepage = formData.get('showOnHomepage') === 'true'
-    const duration       = formData.get('duration')?.trim()
-    const playLimit      = parseInt(formData.get('playLimit') || '3')
-    const thumbnailFile  = formData.get('thumbnail')
-    const videoFile      = formData.get('video')
+    // Validation
+    if (!title?.trim()) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    }
+    if (!type) {
+      return NextResponse.json({ error: 'Type is required' }, { status: 400 })
+    }
+    if (!thumbnailUrl) {
+      return NextResponse.json({ error: 'Thumbnail is required' }, { status: 400 })
+    }
+    if (!videoUrl) {
+      return NextResponse.json({ error: 'Video is required' }, { status: 400 })
+    }
 
-    /* ── Validation ── */
-    if (!title)         return NextResponse.json({ error: 'Title is required' },     { status: 400 })
-    if (!type)          return NextResponse.json({ error: 'Type is required' },      { status: 400 })
-    if (!thumbnailFile) return NextResponse.json({ error: 'Thumbnail is required' }, { status: 400 })
-    if (!videoFile)     return NextResponse.json({ error: 'Video is required' },     { status: 400 })
-
-    /* ── Upload thumbnail → Cloudinary ── */
-    const thumbBuf    = await thumbnailFile.arrayBuffer()
-    const thumbBase64 = `data:${thumbnailFile.type};base64,${Buffer.from(thumbBuf).toString('base64')}`
-    const { url: thumbnailUrl, publicId: thumbnailPublicId } =
-      await uploadImage(thumbBase64, 'ldce/thumbnails')
-
-    /* ── Upload video → Cloudflare R2 ── */
-    const videoBuf = Buffer.from(await videoFile.arrayBuffer())
-    const { key: videoKey, url: videoUrl } =
-      await uploadVideoToR2(videoBuf, videoFile.name, videoFile.type, 'videos')
-
-    /* ── Persist to DB ── */
     const video = await prisma.video.create({
       data: {
-        title,
-        description:    description || null,
+        title: title.trim(),
+        description: description?.trim() || null,
         type,
-        topicId:        topicId || null,
-        thumbnail:      thumbnailUrl,
-        thumbnailPublicId,
+        topicId: topicId || null,
+        thumbnail: thumbnailUrl,
+        thumbnailPublicId: thumbnailPublicId || null,
         videoUrl,
-        videoKey,
-        duration:       duration || null,
-        order,
-        showOnHomepage,
-        playLimit,
+        videoKey: videoKey || null,
+        order: parseInt(order) || 0,
+        showOnHomepage: Boolean(showOnHomepage),
+        playLimit: parseInt(playLimit) || 3,
       },
     })
 
-    return NextResponse.json({ success: true, video: { ...video, _id: video.id } }, { status: 201 })
+    console.log(`✅ Video saved: ${video.id} — ${title}`)
+
+    return NextResponse.json(
+      { success: true, video: { ...video, _id: video.id } },
+      { status: 201 }
+    )
   } catch (error) {
-    console.error('Admin video upload error:', error)
-    return NextResponse.json({ error: 'Failed to upload video' }, { status: 500 })
+    console.error('Admin video POST error:', error)
+    return NextResponse.json(
+      { error: 'Failed to save video' },
+      { status: 500 }
+    )
   }
 }
 
 export async function PATCH(req) {
   try {
     const admin = requireAdmin(req)
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const body = await req.json()
     const { id, ...updates } = body
-    if (!id) return NextResponse.json({ error: 'Video ID required' }, { status: 400 })
 
-    const allowed = ['title', 'description', 'type', 'topicId', 'order',
-                     'showOnHomepage', 'isActive', 'duration', 'playLimit']
+    if (!id) {
+      return NextResponse.json({ error: 'Video ID required' }, { status: 400 })
+    }
+
+    const allowed = [
+      'title', 'description', 'type', 'topicId', 'order',
+      'showOnHomepage', 'isActive', 'duration', 'playLimit',
+    ]
     const data = {}
-    allowed.forEach(k => { if (k in updates) data[k] = updates[k] })
+    allowed.forEach(k => {
+      if (k in updates) data[k] = updates[k]
+    })
 
     const video = await prisma.video.update({ where: { id }, data })
-    return NextResponse.json({ success: true, video: { ...video, _id: video.id } })
+
+    return NextResponse.json({
+      success: true,
+      video: { ...video, _id: video.id },
+    })
   } catch (error) {
     console.error('Admin PATCH video:', error)
-    return NextResponse.json({ error: 'Failed to update video' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update video' },
+      { status: 500 }
+    )
   }
 }
 
 export async function DELETE(req) {
   try {
     const admin = requireAdmin(req)
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
-    if (!id) return NextResponse.json({ error: 'Video ID required' }, { status: 400 })
+
+    if (!id) {
+      return NextResponse.json({ error: 'Video ID required' }, { status: 400 })
+    }
 
     const video = await prisma.video.findUnique({ where: { id } })
-    if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 })
+    if (!video) {
+      return NextResponse.json({ error: 'Video not found' }, { status: 404 })
+    }
 
-    // Delete from R2 and Cloudinary in parallel
     await Promise.allSettled([
-      video.videoKey         ? deleteVideoFromR2(video.videoKey)           : Promise.resolve(),
-      video.thumbnailPublicId ? deleteImage(video.thumbnailPublicId)        : Promise.resolve(),
+      video.videoKey
+        ? deleteVideoFromR2(video.videoKey)
+        : Promise.resolve(),
+      video.thumbnailPublicId
+        ? deleteImage(video.thumbnailPublicId)
+        : Promise.resolve(),
     ])
 
     await prisma.videoPlay.deleteMany({ where: { videoId: id } })
     await prisma.video.delete({ where: { id } })
 
-    return NextResponse.json({ success: true, message: 'Video deleted successfully' })
+    return NextResponse.json({
+      success: true,
+      message: 'Video deleted successfully',
+    })
   } catch (error) {
     console.error('Admin DELETE video:', error)
-    return NextResponse.json({ error: 'Failed to delete video' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to delete video' },
+      { status: 500 }
+    )
   }
 }
