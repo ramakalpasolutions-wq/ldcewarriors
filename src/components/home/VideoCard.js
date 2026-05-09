@@ -12,8 +12,6 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
   const playLimit      = video.playLimit || 3
   const isPremium      = video.type === 'premium'
 
-  // Only show limit UI if user is actually subscribed — prevents stale localStorage
-  // from showing "Play limit reached" to logged-out or non-subscribed users
   const isLimitReached = isPremium && isSubscribed && localPlayCount >= playLimit
 
   return (
@@ -33,9 +31,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           box-shadow: 0 12px 32px rgba(0,0,0,0.09);
           border-color: rgba(232,168,56,0.35);
         }
-        .vc-root.limit {
-          opacity: 0.72;
-        }
+        .vc-root.limit { opacity: 0.72; }
 
         /* ── Thumbnail ── */
         .vc-thumb {
@@ -51,34 +47,12 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           transition: transform 0.45s ease;
           display: block;
         }
-        .vc-root:hover .vc-thumb img {
-          transform: scale(1.06);
-        }
+        .vc-root:hover .vc-thumb img { transform: scale(1.06); }
 
-        /* Subtle gradient at bottom of thumb */
         .vc-thumb-grad {
           position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
           background: linear-gradient(to top, rgba(0,0,0,0.22), transparent);
           pointer-events: none;
-        }
-
-        /* ── Type badge ── */
-        .vc-badge {
-          position: absolute; top: 10px; left: 10px;
-          padding: 4px 10px; border-radius: 999px;
-          font-size: 10px; font-weight: 700;
-          letter-spacing: 0.3px;
-          display: inline-flex; align-items: center; gap: 4px;
-          line-height: 1;
-          z-index: 3;
-        }
-        .vc-badge.premium {
-          background: linear-gradient(135deg,#E8A838,#D4922A);
-          color: #1B2A4A;
-        }
-        .vc-badge.free {
-          background: rgba(42,157,143,0.92);
-          color: #fff;
         }
 
         /* ── Duration ── */
@@ -134,6 +108,26 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           gap: 6px; flex-wrap: wrap;
           margin-top: auto;
         }
+
+        /* ── Type badge — now in info row ── */
+        .vc-type-badge {
+          display: inline-flex; align-items: center; gap: 4px;
+          padding: 3px 10px; border-radius: 999px;
+          font-size: 10px; font-weight: 700;
+          letter-spacing: 0.3px; line-height: 1;
+          flex-shrink: 0;
+        }
+        .vc-type-badge.free {
+          background: rgba(42,157,143,0.12);
+          color: #2A9D8F;
+          border: 1px solid rgba(42,157,143,0.25);
+        }
+        .vc-type-badge.premium {
+          background: rgba(232,168,56,0.12);
+          color: #D4922A;
+          border: 1px solid rgba(232,168,56,0.3);
+        }
+
         .vc-topic-chip {
           font-size: 10px; font-weight: 600; color: #1B2A4A;
           background: rgba(27,42,74,0.06);
@@ -175,7 +169,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
         onMouseLeave={() => setHovered(false)}
         onClick={() => onClick?.({ ...video, _id: videoId })}
       >
-        {/* ── Thumbnail ── */}
+        {/* ── Thumbnail — NO badge here anymore ── */}
         <div className="vc-thumb">
           <img
             src={video.thumbnail || 'https://via.placeholder.com/640x360/1B2A4A/E8A838?text=LDCE+Video'}
@@ -183,17 +177,12 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           />
           <div className="vc-thumb-grad"/>
 
-          {/* Type badge */}
-          <div className={`vc-badge ${isPremium ? 'premium' : 'free'}`}>
-            {isPremium ? <><span>⭐</span> Premium</> : 'FREE'}
-          </div>
-
           {/* Duration */}
           {video.duration && (
             <div className="vc-duration">{video.duration}</div>
           )}
 
-          {/* Play button — only when not locked and not limit reached */}
+          {/* Play button */}
           {!video.isLocked && !isLimitReached && (
             <div className="vc-play">
               <div className="vc-play-circle">
@@ -204,7 +193,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
-          {/* Locked: premium but not subscribed */}
+          {/* Locked overlay */}
           {video.isLocked && !isLimitReached && (
             <div className="vc-overlay">
               <div className="vc-overlay-icon">🔒</div>
@@ -213,7 +202,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
-          {/* Play limit exhausted — only shown to subscribed users */}
+          {/* Play limit exhausted */}
           {isLimitReached && (
             <div className="vc-overlay exhausted">
               <div className="vc-overlay-icon">🚫</div>
@@ -230,13 +219,18 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           </h3>
 
           <div className="vc-meta">
+            {/* ✅ FREE / PREMIUM badge now lives here */}
+            <span className={`vc-type-badge ${isPremium ? 'premium' : 'free'}`}>
+              {isPremium ? <>⭐ Premium</> : <>✔ Free</>}
+            </span>
+
             {(video.topicId?.name || video.topic?.name) && (
               <span className="vc-topic-chip">
                 {video.topicId?.name || video.topic?.name}
               </span>
             )}
 
-            {/* Play dots — only shown to subscribed users with some plays used */}
+            {/* Play dots — only for subscribed premium users */}
             {isPremium && isSubscribed && !video.isLocked && localPlayCount > 0 && (
               <div className="vc-plays-dots">
                 {Array(playLimit).fill(null).map((_, i) => (
