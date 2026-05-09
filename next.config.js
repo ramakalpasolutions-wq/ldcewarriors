@@ -24,10 +24,10 @@ const nextConfig = {
   // ✅ Needed for Prisma/Mongo
   serverExternalPackages: ['mongoose'],
 
-  // ✅ Fix 413 upload error
+  // ✅ Only JSON metadata goes through server actions — keep this small
   experimental: {
     serverActions: {
-      bodySizeLimit: '600mb',
+      bodySizeLimit: '10mb',
     },
   },
 

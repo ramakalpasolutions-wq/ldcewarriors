@@ -272,18 +272,18 @@ function TabletVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
 }
 
 export default function AdminVideosPage() {
-  const [videos, setVideos]                   = useState([])
-  const [topics, setTopics]                   = useState([])
-  const [loading, setLoading]                 = useState(true)
-  const [showForm, setShowForm]               = useState(false)
-  const [uploading, setUploading]             = useState(false)
-  const [uploadProgress, setUploadProgress]   = useState(0)
-  const [uploadStage, setUploadStage]         = useState('thumb')
-  const [deleting, setDeleting]               = useState(null)
-  const [filter, setFilter]                   = useState('all')
-  const [topicFilt, setTopicFilt]             = useState('all')
-  const [editVideo, setEditVideo]             = useState(null)
-  const [screenSize, setScreenSize]           = useState('desktop')
+  const [videos, setVideos] = useState([])
+  const [topics, setTopics] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadStage, setUploadStage] = useState('thumb')
+  const [deleting, setDeleting] = useState(null)
+  const [filter, setFilter] = useState('all')
+  const [topicFilt, setTopicFilt] = useState('all')
+  const [editVideo, setEditVideo] = useState(null)
+  const [screenSize, setScreenSize] = useState('desktop')
 
   const [form, setForm] = useState({
     title: '', description: '', type: 'free', topicId: '',
@@ -303,15 +303,15 @@ export default function AdminVideosPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const isMobile  = screenSize === 'mobile'
-  const isTablet  = screenSize === 'tablet'
+  const isMobile = screenSize === 'mobile'
+  const isTablet = screenSize === 'tablet'
   const isDesktop = screenSize === 'desktop'
 
   // ✅ FIX 1: Use adminFetch for all API calls
   const fetchVideos = useCallback(async () => {
     setLoading(true)
     try {
-      const res  = await adminFetch('/api/admin/videos')
+      const res = await adminFetch('/api/admin/videos')
       const data = await res.json()
       if (data.success) setVideos(data.videos || [])
       else toast.error(data.error || 'Failed to load videos')
@@ -321,16 +321,16 @@ export default function AdminVideosPage() {
 
   const fetchTopics = useCallback(async () => {
     try {
-      const res  = await adminFetch('/api/admin/topics')
+      const res = await adminFetch('/api/admin/topics')
       const data = await res.json()
       if (data.success) setTopics(data.topics || [])
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => { fetchVideos(); fetchTopics() }, [fetchVideos, fetchTopics])
 
   const filtered = videos.filter(v => {
-    const typeOk  = filter    === 'all' || v.type    === filter
+    const typeOk = filter === 'all' || v.type === filter
     const topicOk = topicFilt === 'all' || v.topicId === topicFilt
     return typeOk && topicOk
   })
@@ -347,8 +347,8 @@ export default function AdminVideosPage() {
   async function handleUpload(e) {
     e.preventDefault()
     if (!form.title.trim()) { toast.error('Title is required'); return }
-    if (!form.thumbnail)    { toast.error('Thumbnail is required'); return }
-    if (!form.video)        { toast.error('Video file is required'); return }
+    if (!form.thumbnail) { toast.error('Thumbnail is required'); return }
+    if (!form.video) { toast.error('Video file is required'); return }
 
     setUploading(true)
     setUploadProgress(0)
@@ -382,17 +382,17 @@ export default function AdminVideosPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title:             form.title.trim(),
-          description:       form.description,
-          type:              form.type,
-          topicId:           form.topicId,
-          order:             form.order,
-          showOnHomepage:    form.showOnHomepage,
-          playLimit:         form.playLimit,
-          thumbnailUrl:      thumbResult.url,
+          title: form.title.trim(),
+          description: form.description,
+          type: form.type,
+          topicId: form.topicId,
+          order: form.order,
+          showOnHomepage: form.showOnHomepage,
+          playLimit: form.playLimit,
+          thumbnailUrl: thumbResult.url,
           thumbnailPublicId: thumbResult.publicId,
-          videoUrl:          videoResult.publicUrl,
-          videoKey:          videoResult.key,
+          videoUrl: videoResult.publicUrl,
+          videoKey: videoResult.key,
         }),
       })
 
@@ -424,13 +424,13 @@ export default function AdminVideosPage() {
     setEditVideo(video)
     setShowForm(true)
     setForm({
-      title:          video.title,
-      description:    video.description || '',
-      type:           video.type,
-      topicId:        video.topicId || '',
-      order:          video.order || 0,
+      title: video.title,
+      description: video.description || '',
+      type: video.type,
+      topicId: video.topicId || '',
+      order: video.order || 0,
       showOnHomepage: video.showOnHomepage || false,
-      playLimit:      video.playLimit || 3,
+      playLimit: video.playLimit || 3,
       thumbnail: null, video: null,
       thumbPreview: video.thumbnail || '',
     })
@@ -448,14 +448,14 @@ export default function AdminVideosPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id:             editVideo._id || editVideo.id,
-          title:          form.title,
-          description:    form.description,
-          type:           form.type,
-          topicId:        form.topicId || null,
-          order:          form.order,
+          id: editVideo._id || editVideo.id,
+          title: form.title,
+          description: form.description,
+          type: form.type,
+          topicId: form.topicId || null,
+          order: form.order,
           showOnHomepage: form.showOnHomepage,
-          playLimit:      form.playLimit,
+          playLimit: form.playLimit,
         }),
       })
       const data = await res.json()
@@ -475,7 +475,7 @@ export default function AdminVideosPage() {
     setDeleting(id)
     try {
       // ✅ FIX 4: Use adminFetch for DELETE
-      const res  = await adminFetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' })
+      const res = await adminFetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' })
       const data = await res.json()
       if (data.success) {
         setVideos(prev => prev.filter(v => v._id !== id && v.id !== id))
@@ -494,7 +494,7 @@ export default function AdminVideosPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id:       video._id || video.id,
+          id: video._id || video.id,
           isActive: !video.isActive,
         }),
       })
@@ -510,9 +510,9 @@ export default function AdminVideosPage() {
   }
 
   const FILTER_TABS = [
-    { id: 'all',     label: 'All',                           count: videos.length },
-    { id: 'free',    label: isMobile ? '🎬' : '🎬 Free',    count: videos.filter(v => v.type === 'free').length },
-    { id: 'premium', label: isMobile ? '⭐' : '⭐ Premium',  count: videos.filter(v => v.type === 'premium').length },
+    { id: 'all', label: 'All', count: videos.length },
+    { id: 'free', label: isMobile ? '🎬' : '🎬 Free', count: videos.filter(v => v.type === 'free').length },
+    { id: 'premium', label: isMobile ? '⭐' : '⭐ Premium', count: videos.filter(v => v.type === 'premium').length },
   ]
 
   const EmptyState = () => (
@@ -674,9 +674,8 @@ export default function AdminVideosPage() {
                   <FileDropZone label="Thumbnail" accept="image/jpeg,image/png,image/webp" hint="Max 5MB"
                     file={form.thumbnail} preview={form.thumbPreview} maxSizeMB={5} disabled={uploading}
                     onChange={f => setForm({ ...form, thumbnail: f, thumbPreview: URL.createObjectURL(f) })} />
-                  <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="Max 500MB"
-                    file={form.video} maxSizeMB={500} disabled={uploading}
-                    onChange={f => setForm({ ...form, video: f })} />
+                  <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="No size limit"
+                    file={form.video} disabled={uploading} onChange={f => setForm({ ...form, video: f })} />
                 </div>
               )}
 
@@ -746,17 +745,17 @@ export default function AdminVideosPage() {
         {isMobile ? (
           <div>
             {loading
-              ? [1,2,3].map(i => <div key={i} style={{ height: '155px', borderRadius: '14px', marginBottom: '10px', background: 'linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />)
+              ? [1, 2, 3].map(i => <div key={i} style={{ height: '155px', borderRadius: '14px', marginBottom: '10px', background: 'linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />)
               : filtered.length === 0 ? <EmptyState />
-              : filtered.map(video => <MobileVideoCard key={video._id} video={video} onEdit={handleEdit} onDelete={handleDelete} onToggle={toggleActive} deleting={deleting} />)
+                : filtered.map(video => <MobileVideoCard key={video._id} video={video} onEdit={handleEdit} onDelete={handleDelete} onToggle={toggleActive} deleting={deleting} />)
             }
           </div>
         ) : isTablet ? (
           <div style={{ background: tk.card, border: `1.5px solid ${tk.border}`, borderRadius: '14px', overflow: 'hidden', padding: '12px' }}>
             {loading
-              ? [1,2,3,4].map(i => <div key={i} style={{ height: '76px', borderRadius: '10px', marginBottom: '8px', background: 'linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />)
+              ? [1, 2, 3, 4].map(i => <div key={i} style={{ height: '76px', borderRadius: '10px', marginBottom: '8px', background: 'linear-gradient(90deg,#F3F4F6 25%,#E9EAEC 50%,#F3F4F6 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />)
               : filtered.length === 0 ? <EmptyState />
-              : filtered.map(video => <TabletVideoCard key={video._id} video={video} onEdit={handleEdit} onDelete={handleDelete} onToggle={toggleActive} deleting={deleting} />)
+                : filtered.map(video => <TabletVideoCard key={video._id} video={video} onEdit={handleEdit} onDelete={handleDelete} onToggle={toggleActive} deleting={deleting} />)
             }
           </div>
         ) : (
@@ -773,7 +772,7 @@ export default function AdminVideosPage() {
                 </thead>
                 <tbody>
                   {loading
-                    ? [1,2,3,4,5].map(i => <SkeletonRow key={i} />)
+                    ? [1, 2, 3, 4, 5].map(i => <SkeletonRow key={i} />)
                     : filtered.length === 0
                       ? <tr><td colSpan={8}><EmptyState /></td></tr>
                       : filtered.map(video => (
