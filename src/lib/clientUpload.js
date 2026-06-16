@@ -1,64 +1,28 @@
 // src/lib/clientUpload.js
 
 /**
- * Get the admin token from wherever it's stored
- */
-function getAdminToken() {
-  // Try localStorage first (common pattern)
-  if (typeof window !== 'undefined') {
-    const fromStorage =
-      localStorage.getItem('adminToken') ||
-      localStorage.getItem('token') ||
-      sessionStorage.getItem('adminToken') ||
-      sessionStorage.getItem('token')
-    if (fromStorage) return fromStorage
-  }
-  // Cookie will be sent automatically via credentials:'include'
-  return null
-}
-
-/**
- * Build headers with auth token
- */
-function authHeaders() {
-  const headers = { 'Content-Type': 'application/json' }
-  const token = getAdminToken()
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
-  }
-  return headers
-}
-
-/**
  * Upload image directly to Cloudinary from browser
  */
 export async function uploadImageToCloudinary(file, folder) {
-  console.log(`📤 Uploading image: ${file.name} → ${folder}`)
-
+  // Get signature from your API
   const signRes = await fetch('/api/admin/cloudinary-sign', {
-    method:      'POST',
-    headers:     authHeaders(),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body:        JSON.stringify({ folder }),
+    body: JSON.stringify({ folder }),
   })
 
-  if (!signRes.ok) {
-    const err = await signRes.json().catch(() => ({}))
-    throw new Error(
-      `Cloudinary sign failed (${signRes.status}): ${err.error || 'Unknown error'}`
-    )
-  }
-
+  if (!signRes.ok) throw new Error('Failed to get upload signature')
   const { signature, timestamp, cloudName, apiKey, folder: signedFolder } =
     await signRes.json()
 
-  // Upload directly from browser to Cloudinary (bypasses Vercel)
+  // Upload directly to Cloudinary
   const formData = new FormData()
-  formData.append('file',      file)
+  formData.append('file', file)
   formData.append('signature', signature)
-  formData.append('timestamp', String(timestamp))
-  formData.append('api_key',   apiKey)
-  formData.append('folder',    signedFolder)
+  formData.append('timestamp', timestamp)
+  formData.append('api_key', apiKey)
+  formData.append('folder', signedFolder)
 
   const uploadRes = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
@@ -66,54 +30,38 @@ export async function uploadImageToCloudinary(file, folder) {
   )
 
   if (!uploadRes.ok) {
-    const err = await uploadRes.json().catch(() => ({}))
-    throw new Error(
-      `Cloudinary upload failed: ${err.error?.message || uploadRes.status}`
-    )
+    const err = await uploadRes.json()
+    throw new Error(err.error?.message || 'Cloudinary upload failed')
   }
 
   const data = await uploadRes.json()
-  console.log('✅ Cloudinary done:', data.public_id)
-
   return {
-    url:      data.secure_url,
+    url: data.secure_url,
     publicId: data.public_id,
   }
 }
 
 /**
  * Upload video directly to Cloudflare R2 from browser
- * onProgress(0–100) called during upload
+ * onProgress(percent) called during upload
  */
 export async function uploadVideoToR2Direct(file, folder, onProgress) {
-  console.log(
-    `📤 Uploading video: ${file.name}`,
-    `(${(file.size / 1024 / 1024).toFixed(1)} MB) → ${folder}`
-  )
-
-  // Step 1: Get presigned URL (tiny request, well under 4.5MB limit)
+  // Get presigned URL from your API
   const presignRes = await fetch('/api/admin/r2-presign', {
-    method:      'POST',
-    headers:     authHeaders(),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body:        JSON.stringify({
+    body: JSON.stringify({
       fileName: file.name,
-      fileType: file.type || 'video/mp4',
+      fileType: file.type,
       folder,
     }),
   })
 
-  if (!presignRes.ok) {
-    const err = await presignRes.json().catch(() => ({}))
-    throw new Error(
-      `R2 presign failed (${presignRes.status}): ${err.error || 'Unknown error'}`
-    )
-  }
-
+  if (!presignRes.ok) throw new Error('Failed to get presigned URL')
   const { presignedUrl, key, publicUrl } = await presignRes.json()
-  console.log('✅ Got presigned URL, uploading directly to R2...')
 
-  // Step 2: Upload directly to R2 (bypasses Vercel completely)
+  // Upload directly to R2 using XHR for progress tracking
   await new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
 
@@ -124,31 +72,19 @@ export async function uploadVideoToR2Direct(file, folder, onProgress) {
     })
 
     xhr.addEventListener('load', () => {
+      // R2 returns 200 or 204 on success
       if (xhr.status === 200 || xhr.status === 204) {
-        console.log('✅ R2 upload complete')
         resolve()
       } else {
-        console.error('R2 upload failed:', xhr.status, xhr.responseText)
-        reject(
-          new Error(
-            `R2 upload failed (HTTP ${xhr.status}). ` +
-            `Check your R2 CORS settings.`
-          )
-        )
+        reject(new Error(`R2 upload failed with status: ${xhr.status}`))
       }
     })
 
-    xhr.addEventListener('error', () =>
-      reject(new Error('Network error — check R2 CORS settings'))
-    )
-    xhr.addEventListener('abort', () =>
-      reject(new Error('Upload cancelled'))
-    )
+    xhr.addEventListener('error', () => reject(new Error('Network error during R2 upload')))
+    xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
 
-    // PUT directly to R2's presigned URL
     xhr.open('PUT', presignedUrl)
-    xhr.setRequestHeader('Content-Type', file.type || 'video/mp4')
-    xhr.timeout = 60 * 60 * 1000 // 1 hour timeout
+    xhr.setRequestHeader('Content-Type', file.type)
     xhr.send(file)
   })
 

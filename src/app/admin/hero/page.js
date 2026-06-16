@@ -101,9 +101,14 @@ export default function AdminHeroPage() {
   const [progress, setProgress] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
+
+  // ✅ NEW: Edit mode state
+  const [editingId, setEditingId] = useState(null)
+  
   const [form, setForm] = useState({
     type: 'image', title: '', order: 0,
     media: null, mediaPreview: '',
+    existingMediaUrl: '', // ✅ Track current media when editing
   })
 
   useEffect(() => {
@@ -130,12 +135,32 @@ export default function AdminHeroPage() {
   useEffect(() => { fetchSlides() }, [fetchSlides])
 
   function resetForm() {
-    setForm({ type: 'image', title: '', order: 0, media: null, mediaPreview: '' })
+    setForm({
+      type: 'image', title: '', order: 0,
+      media: null, mediaPreview: '', existingMediaUrl: '',
+    })
     setProgress(0)
+    setEditingId(null)
+  }
+
+  // ✅ NEW: Open edit mode with pre-filled data
+  function handleEdit(slide) {
+    setEditingId(slide._id || slide.id)
+    setForm({
+      type: slide.type || 'image',
+      title: slide.title || '',
+      order: slide.order || 0,
+      media: null,
+      mediaPreview: '',
+      existingMediaUrl: slide.mediaUrl || '',
+    })
+    setShowForm(true)
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function handleTypeChange(newType) {
-    if (saving) return
+    if (saving || editingId) return // Don't allow type change in edit mode
     setForm(f => ({ ...f, type: newType, media: null, mediaPreview: '' }))
   }
 
@@ -156,65 +181,71 @@ export default function AdminHeroPage() {
     }))
   }
 
-  // ✅ KEY CHANGE: Upload directly from browser
+  // ✅ UPDATED: Handles both Create and Update
   async function handleSave(e) {
     e.preventDefault()
-    if (!form.title.trim()) { toast.error('Title is required'); return }
-    if (!form.media)        { toast.error('Media file is required'); return }
+    // if (!form.title.trim()) { toast.error('Title is required'); return }
+    
+    // Media is required for new slides, optional for edits
+    if (!editingId && !form.media) {
+      toast.error('Media file is required'); return
+    }
 
     setSaving(true)
     setProgress(5)
+
+    const isEditing = !!editingId
+    const toastId = 'hero-upload'
 
     try {
       let mediaUrl      = null
       let mediaPublicId = null
       let videoKey      = null
 
-      if (form.type === 'video') {
-        // Upload video directly from browser to R2
-        toast.loading('Uploading video to cloud…', { id: 'hero-upload' })
+      // Only upload if user selected a new file
+      if (form.media) {
+        if (form.type === 'video') {
+          toast.loading('Uploading video to cloud…', { id: toastId })
 
-        const result = await uploadVideoToR2Direct(
-          form.media,
-          'hero/videos',
-          (percent) => {
-            setProgress(Math.round(percent * 0.9)) // 0–90%
-          }
-        )
+          const result = await uploadVideoToR2Direct(
+            form.media,
+            'hero/videos',
+            (percent) => {
+              setProgress(Math.round(percent * 0.9))
+            }
+          )
 
-        mediaUrl = result.publicUrl
-        videoKey = result.key
-        console.log('✅ Hero video uploaded to R2:', videoKey)
-        setProgress(92)
-      } else {
-        // Upload image directly from browser to Cloudinary
-        toast.loading('Uploading image…', { id: 'hero-upload' })
-        setProgress(20)
+          mediaUrl = result.publicUrl
+          videoKey = result.key
+          setProgress(92)
+        } else {
+          toast.loading('Uploading image…', { id: toastId })
+          setProgress(20)
 
-        const folder = `ldce/hero/${form.type}`
-        const result = await uploadImageToCloudinary(form.media, folder)
+          const folder = `ldce/hero/${form.type}`
+          const result = await uploadImageToCloudinary(form.media, folder)
 
-        mediaUrl      = result.url
-        mediaPublicId = result.publicId
-        console.log('✅ Hero image uploaded to Cloudinary:', mediaPublicId)
-        setProgress(80)
+          mediaUrl      = result.url
+          mediaPublicId = result.publicId
+          setProgress(80)
+        }
       }
 
-      // Save metadata to DB via API (tiny JSON)
-      toast.loading('Saving…', { id: 'hero-upload' })
+      toast.loading(isEditing ? 'Updating…' : 'Saving…', { id: toastId })
       setProgress(92)
 
+      // ✅ Use PUT for edit, POST for create
       const res = await fetch('/api/admin/hero', {
-        method: 'POST',
+        method: isEditing ? 'PUT' : 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          ...(isEditing && { id: editingId }),
           type:  form.type,
           title: form.title.trim(),
           order: form.order,
-          mediaUrl,
-          mediaPublicId,
-          videoKey,
+          // Only send media fields if user uploaded new media
+          ...(mediaUrl && { mediaUrl, mediaPublicId, videoKey }),
         }),
       })
 
@@ -223,18 +254,20 @@ export default function AdminHeroPage() {
       if (data.success) {
         setProgress(100)
         toast.success(
-          form.type === 'video' ? '✅ Video uploaded!' : '✅ Hero slide added!',
-          { id: 'hero-upload' }
+          isEditing
+            ? '✅ Slide updated!'
+            : form.type === 'video' ? '✅ Video uploaded!' : '✅ Hero slide added!',
+          { id: toastId }
         )
         resetForm()
         setShowForm(false)
         await fetchSlides()
       } else {
-        toast.error(data.error || 'Failed to add slide', { id: 'hero-upload' })
+        toast.error(data.error || (isEditing ? 'Update failed' : 'Failed to add slide'), { id: toastId })
       }
     } catch (err) {
-      console.error('Hero upload error:', err)
-      toast.error(`Upload failed: ${err.message}`, { id: 'hero-upload' })
+      console.error('Hero save error:', err)
+      toast.error(`${isEditing ? 'Update' : 'Upload'} failed: ${err.message}`, { id: toastId })
     } finally {
       setTimeout(() => {
         setSaving(false)
@@ -262,6 +295,7 @@ export default function AdminHeroPage() {
   }
 
   const cfg = TYPE_CONFIG[form.type]
+  const isEditMode = !!editingId
 
   return (
     <>
@@ -365,6 +399,9 @@ export default function AdminHeroPage() {
         }
         .hero-table tbody tr:last-child td { border-bottom: none; }
         .hero-table tbody tr:hover td { background: rgba(27,42,74,0.015); }
+        .hero-table tbody tr.editing td { 
+          background: rgba(232,168,56,0.08) !important;
+        }
 
         .hero-thumb {
           width: ${isMobile ? '54px' : '68px'};
@@ -381,27 +418,53 @@ export default function AdminHeroPage() {
           border: 1.5px solid ${tk.border};
         }
 
-        .hero-del-btn {
+        .hero-action-btn {
           font-size: ${isMobile ? '11px' : '12px'};
-          font-weight: 600; color: #ef4444;
+          font-weight: 600;
           background: none; border: 1.5px solid transparent;
           cursor: pointer;
           padding: ${isMobile ? '5px 8px' : '5px 12px'};
           border-radius: 8px; transition: all .2s; font-family: inherit;
           white-space: nowrap;
         }
+        .hero-edit-btn {
+          color: #3B82F6;
+        }
+        .hero-edit-btn:hover:not(:disabled) {
+          background: rgba(59,130,246,0.07);
+          border-color: rgba(59,130,246,0.2);
+        }
+        .hero-del-btn {
+          color: #ef4444;
+        }
         .hero-del-btn:hover:not(:disabled) {
           background: rgba(239,68,68,0.07);
           border-color: rgba(239,68,68,0.2);
         }
-        .hero-del-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .hero-action-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .hero-action-row {
+          display: flex; gap: 4px; justify-content: flex-end;
+        }
 
         .hero-slide-card {
           display: flex; gap: 10px; align-items: center;
           padding: 12px; border-radius: 12px;
           background: #FAFAFA; border: 1.5px solid ${tk.border};
         }
+        .hero-slide-card.editing {
+          background: rgba(232,168,56,0.08);
+          border-color: rgba(232,168,56,0.3);
+        }
         .hero-slide-card:not(:last-child) { margin-bottom: 10px; }
+
+        .hero-edit-banner {
+          background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04));
+          border: 1.5px solid rgba(59,130,246,0.25);
+          border-radius: 12px; padding: 12px 16px;
+          display: flex; align-items: center; gap: 10px;
+          margin-bottom: 16px;
+        }
       `}</style>
 
       <div className="hero-pg">
@@ -463,7 +526,9 @@ export default function AdminHeroPage() {
           >
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-              background: `linear-gradient(90deg,${tk.navy},${tk.gold},${tk.navy})`,
+              background: isEditMode
+                ? `linear-gradient(90deg,#3B82F6,#60A5FA,#3B82F6)`
+                : `linear-gradient(90deg,${tk.navy},${tk.gold},${tk.navy})`,
               backgroundSize: '200% 100%',
               animation: 'shimmer 2.5s linear infinite',
             }} />
@@ -473,8 +538,23 @@ export default function AdminHeroPage() {
               marginBottom: '20px',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              🎞️ Add Hero Slide
+              {isEditMode ? '✏️ Edit Hero Slide' : '🎞️ Add Hero Slide'}
             </h3>
+
+            {/* ✅ Edit mode banner */}
+            {isEditMode && (
+              <div className="hero-edit-banner">
+                <span style={{ fontSize: '18px' }}>✏️</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#1E40AF' }}>
+                    Editing existing slide
+                  </p>
+                  <p style={{ fontSize: '11px', color: '#3B82F6' }}>
+                    Leave file empty to keep current media. Upload a new file to replace it.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <form
               onSubmit={handleSave}
@@ -494,6 +574,12 @@ export default function AdminHeroPage() {
                     fontSize: '11px', fontWeight: 700, color: tk.faint,
                     textTransform: 'uppercase', letterSpacing: '.7px',
                   }}>Step 1 — Choose Type</span>
+                  {isEditMode && (
+                    <span style={{
+                      fontSize: '10px', color: tk.faint,
+                      fontStyle: 'italic', marginLeft: '4px',
+                    }}>(locked in edit mode)</span>
+                  )}
                 </div>
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
@@ -501,7 +587,8 @@ export default function AdminHeroPage() {
                 }}>
                   {Object.entries(TYPE_CONFIG).map(([id, c]) => (
                     <button
-                      key={id} type="button" disabled={saving}
+                      key={id} type="button"
+                      disabled={saving || isEditMode}
                       className={`hero-type-btn ${form.type === id ? 'active' : ''}`}
                       onClick={() => handleTypeChange(id)}
                     >
@@ -533,21 +620,21 @@ export default function AdminHeroPage() {
                   gap: '10px', alignItems: 'end',
                 }}>
                   <div>
-                    <label className="hero-lbl">
-                      Title <span className="hero-lbl-req">*</span>
-                    </label>
-                    <input
+                   <label className="hero-lbl">
+                    Title <span style={{ fontSize: '10px', color: tk.faint, fontWeight: 500, marginLeft: '4px' }}>(optional)</span>
+                  </label>
+                   <input
                       type="text" className="adm-input"
                       placeholder={
-                        form.type === 'image' ? 'e.g. Welcome to LDCE Portal'
-                        : form.type === 'video' ? 'e.g. Course Introduction'
-                        : 'e.g. Latest Notification'
+                        form.type === 'image' ? 'e.g. Welcome to LDCE Portal (optional)'
+                        : form.type === 'video' ? 'e.g. Course Introduction (optional)'
+                        : 'e.g. Latest Notification (optional)'
                       }
                       value={form.title}
                       onChange={e => setForm(f => ({
                         ...f, title: e.target.value,
                       }))}
-                      disabled={saving} required
+                      disabled={saving}
                     />
                   </div>
                   <div style={{ minWidth: isMobile ? 'auto' : '80px' }}>
@@ -577,8 +664,52 @@ export default function AdminHeroPage() {
                   <span style={{
                     fontSize: '11px', fontWeight: 700, color: tk.faint,
                     textTransform: 'uppercase', letterSpacing: '.7px',
-                  }}>Step 3 — Upload Media</span>
+                  }}>
+                    Step 3 — {isEditMode ? 'Replace Media (Optional)' : 'Upload Media'}
+                  </span>
                 </div>
+
+                {/* ✅ Show existing media in edit mode */}
+                {isEditMode && form.existingMediaUrl && !form.media && (
+                  <div style={{
+                    marginBottom: '12px', padding: '12px',
+                    background: 'rgba(27,42,74,0.04)',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${tk.border}`,
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                  }}>
+                    {form.type === 'video' ? (
+                      <div style={{
+                        width: '60px', height: '40px',
+                        background: 'rgba(27,42,74,0.06)',
+                        borderRadius: '8px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '20px', flexShrink: 0,
+                      }}>🎬</div>
+                    ) : (
+                      <img
+                        src={form.existingMediaUrl}
+                        alt="Current"
+                        style={{
+                          width: '60px', height: '40px',
+                          objectFit: 'cover',
+                          borderRadius: '8px', flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        fontSize: '12px', fontWeight: 600,
+                        color: tk.text, marginBottom: '2px',
+                      }}>📎 Current Media</p>
+                      <p style={{
+                        fontSize: '11px', color: tk.muted,
+                        overflow: 'hidden', textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>{form.existingMediaUrl.split('/').pop()}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className={`hero-drop ${form.media ? 'has-file' : ''} ${saving ? 'disabled' : ''}`}>
                   <input
@@ -597,7 +728,9 @@ export default function AdminHeroPage() {
                         fontSize: '13px', fontWeight: 600,
                         color: tk.text, marginBottom: '5px',
                       }}>
-                        Click to upload {cfg.label.toLowerCase()}
+                        {isEditMode
+                          ? `Click to replace ${cfg.label.toLowerCase()}`
+                          : `Click to upload ${cfg.label.toLowerCase()}`}
                       </p>
                       <p style={{ fontSize: '11px', color: tk.faint }}>
                         {cfg.hint}
@@ -717,9 +850,11 @@ export default function AdminHeroPage() {
                           d="M4 12a8 8 0 018-8v8z"
                         />
                       </svg>
-                      Uploading…
+                      {isEditMode ? 'Updating…' : 'Uploading…'}
                     </>
-                  ) : '+ Add Hero Slide'}
+                  ) : (
+                    isEditMode ? '✓ Update Slide' : '+ Add Hero Slide'
+                  )}
                 </button>
                 <button
                   type="button" disabled={saving}
@@ -775,8 +910,9 @@ export default function AdminHeroPage() {
               {slides.map(slide => {
                 const c  = TYPE_CONFIG[slide.type] || TYPE_CONFIG.image
                 const id = slide._id || slide.id
+                const isEditing = editingId === id
                 return (
-                  <div key={id} className="hero-slide-card">
+                  <div key={id} className={`hero-slide-card ${isEditing ? 'editing' : ''}`}>
                     {slide.type === 'video' ? (
                       <div className="hero-thumb-ph">🎬</div>
                     ) : slide.mediaUrl ? (
@@ -811,18 +947,32 @@ export default function AdminHeroPage() {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDelete(id)}
-                      disabled={deleting === id}
-                      style={{
-                        background: 'rgba(239,68,68,0.08)',
-                        border: '1px solid rgba(239,68,68,0.15)',
-                        color: '#ef4444', padding: '7px 10px',
-                        borderRadius: '9px', cursor: 'pointer',
-                        fontSize: '14px', flexShrink: 0,
-                        opacity: deleting === id ? 0.5 : 1,
-                      }}
-                    >🗑️</button>
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                      <button
+                        onClick={() => handleEdit(slide)}
+                        disabled={saving || deleting === id}
+                        style={{
+                          background: 'rgba(59,130,246,0.08)',
+                          border: '1px solid rgba(59,130,246,0.15)',
+                          color: '#3B82F6', padding: '7px 10px',
+                          borderRadius: '9px', cursor: 'pointer',
+                          fontSize: '14px',
+                          opacity: (saving || deleting === id) ? 0.5 : 1,
+                        }}
+                      >✏️</button>
+                      <button
+                        onClick={() => handleDelete(id)}
+                        disabled={deleting === id || saving}
+                        style={{
+                          background: 'rgba(239,68,68,0.08)',
+                          border: '1px solid rgba(239,68,68,0.15)',
+                          color: '#ef4444', padding: '7px 10px',
+                          borderRadius: '9px', cursor: 'pointer',
+                          fontSize: '14px',
+                          opacity: (deleting === id || saving) ? 0.5 : 1,
+                        }}
+                      >🗑️</button>
+                    </div>
                   </div>
                 )
               })}
@@ -844,8 +994,9 @@ export default function AdminHeroPage() {
                   {slides.map(slide => {
                     const c  = TYPE_CONFIG[slide.type] || TYPE_CONFIG.image
                     const id = slide._id || slide.id
+                    const isEditing = editingId === id
                     return (
-                      <tr key={id}>
+                      <tr key={id} className={isEditing ? 'editing' : ''}>
                         <td>
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: '10px',
@@ -916,33 +1067,42 @@ export default function AdminHeroPage() {
                           </span>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button
-                            onClick={() => handleDelete(id)}
-                            disabled={deleting === id}
-                            className="hero-del-btn"
-                          >
-                            {deleting === id ? (
-                              <>
-                                <svg style={{
-                                  width: '11px', height: '11px',
-                                  animation: 'spin 1s linear infinite',
-                                  display: 'inline-block',
-                                  marginRight: '4px', verticalAlign: 'middle',
-                                }} fill="none" viewBox="0 0 24 24">
-                                  <circle
-                                    style={{ opacity: .25 }}
-                                    cx="12" cy="12" r="10"
-                                    stroke="currentColor" strokeWidth="4"
-                                  />
-                                  <path
-                                    style={{ opacity: .75 }}
-                                    fill="currentColor" d="M4 12a8 8 0 018-8v8z"
-                                  />
-                                </svg>
-                                Deleting…
-                              </>
-                            ) : '🗑️ Delete'}
-                          </button>
+                          <div className="hero-action-row">
+                            <button
+                              onClick={() => handleEdit(slide)}
+                              disabled={saving || deleting === id}
+                              className="hero-action-btn hero-edit-btn"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(id)}
+                              disabled={deleting === id || saving}
+                              className="hero-action-btn hero-del-btn"
+                            >
+                              {deleting === id ? (
+                                <>
+                                  <svg style={{
+                                    width: '11px', height: '11px',
+                                    animation: 'spin 1s linear infinite',
+                                    display: 'inline-block',
+                                    marginRight: '4px', verticalAlign: 'middle',
+                                  }} fill="none" viewBox="0 0 24 24">
+                                    <circle
+                                      style={{ opacity: .25 }}
+                                      cx="12" cy="12" r="10"
+                                      stroke="currentColor" strokeWidth="4"
+                                    />
+                                    <path
+                                      style={{ opacity: .75 }}
+                                      fill="currentColor" d="M4 12a8 8 0 018-8v8z"
+                                    />
+                                  </svg>
+                                  Deleting…
+                                </>
+                              ) : '🗑️ Delete'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )

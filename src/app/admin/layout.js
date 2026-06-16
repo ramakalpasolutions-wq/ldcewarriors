@@ -249,7 +249,7 @@ export default function AdminLayout({ children }) {
         {/* ── Nav Links ── */}
         <nav style={{
           flex: 1,
-          padding: '4px 6px',
+          padding: '10px 10px',
           overflowY: 'auto',
           display: 'flex', flexDirection: 'column', gap: '1px',
           scrollbarWidth: 'none',
@@ -270,10 +270,10 @@ export default function AdminLayout({ children }) {
                 style={{
                   display: 'flex', alignItems: 'center',
                   gap: '10px',
-                  padding: isCollapsed ? '11px 0' : '9px 12px',
+                  padding: isCollapsed ? '11px 0' : '16px 12px',
                   justifyContent: isCollapsed ? 'center' : 'flex-start',
                   borderRadius: '11px', fontSize: '13px',
-                  fontWeight: isActive ? 700 : 500,
+                  fontWeight: isActive ? 700 : 900,
                   textDecoration: 'none',
                   transition: 'all 0.18s ease',
                   border: '1px solid transparent',

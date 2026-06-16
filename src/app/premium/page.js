@@ -31,15 +31,19 @@ const TOPIC_ICONS = {
 }
 
 const COURSE_TOPICS = [
-  { icon: '🚃', label: 'Wagon' },
-  { icon: '🚄', label: 'LHB (Linke Hofmann Busch coaches)' },
+  { icon: '🚛', label: 'Wagon' },
+  { icon: '🚆', label: 'LHB (Linke Hofmann Busch coaches)' },
   { icon: '🏭', label: 'ICf (Integrated Coach Factory)' },
   { icon: '🚂', label: 'Diesel Locomotives' },
   { icon: '📋', label: 'Establishment Rules' },
   { icon: '💰', label: 'Financial Rules' },
-  { icon: '🗄️', label: 'Stores Management' },
-  { icon: '🌐', label: 'General Awareness' },
-  { icon: '🧠', label: 'Aptitude & Reasoning' },
+  { icon: '📦', label: 'Stores Management' },
+  { icon: '🌍', label: 'General Awareness' },
+  { icon: '🧩', label: 'Aptitude & Reasoning' },
+  { icon: '🇮🇳', label: 'Rajabasha' },
+  { icon: '⚖️', label: 'I. R. C. A Rules' },
+  { icon: '⚡', label: 'Basic Electrical Engineering' },
+  { icon: '⚙️', label: 'Pure Mechanical Concepts' },
 ]
 
 /* ── Sub-components ── */
@@ -682,7 +686,7 @@ export default function PremiumPage() {
                       <div style={{ padding: '14px 16px 4px', background: 'rgba(255,255,255,0.03)' }}>
                         {[
                           { icon: '📅', text: `Valid for ${priceLoading ? '—' : subMonths} months.` },
-                          { icon: '▶️', text: 'Each video can be watched up to 2 times only.' },
+                          { icon: '▶️', text: 'Each video can be watched up to 2 times.' },
                         ].map((item, i) => (
                           <div key={i} style={{
                             display: 'flex', alignItems: 'flex-start',

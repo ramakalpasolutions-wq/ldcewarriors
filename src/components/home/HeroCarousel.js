@@ -550,7 +550,7 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
               )}
 
               {/* Text overlay card */}
-              <div style={{
+              {/* <div style={{
                 position: 'absolute',
                 bottom: isMobile ? '10px' : '20px',
                 left: isMobile ? '10px' : '20px',
@@ -571,7 +571,7 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
                 {!isMobile && (
                   <Link href="/classes" style={{ display: 'inline-block', marginTop: '10px', padding: '7px 15px', background: '#F3F4F6', borderRadius: '8px', color: '#1B2A4A', fontSize: '11px', fontWeight: 700, textDecoration: 'none' }}>Browse Classes</Link>
                 )}
-              </div>
+              </div> */}
 
               {/* Slide counter */}
               {slides.length > 1 && (
