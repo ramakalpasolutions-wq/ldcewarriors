@@ -21,24 +21,15 @@ const nextConfig = {
     ],
   },
 
-  // ✅ Needed for Prisma/Mongo
+  // Needed for Prisma/Mongo
   serverExternalPackages: ['mongoose'],
 
-<<<<<<< HEAD
-  // ✅ Only JSON metadata goes through server actions — keep this small
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '10mb',
-=======
-  // ✅ Fix 413 upload error
+  // Fix upload size limit
   experimental: {
     serverActions: {
       bodySizeLimit: '600mb',
->>>>>>> master
     },
   },
-
-  // ✅ NO turbopack config - Webpack is default in Next.js 15
 }
 
 module.exports = nextConfig
