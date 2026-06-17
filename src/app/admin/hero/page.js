@@ -101,11 +101,6 @@ export default function AdminHeroPage() {
   const [progress, setProgress] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
   const [isTablet, setIsTablet] = useState(false)
-<<<<<<< HEAD
-  const [form, setForm] = useState({
-    type: 'image', title: '', order: 0,
-    media: null, mediaPreview: '',
-=======
 
   // ✅ NEW: Edit mode state
   const [editingId, setEditingId] = useState(null)
@@ -114,7 +109,6 @@ export default function AdminHeroPage() {
     type: 'image', title: '', order: 0,
     media: null, mediaPreview: '',
     existingMediaUrl: '', // ✅ Track current media when editing
->>>>>>> master
   })
 
   useEffect(() => {
@@ -141,14 +135,6 @@ export default function AdminHeroPage() {
   useEffect(() => { fetchSlides() }, [fetchSlides])
 
   function resetForm() {
-<<<<<<< HEAD
-    setForm({ type: 'image', title: '', order: 0, media: null, mediaPreview: '' })
-    setProgress(0)
-  }
-
-  function handleTypeChange(newType) {
-    if (saving) return
-=======
     setForm({
       type: 'image', title: '', order: 0,
       media: null, mediaPreview: '', existingMediaUrl: '',
@@ -175,7 +161,6 @@ export default function AdminHeroPage() {
 
   function handleTypeChange(newType) {
     if (saving || editingId) return // Don't allow type change in edit mode
->>>>>>> master
     setForm(f => ({ ...f, type: newType, media: null, mediaPreview: '' }))
   }
 
@@ -196,13 +181,6 @@ export default function AdminHeroPage() {
     }))
   }
 
-<<<<<<< HEAD
-  // ✅ KEY CHANGE: Upload directly from browser
-  async function handleSave(e) {
-    e.preventDefault()
-    if (!form.title.trim()) { toast.error('Title is required'); return }
-    if (!form.media)        { toast.error('Media file is required'); return }
-=======
   // ✅ UPDATED: Handles both Create and Update
   async function handleSave(e) {
     e.preventDefault()
@@ -212,69 +190,18 @@ export default function AdminHeroPage() {
     if (!editingId && !form.media) {
       toast.error('Media file is required'); return
     }
->>>>>>> master
 
     setSaving(true)
     setProgress(5)
 
-<<<<<<< HEAD
-=======
     const isEditing = !!editingId
     const toastId = 'hero-upload'
 
->>>>>>> master
     try {
       let mediaUrl      = null
       let mediaPublicId = null
       let videoKey      = null
 
-<<<<<<< HEAD
-      if (form.type === 'video') {
-        // Upload video directly from browser to R2
-        toast.loading('Uploading video to cloud…', { id: 'hero-upload' })
-
-        const result = await uploadVideoToR2Direct(
-          form.media,
-          'hero/videos',
-          (percent) => {
-            setProgress(Math.round(percent * 0.9)) // 0–90%
-          }
-        )
-
-        mediaUrl = result.publicUrl
-        videoKey = result.key
-        console.log('✅ Hero video uploaded to R2:', videoKey)
-        setProgress(92)
-      } else {
-        // Upload image directly from browser to Cloudinary
-        toast.loading('Uploading image…', { id: 'hero-upload' })
-        setProgress(20)
-
-        const folder = `ldce/hero/${form.type}`
-        const result = await uploadImageToCloudinary(form.media, folder)
-
-        mediaUrl      = result.url
-        mediaPublicId = result.publicId
-        console.log('✅ Hero image uploaded to Cloudinary:', mediaPublicId)
-        setProgress(80)
-      }
-
-      // Save metadata to DB via API (tiny JSON)
-      toast.loading('Saving…', { id: 'hero-upload' })
-      setProgress(92)
-
-      const res = await fetch('/api/admin/hero', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type:  form.type,
-          title: form.title.trim(),
-          order: form.order,
-          mediaUrl,
-          mediaPublicId,
-          videoKey,
-=======
       // Only upload if user selected a new file
       if (form.media) {
         if (form.type === 'video') {
@@ -319,7 +246,6 @@ export default function AdminHeroPage() {
           order: form.order,
           // Only send media fields if user uploaded new media
           ...(mediaUrl && { mediaUrl, mediaPublicId, videoKey }),
->>>>>>> master
         }),
       })
 
@@ -328,33 +254,20 @@ export default function AdminHeroPage() {
       if (data.success) {
         setProgress(100)
         toast.success(
-<<<<<<< HEAD
-          form.type === 'video' ? '✅ Video uploaded!' : '✅ Hero slide added!',
-          { id: 'hero-upload' }
-=======
           isEditing
             ? '✅ Slide updated!'
             : form.type === 'video' ? '✅ Video uploaded!' : '✅ Hero slide added!',
           { id: toastId }
->>>>>>> master
         )
         resetForm()
         setShowForm(false)
         await fetchSlides()
       } else {
-<<<<<<< HEAD
-        toast.error(data.error || 'Failed to add slide', { id: 'hero-upload' })
-      }
-    } catch (err) {
-      console.error('Hero upload error:', err)
-      toast.error(`Upload failed: ${err.message}`, { id: 'hero-upload' })
-=======
         toast.error(data.error || (isEditing ? 'Update failed' : 'Failed to add slide'), { id: toastId })
       }
     } catch (err) {
       console.error('Hero save error:', err)
       toast.error(`${isEditing ? 'Update' : 'Upload'} failed: ${err.message}`, { id: toastId })
->>>>>>> master
     } finally {
       setTimeout(() => {
         setSaving(false)
@@ -382,10 +295,7 @@ export default function AdminHeroPage() {
   }
 
   const cfg = TYPE_CONFIG[form.type]
-<<<<<<< HEAD
-=======
   const isEditMode = !!editingId
->>>>>>> master
 
   return (
     <>
@@ -489,12 +399,9 @@ export default function AdminHeroPage() {
         }
         .hero-table tbody tr:last-child td { border-bottom: none; }
         .hero-table tbody tr:hover td { background: rgba(27,42,74,0.015); }
-<<<<<<< HEAD
-=======
         .hero-table tbody tr.editing td { 
           background: rgba(232,168,56,0.08) !important;
         }
->>>>>>> master
 
         .hero-thumb {
           width: ${isMobile ? '54px' : '68px'};
@@ -511,23 +418,15 @@ export default function AdminHeroPage() {
           border: 1.5px solid ${tk.border};
         }
 
-<<<<<<< HEAD
-        .hero-del-btn {
-          font-size: ${isMobile ? '11px' : '12px'};
-          font-weight: 600; color: #ef4444;
-=======
         .hero-action-btn {
           font-size: ${isMobile ? '11px' : '12px'};
           font-weight: 600;
->>>>>>> master
           background: none; border: 1.5px solid transparent;
           cursor: pointer;
           padding: ${isMobile ? '5px 8px' : '5px 12px'};
           border-radius: 8px; transition: all .2s; font-family: inherit;
           white-space: nowrap;
         }
-<<<<<<< HEAD
-=======
         .hero-edit-btn {
           color: #3B82F6;
         }
@@ -538,29 +437,21 @@ export default function AdminHeroPage() {
         .hero-del-btn {
           color: #ef4444;
         }
->>>>>>> master
         .hero-del-btn:hover:not(:disabled) {
           background: rgba(239,68,68,0.07);
           border-color: rgba(239,68,68,0.2);
         }
-<<<<<<< HEAD
-        .hero-del-btn:disabled { opacity: .4; cursor: not-allowed; }
-=======
         .hero-action-btn:disabled { opacity: .4; cursor: not-allowed; }
 
         .hero-action-row {
           display: flex; gap: 4px; justify-content: flex-end;
         }
->>>>>>> master
 
         .hero-slide-card {
           display: flex; gap: 10px; align-items: center;
           padding: 12px; border-radius: 12px;
           background: #FAFAFA; border: 1.5px solid ${tk.border};
         }
-<<<<<<< HEAD
-        .hero-slide-card:not(:last-child) { margin-bottom: 10px; }
-=======
         .hero-slide-card.editing {
           background: rgba(232,168,56,0.08);
           border-color: rgba(232,168,56,0.3);
@@ -574,7 +465,6 @@ export default function AdminHeroPage() {
           display: flex; align-items: center; gap: 10px;
           margin-bottom: 16px;
         }
->>>>>>> master
       `}</style>
 
       <div className="hero-pg">
@@ -636,13 +526,9 @@ export default function AdminHeroPage() {
           >
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-<<<<<<< HEAD
-              background: `linear-gradient(90deg,${tk.navy},${tk.gold},${tk.navy})`,
-=======
               background: isEditMode
                 ? `linear-gradient(90deg,#3B82F6,#60A5FA,#3B82F6)`
                 : `linear-gradient(90deg,${tk.navy},${tk.gold},${tk.navy})`,
->>>>>>> master
               backgroundSize: '200% 100%',
               animation: 'shimmer 2.5s linear infinite',
             }} />
@@ -652,11 +538,6 @@ export default function AdminHeroPage() {
               marginBottom: '20px',
               display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-<<<<<<< HEAD
-              🎞️ Add Hero Slide
-            </h3>
-
-=======
               {isEditMode ? '✏️ Edit Hero Slide' : '🎞️ Add Hero Slide'}
             </h3>
 
@@ -675,7 +556,6 @@ export default function AdminHeroPage() {
               </div>
             )}
 
->>>>>>> master
             <form
               onSubmit={handleSave}
               style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}
@@ -694,15 +574,12 @@ export default function AdminHeroPage() {
                     fontSize: '11px', fontWeight: 700, color: tk.faint,
                     textTransform: 'uppercase', letterSpacing: '.7px',
                   }}>Step 1 — Choose Type</span>
-<<<<<<< HEAD
-=======
                   {isEditMode && (
                     <span style={{
                       fontSize: '10px', color: tk.faint,
                       fontStyle: 'italic', marginLeft: '4px',
                     }}>(locked in edit mode)</span>
                   )}
->>>>>>> master
                 </div>
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
@@ -710,12 +587,8 @@ export default function AdminHeroPage() {
                 }}>
                   {Object.entries(TYPE_CONFIG).map(([id, c]) => (
                     <button
-<<<<<<< HEAD
-                      key={id} type="button" disabled={saving}
-=======
                       key={id} type="button"
                       disabled={saving || isEditMode}
->>>>>>> master
                       className={`hero-type-btn ${form.type === id ? 'active' : ''}`}
                       onClick={() => handleTypeChange(id)}
                     >
@@ -747,17 +620,6 @@ export default function AdminHeroPage() {
                   gap: '10px', alignItems: 'end',
                 }}>
                   <div>
-<<<<<<< HEAD
-                    <label className="hero-lbl">
-                      Title <span className="hero-lbl-req">*</span>
-                    </label>
-                    <input
-                      type="text" className="adm-input"
-                      placeholder={
-                        form.type === 'image' ? 'e.g. Welcome to LDCE Portal'
-                        : form.type === 'video' ? 'e.g. Course Introduction'
-                        : 'e.g. Latest Notification'
-=======
                    <label className="hero-lbl">
                     Title <span style={{ fontSize: '10px', color: tk.faint, fontWeight: 500, marginLeft: '4px' }}>(optional)</span>
                   </label>
@@ -767,17 +629,12 @@ export default function AdminHeroPage() {
                         form.type === 'image' ? 'e.g. Welcome to LDCE Portal (optional)'
                         : form.type === 'video' ? 'e.g. Course Introduction (optional)'
                         : 'e.g. Latest Notification (optional)'
->>>>>>> master
                       }
                       value={form.title}
                       onChange={e => setForm(f => ({
                         ...f, title: e.target.value,
                       }))}
-<<<<<<< HEAD
-                      disabled={saving} required
-=======
                       disabled={saving}
->>>>>>> master
                     />
                   </div>
                   <div style={{ minWidth: isMobile ? 'auto' : '80px' }}>
@@ -807,11 +664,6 @@ export default function AdminHeroPage() {
                   <span style={{
                     fontSize: '11px', fontWeight: 700, color: tk.faint,
                     textTransform: 'uppercase', letterSpacing: '.7px',
-<<<<<<< HEAD
-                  }}>Step 3 — Upload Media</span>
-                </div>
-
-=======
                   }}>
                     Step 3 — {isEditMode ? 'Replace Media (Optional)' : 'Upload Media'}
                   </span>
@@ -859,7 +711,6 @@ export default function AdminHeroPage() {
                   </div>
                 )}
 
->>>>>>> master
                 <div className={`hero-drop ${form.media ? 'has-file' : ''} ${saving ? 'disabled' : ''}`}>
                   <input
                     type="file" accept={cfg.accept}
@@ -877,13 +728,9 @@ export default function AdminHeroPage() {
                         fontSize: '13px', fontWeight: 600,
                         color: tk.text, marginBottom: '5px',
                       }}>
-<<<<<<< HEAD
-                        Click to upload {cfg.label.toLowerCase()}
-=======
                         {isEditMode
                           ? `Click to replace ${cfg.label.toLowerCase()}`
                           : `Click to upload ${cfg.label.toLowerCase()}`}
->>>>>>> master
                       </p>
                       <p style={{ fontSize: '11px', color: tk.faint }}>
                         {cfg.hint}
@@ -1003,17 +850,11 @@ export default function AdminHeroPage() {
                           d="M4 12a8 8 0 018-8v8z"
                         />
                       </svg>
-<<<<<<< HEAD
-                      Uploading…
-                    </>
-                  ) : '+ Add Hero Slide'}
-=======
                       {isEditMode ? 'Updating…' : 'Uploading…'}
                     </>
                   ) : (
                     isEditMode ? '✓ Update Slide' : '+ Add Hero Slide'
                   )}
->>>>>>> master
                 </button>
                 <button
                   type="button" disabled={saving}
@@ -1069,14 +910,9 @@ export default function AdminHeroPage() {
               {slides.map(slide => {
                 const c  = TYPE_CONFIG[slide.type] || TYPE_CONFIG.image
                 const id = slide._id || slide.id
-<<<<<<< HEAD
-                return (
-                  <div key={id} className="hero-slide-card">
-=======
                 const isEditing = editingId === id
                 return (
                   <div key={id} className={`hero-slide-card ${isEditing ? 'editing' : ''}`}>
->>>>>>> master
                     {slide.type === 'video' ? (
                       <div className="hero-thumb-ph">🎬</div>
                     ) : slide.mediaUrl ? (
@@ -1111,20 +947,6 @@ export default function AdminHeroPage() {
                         </span>
                       </div>
                     </div>
-<<<<<<< HEAD
-                    <button
-                      onClick={() => handleDelete(id)}
-                      disabled={deleting === id}
-                      style={{
-                        background: 'rgba(239,68,68,0.08)',
-                        border: '1px solid rgba(239,68,68,0.15)',
-                        color: '#ef4444', padding: '7px 10px',
-                        borderRadius: '9px', cursor: 'pointer',
-                        fontSize: '14px', flexShrink: 0,
-                        opacity: deleting === id ? 0.5 : 1,
-                      }}
-                    >🗑️</button>
-=======
                     <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                       <button
                         onClick={() => handleEdit(slide)}
@@ -1151,7 +973,6 @@ export default function AdminHeroPage() {
                         }}
                       >🗑️</button>
                     </div>
->>>>>>> master
                   </div>
                 )
               })}
@@ -1173,14 +994,9 @@ export default function AdminHeroPage() {
                   {slides.map(slide => {
                     const c  = TYPE_CONFIG[slide.type] || TYPE_CONFIG.image
                     const id = slide._id || slide.id
-<<<<<<< HEAD
-                    return (
-                      <tr key={id}>
-=======
                     const isEditing = editingId === id
                     return (
                       <tr key={id} className={isEditing ? 'editing' : ''}>
->>>>>>> master
                         <td>
                           <div style={{
                             display: 'flex', alignItems: 'center', gap: '10px',
@@ -1251,35 +1067,6 @@ export default function AdminHeroPage() {
                           </span>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-<<<<<<< HEAD
-                          <button
-                            onClick={() => handleDelete(id)}
-                            disabled={deleting === id}
-                            className="hero-del-btn"
-                          >
-                            {deleting === id ? (
-                              <>
-                                <svg style={{
-                                  width: '11px', height: '11px',
-                                  animation: 'spin 1s linear infinite',
-                                  display: 'inline-block',
-                                  marginRight: '4px', verticalAlign: 'middle',
-                                }} fill="none" viewBox="0 0 24 24">
-                                  <circle
-                                    style={{ opacity: .25 }}
-                                    cx="12" cy="12" r="10"
-                                    stroke="currentColor" strokeWidth="4"
-                                  />
-                                  <path
-                                    style={{ opacity: .75 }}
-                                    fill="currentColor" d="M4 12a8 8 0 018-8v8z"
-                                  />
-                                </svg>
-                                Deleting…
-                              </>
-                            ) : '🗑️ Delete'}
-                          </button>
-=======
                           <div className="hero-action-row">
                             <button
                               onClick={() => handleEdit(slide)}
@@ -1316,7 +1103,6 @@ export default function AdminHeroPage() {
                               ) : '🗑️ Delete'}
                             </button>
                           </div>
->>>>>>> master
                         </td>
                       </tr>
                     )

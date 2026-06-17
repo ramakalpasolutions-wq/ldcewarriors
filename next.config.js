@@ -21,15 +21,17 @@ const nextConfig = {
     ],
   },
 
-  // Needed for Prisma/Mongo
+  // ✅ Needed for Prisma/Mongo
   serverExternalPackages: ['mongoose'],
 
-  // Fix upload size limit
+  // ✅ Fix 413 upload error
   experimental: {
     serverActions: {
       bodySizeLimit: '600mb',
     },
   },
+
+  // ✅ NO turbopack config - Webpack is default in Next.js 15
 }
 
 module.exports = nextConfig

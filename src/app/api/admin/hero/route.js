@@ -29,11 +29,7 @@ export async function GET(req) {
   }
 }
 
-<<<<<<< HEAD
-// ✅ Now receives JSON (files pre-uploaded from browser)
-=======
 // ✅ Receives JSON (files pre-uploaded from browser)
->>>>>>> master
 export async function POST(req) {
   try {
     const admin = requireAdmin(req)
@@ -46,17 +42,6 @@ export async function POST(req) {
       type = 'image',
       title,
       order = 0,
-<<<<<<< HEAD
-      // Pre-uploaded data
-      mediaUrl,
-      mediaPublicId,  // Cloudinary public ID (image/article)
-      videoKey,       // R2 key (video)
-    } = body
-
-    if (!title?.trim()) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
-=======
       mediaUrl,
       mediaPublicId,
       videoKey,
@@ -65,7 +50,6 @@ export async function POST(req) {
     // if (!title?.trim()) {
     //   return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     // }
->>>>>>> master
     if (!mediaUrl) {
       return NextResponse.json({ error: 'Media URL is required' }, { status: 400 })
     }
@@ -73,11 +57,7 @@ export async function POST(req) {
     const hero = await prisma.hero.create({
       data: {
         type,
-<<<<<<< HEAD
-        title: title.trim(),
-=======
         title: title?.trim() || '',
->>>>>>> master
         subtitle: null,
         mediaUrl,
         mediaPublicId: mediaPublicId || null,
@@ -104,8 +84,6 @@ export async function POST(req) {
   }
 }
 
-<<<<<<< HEAD
-=======
 // ✅ NEW: PUT method for editing hero slides
 export async function PUT(req) {
   try {
@@ -192,7 +170,6 @@ export async function PUT(req) {
   }
 }
 
->>>>>>> master
 export async function DELETE(req) {
   try {
     const admin = requireAdmin(req)
