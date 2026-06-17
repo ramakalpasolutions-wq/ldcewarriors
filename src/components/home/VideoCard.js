@@ -31,7 +31,13 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           box-shadow: 0 12px 32px rgba(0,0,0,0.09);
           border-color: rgba(232,168,56,0.35);
         }
+<<<<<<< HEAD
         .vc-root.limit { opacity: 0.72; }
+=======
+        .vc-root.limit {
+          opacity: 0.72;
+        }
+>>>>>>> master
 
         /* ── Thumbnail ── */
         .vc-thumb {
@@ -47,14 +53,56 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           transition: transform 0.45s ease;
           display: block;
         }
+<<<<<<< HEAD
         .vc-root:hover .vc-thumb img { transform: scale(1.06); }
 
+=======
+        .vc-root:hover .vc-thumb img {
+          transform: scale(1.06);
+        }
+
+        /* Subtle gradient at bottom of thumb */
+>>>>>>> master
         .vc-thumb-grad {
           position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
           background: linear-gradient(to top, rgba(0,0,0,0.22), transparent);
           pointer-events: none;
         }
 
+<<<<<<< HEAD
+=======
+        /* ── Type badge — SMALLER & LESS INTRUSIVE ── */
+        .vc-badge {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          padding: 3px 8px;
+          border-radius: 6px;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.5px;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          line-height: 1;
+          z-index: 3;
+          text-transform: uppercase;
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .vc-badge.premium {
+          background: linear-gradient(135deg, rgba(232,168,56,0.95), rgba(212,146,42,0.95));
+          color: #1B2A4A;
+          border: 1px solid rgba(255,255,255,0.25);
+        }
+        .vc-badge.free {
+          background: rgba(42,157,143,0.92);
+          color: #fff;
+          border: 1px solid rgba(255,255,255,0.25);
+        }
+
+>>>>>>> master
         /* ── Duration ── */
         .vc-duration {
           position: absolute; bottom: 8px; right: 8px;
@@ -108,6 +156,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           gap: 6px; flex-wrap: wrap;
           margin-top: auto;
         }
+<<<<<<< HEAD
 
         /* ── Type badge — now in info row ── */
         .vc-type-badge {
@@ -128,6 +177,8 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           border: 1px solid rgba(232,168,56,0.3);
         }
 
+=======
+>>>>>>> master
         .vc-topic-chip {
           font-size: 10px; font-weight: 600; color: #1B2A4A;
           background: rgba(27,42,74,0.06);
@@ -169,7 +220,11 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
         onMouseLeave={() => setHovered(false)}
         onClick={() => onClick?.({ ...video, _id: videoId })}
       >
+<<<<<<< HEAD
         {/* ── Thumbnail — NO badge here anymore ── */}
+=======
+        {/* ── Thumbnail ── */}
+>>>>>>> master
         <div className="vc-thumb">
           <img
             src={video.thumbnail || 'https://via.placeholder.com/640x360/1B2A4A/E8A838?text=LDCE+Video'}
@@ -177,6 +232,14 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           />
           <div className="vc-thumb-grad"/>
 
+<<<<<<< HEAD
+=======
+          {/* Type badge — smaller, glass effect */}
+          {/* <div className={`vc-badge ${isPremium ? 'premium' : 'free'}`}>
+            {isPremium ? <><span>⭐</span> Premium</> : 'Free'}
+          </div> */}
+
+>>>>>>> master
           {/* Duration */}
           {video.duration && (
             <div className="vc-duration">{video.duration}</div>
@@ -202,7 +265,11 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
+<<<<<<< HEAD
           {/* Play limit exhausted */}
+=======
+          {/* Limit reached overlay */}
+>>>>>>> master
           {isLimitReached && (
             <div className="vc-overlay exhausted">
               <div className="vc-overlay-icon">🚫</div>
@@ -219,18 +286,24 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           </h3>
 
           <div className="vc-meta">
+<<<<<<< HEAD
             {/* ✅ FREE / PREMIUM badge now lives here */}
             <span className={`vc-type-badge ${isPremium ? 'premium' : 'free'}`}>
               {isPremium ? <>⭐ Premium</> : <>✔ Free</>}
             </span>
 
+=======
+>>>>>>> master
             {(video.topicId?.name || video.topic?.name) && (
               <span className="vc-topic-chip">
                 {video.topicId?.name || video.topic?.name}
               </span>
             )}
 
+<<<<<<< HEAD
             {/* Play dots — only for subscribed premium users */}
+=======
+>>>>>>> master
             {isPremium && isSubscribed && !video.isLocked && localPlayCount > 0 && (
               <div className="vc-plays-dots">
                 {Array(playLimit).fill(null).map((_, i) => (

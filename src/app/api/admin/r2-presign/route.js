@@ -27,7 +27,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+<<<<<<< HEAD
     const { fileName, fileType, folder = 'videos', fileSize } = await req.json()
+=======
+    const { fileName, fileType, folder = 'videos' } = await req.json()
+>>>>>>> master
 
     if (!fileName || !fileType) {
       return NextResponse.json(
@@ -46,6 +50,7 @@ export async function POST(req) {
       CacheControl: 'public, max-age=31536000',
     })
 
+<<<<<<< HEAD
     // ✅ Increase expiry for large files:
     //    < 500MB  → 2 hours
     //    >= 500MB → 4 hours
@@ -60,6 +65,10 @@ export async function POST(req) {
     }
 
     const presignedUrl = await getSignedUrl(R2, command, { expiresIn })
+=======
+    // Presigned URL valid for 2 hours (big videos need time)
+    const presignedUrl = await getSignedUrl(R2, command, { expiresIn: 7200 })
+>>>>>>> master
     const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${key}`
 
     return NextResponse.json({ presignedUrl, key, publicUrl })

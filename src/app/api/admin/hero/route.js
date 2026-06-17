@@ -29,7 +29,11 @@ export async function GET(req) {
   }
 }
 
+<<<<<<< HEAD
 // ✅ Now receives JSON (files pre-uploaded from browser)
+=======
+// ✅ Receives JSON (files pre-uploaded from browser)
+>>>>>>> master
 export async function POST(req) {
   try {
     const admin = requireAdmin(req)
@@ -42,6 +46,7 @@ export async function POST(req) {
       type = 'image',
       title,
       order = 0,
+<<<<<<< HEAD
       // Pre-uploaded data
       mediaUrl,
       mediaPublicId,  // Cloudinary public ID (image/article)
@@ -51,6 +56,16 @@ export async function POST(req) {
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
+=======
+      mediaUrl,
+      mediaPublicId,
+      videoKey,
+    } = body
+
+    // if (!title?.trim()) {
+    //   return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+    // }
+>>>>>>> master
     if (!mediaUrl) {
       return NextResponse.json({ error: 'Media URL is required' }, { status: 400 })
     }
@@ -58,7 +73,11 @@ export async function POST(req) {
     const hero = await prisma.hero.create({
       data: {
         type,
+<<<<<<< HEAD
         title: title.trim(),
+=======
+        title: title?.trim() || '',
+>>>>>>> master
         subtitle: null,
         mediaUrl,
         mediaPublicId: mediaPublicId || null,
@@ -85,6 +104,95 @@ export async function POST(req) {
   }
 }
 
+<<<<<<< HEAD
+=======
+// ✅ NEW: PUT method for editing hero slides
+export async function PUT(req) {
+  try {
+    const admin = requireAdmin(req)
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const {
+      id,
+      type,
+      title,
+      order,
+      isActive,
+      // New media (optional — only if user replaced the file)
+      mediaUrl,
+      mediaPublicId,
+      videoKey,
+    } = body
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+    }
+
+    // Fetch existing slide to compare
+    const existing = await prisma.hero.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json({ error: 'Slide not found' }, { status: 404 })
+    }
+
+    // if (title !== undefined && !title.trim()) {
+    //   return NextResponse.json({ error: 'Title cannot be empty' }, { status: 400 })
+    // }
+
+    // If media changed, delete old media from cloud storage
+    if (mediaUrl && mediaUrl !== existing.mediaUrl) {
+      await Promise.allSettled([
+        existing.type === 'video' && existing.videoKey
+          ? deleteVideoFromR2(existing.videoKey)
+              .then(() => console.log(`✅ Old R2 video deleted: ${existing.videoKey}`))
+              .catch(e => console.warn(`⚠️ R2 delete failed: ${e.message}`))
+          : Promise.resolve(),
+
+        existing.type !== 'video' && existing.mediaPublicId
+          ? deleteImage(existing.mediaPublicId)
+              .then(() => console.log(`✅ Old Cloudinary image deleted: ${existing.mediaPublicId}`))
+              .catch(e => console.warn(`⚠️ Cloudinary delete failed: ${e.message}`))
+          : Promise.resolve(),
+      ])
+    }
+
+    // Build update data — only include fields that are provided
+    const updateData = {}
+    if (type !== undefined)     updateData.type = type
+    if (title !== undefined)    updateData.title = title?.trim() || ''
+    if (order !== undefined)    updateData.order = parseInt(order) || 0
+    if (isActive !== undefined) updateData.isActive = isActive
+
+    // Update media only if new media uploaded
+    if (mediaUrl) {
+      updateData.mediaUrl = mediaUrl
+      updateData.mediaPublicId = mediaPublicId || null
+      updateData.videoKey = videoKey || null
+    }
+
+    const updated = await prisma.hero.update({
+      where: { id },
+      data: updateData,
+    })
+
+    console.log(`✅ Hero slide updated — id: ${id}`)
+
+    return NextResponse.json({
+      success: true,
+      hero: { ...updated, _id: updated.id },
+    })
+  } catch (error) {
+    console.error('Hero PUT error:', error)
+    return NextResponse.json(
+      { error: 'Failed to update slide' },
+      { status: 500 }
+    )
+  }
+}
+
+>>>>>>> master
 export async function DELETE(req) {
   try {
     const admin = requireAdmin(req)
