@@ -10,6 +10,10 @@ import HomeVideoSection from '@/components/home/HomeSections'
 /* ─────────────────────────────────────────
    DATA FETCHING
 ───────────────────────────────────────── */
+
+
+
+
 async function getData() {
   const base = process.env.NEXTAUTH_URL || 'http://localhost:3000'
   try {
