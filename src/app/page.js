@@ -10,13 +10,6 @@ import HomeVideoSection from '@/components/home/HomeSections'
 /* ─────────────────────────────────────────
    DATA FETCHING
 ───────────────────────────────────────── */
-<<<<<<< HEAD
-=======
-
-
-
-
->>>>>>> master
 async function getData() {
   const base = process.env.NEXTAUTH_URL || 'http://localhost:3000'
   try {
@@ -108,11 +101,7 @@ function ViewAllBtn({ href, label, fullWidth = false }) {
 }
 
 /* ─────────────────────────────────────────
-<<<<<<< HEAD
    TOPIC CARD  ← fixed image fitting
-=======
-   TOPIC CARD
->>>>>>> master
 ───────────────────────────────────────── */
 function TopicCard({ topic }) {
   const hasThumbnail = !!topic.thumbnail
@@ -124,7 +113,6 @@ function TopicCard({ topic }) {
       className="topic-card"
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
-<<<<<<< HEAD
       {/* ── Thumbnail wrapper ──
           paddingTop 56.25% = 16/9 ratio trick.
           position:relative + overflow:hidden keeps the image
@@ -136,16 +124,6 @@ function TopicCard({ topic }) {
         overflow: 'hidden',
         background: '#F0EDE8',
         flexShrink: 0,           /* stop flex from squishing it */
-=======
-      {/* Thumbnail wrapper — 16:9 ratio */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        paddingTop: '56.25%',
-        overflow: 'hidden',
-        background: '#F0EDE8',
-        flexShrink: 0,
->>>>>>> master
       }}>
         {hasThumbnail ? (
           <>
@@ -155,25 +133,15 @@ function TopicCard({ topic }) {
               className="topic-card-img"
               style={{
                 position: 'absolute',
-<<<<<<< HEAD
                 inset: 0,               /* top/right/bottom/left: 0 */
                 width: '90%',
                 height: '90%',
                 objectFit: 'fill',     /* fill & crop — never squish */
-=======
-                inset: 0,
-                width: '90%',
-                height: '90%',
-                objectFit: 'fill',
->>>>>>> master
                 objectPosition: 'center',
                 display: 'block',
               }}
             />
-<<<<<<< HEAD
             {/* bottom gradient overlay */}
-=======
->>>>>>> master
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
               background: 'linear-gradient(to top,rgba(0,0,0,0.38),transparent)',
@@ -181,10 +149,7 @@ function TopicCard({ topic }) {
             }} />
           </>
         ) : (
-<<<<<<< HEAD
           /* No thumbnail — centered emoji placeholder */
-=======
->>>>>>> master
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -193,7 +158,6 @@ function TopicCard({ topic }) {
           }}>{icon}</div>
         )}
 
-<<<<<<< HEAD
         {/* Video count badge — top right */}
         {/* <div style={{
           position: 'absolute', top: '8px', right: '8px',
@@ -206,8 +170,6 @@ function TopicCard({ topic }) {
         }}>{topic.videoCount || 0} Videos</div> */}
 
         {/* Icon badge — bottom left (only when thumbnail present) */}
-=======
->>>>>>> master
         {hasThumbnail && (
           <div style={{
             position: 'absolute', bottom: '8px', left: '10px',
@@ -217,19 +179,11 @@ function TopicCard({ topic }) {
         )}
       </div>
 
-<<<<<<< HEAD
       {/* ── Card body ── */}
       <div style={{
         padding: '14px 16px 16px',
         display: 'flex', flexDirection: 'column', gap: '6px',
         flex: 1,                /* take remaining height evenly across row */
-=======
-      {/* Card body */}
-      <div style={{
-        padding: '14px 16px 16px',
-        display: 'flex', flexDirection: 'column', gap: '6px',
-        flex: 1,
->>>>>>> master
       }}>
         <h3 style={{
           fontFamily: 'Playfair Display,serif',
@@ -247,10 +201,7 @@ function TopicCard({ topic }) {
           }}>{topic.description}</p>
         )}
 
-<<<<<<< HEAD
         {/* Footer link */}
-=======
->>>>>>> master
         <div style={{
           marginTop: 'auto', paddingTop: '10px',
           borderTop: `1px solid ${t.border}`,
@@ -409,28 +360,6 @@ export default async function HomePage() {
           background: linear-gradient(90deg,transparent,${t.border},transparent);
         }
 
-<<<<<<< HEAD
-=======
-        /* ── Section banner images — BIG WIDTH for BOTH ── */
-        .banner-wrap {
-          display: flex;
-          align-items: center;
-          flex-shrink: 0;
-        }
-        .section-banner {
-          height: clamp(90px, 12vw, 160px);
-          width: auto;
-          max-width: 100%;
-          object-fit: contain;
-          display: block;
-        }
-        @media (max-width: 639px) {
-          .section-banner {
-            height: clamp(70px, 18vw, 110px);
-          }
-        }
-
->>>>>>> master
         .marquee-track {
           display: flex;
           animation: marquee 32s linear infinite;
@@ -439,12 +368,8 @@ export default async function HomePage() {
         .marquee-track:hover { animation-play-state: paused; }
         @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
-<<<<<<< HEAD
         /* ── Topic grid ──
            align-items:stretch so every card in a row is the same height */
-=======
-        /* ── Topic grid ── */
->>>>>>> master
         .topics-grid {
           display: grid;
           grid-template-columns: repeat(3,1fr);
@@ -461,11 +386,7 @@ export default async function HomePage() {
           background: ${t.card};
           border: 1px solid ${t.border};
           display: flex;
-<<<<<<< HEAD
           flex-direction: column;   /* body grows below fixed-ratio image */
-=======
-          flex-direction: column;
->>>>>>> master
           transition: box-shadow .25s ease, border-color .25s ease, transform .25s ease;
           box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
@@ -474,13 +395,9 @@ export default async function HomePage() {
           transform: translateY(-4px);
           box-shadow: 0 12px 32px rgba(0,0,0,0.09);
         }
-<<<<<<< HEAD
         /* Scale only the img, not the whole wrapper */
         .topic-card-img {
     
-=======
-        .topic-card-img {
->>>>>>> master
           transition: transform .4s ease;
           display: block;
         }
@@ -512,11 +429,7 @@ export default async function HomePage() {
         }
 
         .section-hrow {
-<<<<<<< HEAD
           display: flex; align-items: flex-end;
-=======
-          display: flex; align-items: center;
->>>>>>> master
           justify-content: space-between; gap: 16px;
           margin-bottom: 26px; flex-wrap: wrap;
         }
@@ -546,7 +459,6 @@ export default async function HomePage() {
 
         <div className="home-wrap">
 
-<<<<<<< HEAD
           {/* FREE VIDEOS */}
           <section className="section">
             <div className="section-hrow">
@@ -555,20 +467,6 @@ export default async function HomePage() {
                 title="Start Learning Today"
                 subtitle="Watch our free sample videos and get a taste of expert-led content."
               />
-=======
-          {/* ════════════════════════════════════
-              FREE VIDEOS — Big banner left, btn right
-          ════════════════════════════════════ */}
-          <section className="section">
-            <div className="section-hrow">
-              <div className="banner-wrap">
-                <img
-                  src="/images/free-videos-banner.png"
-                  alt="Free Videos - Watch demo classes"
-                  className="section-banner"
-                />
-              </div>
->>>>>>> master
               <div className="hide-mobile">
                 <ViewAllBtn href="/classes" label="View All Classes →" />
               </div>
@@ -591,7 +489,6 @@ export default async function HomePage() {
 
           <div className="divider" />
 
-<<<<<<< HEAD
           {/* TOPIC-WISE COURSES */}
           <section className="section">
             <SectionHeader
@@ -600,25 +497,6 @@ export default async function HomePage() {
               subtitle="Comprehensive premium courses. Click to view videos."
               center
             />
-=======
-          {/* ════════════════════════════════════
-              PREMIUM / TOPIC-WISE COURSES
-              (Identical big banner — same size as Free)
-          ════════════════════════════════════ */}
-          <section className="section">
-            <div className="section-hrow">
-              <div className="banner-wrap">
-                <img
-                  src="/images/premium-videos-banner.png"
-                  alt="Premium Videos - Watch full classes"
-                  className="section-banner"
-                />
-              </div>
-              <div className="hide-mobile">
-                <ViewAllBtn href="/premium" label="Get Premium →" />
-              </div>
-            </div>
->>>>>>> master
 
             {topics.length > 0 ? (
               <div className="topics-grid">
@@ -647,42 +525,21 @@ export default async function HomePage() {
                 Secure payment via Razorpay
               </p>
             </div>
-<<<<<<< HEAD
-=======
-
-            <div className="show-mobile" style={{ marginTop: '20px', justifyContent: 'center' }}>
-              <ViewAllBtn href="/premium" label="Get Premium →" fullWidth />
-            </div>
->>>>>>> master
           </section>
 
           <div className="divider" />
 
-<<<<<<< HEAD
           {/* ARTICLES + LIVE SIDEBAR */}
           <section className="section">
             <div className="articles-layout">
               <div>
                 <div className="section-hrow" >
-=======
-          {/* ════════════════════════════════════
-              ARTICLES + LIVE SIDEBAR
-          ════════════════════════════════════ */}
-          <section className="section">
-            <div className="articles-layout">
-              <div>
-                <div className="section-hrow">
->>>>>>> master
                   <SectionHeader
                     badge="Articles"
                     title="Latest Insights"
                     subtitle="Expert articles on strategies, notifications, and updates."
                   />
-<<<<<<< HEAD
                   <div className="hide-mobile" >
-=======
-                  <div className="hide-mobile">
->>>>>>> master
                     <ViewAllBtn href="/articles" label="View More →" />
                   </div>
                 </div>
