@@ -26,23 +26,25 @@ const TYPE_CONFIG = {
   image: {
     icon: '🖼️', label: 'Image',
     badge: { bg: '#EFF6FF', color: '#3B82F6' },
-    accept: 'image/*', maxMB: 10,
+    accept: 'image/*',
+    maxMB: 10,
     hint: 'JPG, PNG, WEBP — Max 10MB',
   },
   video: {
     icon: '🎬', label: 'Video',
     badge: { bg: '#F5F3FF', color: '#8B5CF6' },
-    accept: 'video/*', maxMB: 500,
-    hint: 'MP4, MOV, WEBM — Max 500MB',
+    accept: 'video/*',
+    maxMB: 5000,                                    // ✅ 5GB — true large upload
+    hint: 'MP4, MOV, WEBM — Max 5GB',              // ✅ matches the limit
   },
   article: {
     icon: '📰', label: 'Article',
     badge: { bg: '#ECFDF5', color: '#10B981' },
-    accept: 'image/*', maxMB: 10,
+    accept: 'image/*',
+    maxMB: 10,
     hint: 'JPG, PNG, WEBP — Max 10MB',
   },
 }
-
 function UploadProgress({ progress, isVideo }) {
   const stages = isVideo
     ? ['Preparing…', 'Uploading…', 'Processing…', 'Done!']
@@ -164,23 +166,25 @@ export default function AdminHeroPage() {
     setForm(f => ({ ...f, type: newType, media: null, mediaPreview: '' }))
   }
 
-  function handleFileChange(e) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    const cfg = TYPE_CONFIG[form.type]
-    if (f.size > cfg.maxMB * 1024 * 1024) {
-      toast.error(`File must be under ${cfg.maxMB}MB`)
-      e.target.value = ''
-      return
-    }
-    setForm(prev => ({
-      ...prev,
-      media: f,
-      mediaPreview: f.type.startsWith('image/')
-        ? URL.createObjectURL(f) : '',
-    }))
+function handleFileChange(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  const cfg = TYPE_CONFIG[form.type]
+  if (f.size > cfg.maxMB * 1024 * 1024) {
+    const fileSizeMB = (f.size / (1024 * 1024)).toFixed(1)
+    toast.error(
+      `File is ${fileSizeMB}MB. Maximum allowed: ${cfg.maxMB}MB (${(cfg.maxMB/1024).toFixed(1)}GB)`
+    )
+    e.target.value = ''
+    return
   }
-
+  setForm(prev => ({
+    ...prev,
+    media: f,
+    mediaPreview: f.type.startsWith('image/')
+      ? URL.createObjectURL(f) : '',
+  }))
+}
   // ✅ UPDATED: Handles both Create and Update
   async function handleSave(e) {
     e.preventDefault()

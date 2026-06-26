@@ -674,8 +674,8 @@ export default function AdminVideosPage() {
                   <FileDropZone label="Thumbnail" accept="image/jpeg,image/png,image/webp" hint="Max 5MB"
                     file={form.thumbnail} preview={form.thumbPreview} maxSizeMB={5} disabled={uploading}
                     onChange={f => setForm({ ...form, thumbnail: f, thumbPreview: URL.createObjectURL(f) })} />
-                  <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="Max 500MB"
-                    file={form.video} maxSizeMB={500} disabled={uploading}
+                 <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="Max 5GB"
+                    file={form.video} maxSizeMB={5000} disabled={uploading}
                     onChange={f => setForm({ ...form, video: f })} />
                 </div>
               )}
