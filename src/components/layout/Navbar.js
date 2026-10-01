@@ -19,7 +19,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  // Track scroll position for transparent -> glassmorphic transition
+  // Track scroll position for glassmorphic transition
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -28,8 +28,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Sync user state from localStorage
+  // 🌟 Live sync with server to instantly catch Admin "Add Family" updates
   useEffect(() => {
+    // 1. Initial fast load from localStorage
     try {
       const storedUser = localStorage.getItem('ldce_user')
       if (storedUser) {
@@ -38,6 +39,17 @@ export default function Navbar() {
     } catch (e) {
       console.error(e)
     }
+
+    // 2. Fresh background fetch from server profile API
+    fetch('/api/user/profile')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setUser(data.user)
+          localStorage.setItem('ldce_user', JSON.stringify(data.user))
+        }
+      })
+      .catch(() => {})
   }, [pathname])
 
   const handleLogout = async () => {
@@ -61,15 +73,17 @@ export default function Navbar() {
     { href: '/contact', label: 'Contact' },
   ]
 
+  // Check if current user is active in Join Family
+  const isFamilyMember = Boolean(
+    user?.isPremium &&
+    (!user?.premiumExpiresAt || new Date(user?.premiumExpiresAt) > new Date())
+  )
+
   const isJoinFamilyActive = pathname === '/join-family'
 
   return (
     <>
       <style>{`
-        @keyframes goldShimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
         @keyframes pulseGlow {
           0%, 100% {
             box-shadow: 0 0 14px rgba(232, 168, 56, 0.35), 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -78,12 +92,20 @@ export default function Navbar() {
             box-shadow: 0 0 24px rgba(232, 168, 56, 0.65), 0 6px 20px rgba(232, 168, 56, 0.3);
           }
         }
+        @keyframes activeGlow {
+          0%, 100% {
+            box-shadow: 0 0 12px rgba(42, 157, 143, 0.35);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(42, 157, 143, 0.65);
+          }
+        }
         @keyframes sparkleRotate {
           0%, 100% { transform: scale(1) rotate(0deg); }
           50% { transform: scale(1.2) rotate(15deg); }
         }
 
-        /* ── Special Join Family CTA Button Style ── */
+        /* ── Join Family Button (When NOT yet active) ── */
         .nav-join-family-btn {
           position: relative;
           display: inline-flex;
@@ -104,25 +126,32 @@ export default function Navbar() {
           border: 1.5px solid rgba(255, 255, 255, 0.45);
           overflow: hidden;
         }
-
-        .nav-join-family-btn::before {
-          content: '';
-          position: absolute;
-          top: 0; left: -100%; width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-          transform: skewX(-20deg);
-          transition: all 0.6s ease;
-        }
-
-        .nav-join-family-btn:hover::before {
-          left: 140%;
-        }
-
         .nav-join-family-btn:hover {
           transform: translateY(-2px) scale(1.04);
-          background-position: right center;
           box-shadow: 0 0 30px rgba(232, 168, 56, 0.8), 0 8px 24px rgba(0,0,0,0.25) !important;
-          color: #0D1829 !important;
+        }
+
+        /* ── Active Family Member Badge (When ACTIVATED) ── */
+        .nav-family-active-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 7px 16px;
+          border-radius: 999px;
+          background: rgba(42, 157, 143, 0.15);
+          border: 1.5px solid rgba(42, 157, 143, 0.4);
+          color: #5DE8D8 !important;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          transition: all 0.25s ease;
+          animation: activeGlow 3s infinite;
+        }
+        .nav-family-active-badge:hover {
+          background: rgba(42, 157, 143, 0.25);
+          border-color: #5DE8D8;
+          transform: translateY(-1px);
         }
 
         .nav-join-family-sparkle {
@@ -130,23 +159,6 @@ export default function Navbar() {
           animation: sparkleRotate 2.4s ease-in-out infinite;
           font-size: 15px;
           line-height: 1;
-        }
-
-        /* Mobile Join Family Button */
-        .mobile-join-family-card {
-          margin: 10px 0 16px;
-          padding: 14px 18px;
-          border-radius: 16px;
-          background: linear-gradient(135deg, #E8A838 0%, #D4922A 100%);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          text-decoration: none;
-          color: #12203A !important;
-          font-weight: 800;
-          font-size: 14.5px;
-          box-shadow: 0 8px 24px rgba(232, 168, 56, 0.35);
-          border: 1.5px solid rgba(255, 255, 255, 0.3);
         }
 
         .nav-link-standard {
@@ -159,12 +171,10 @@ export default function Navbar() {
           border-radius: 8px;
           transition: all 0.2s ease;
         }
-
         .nav-link-standard:hover {
           color: #FFFFFF;
           background: rgba(255, 255, 255, 0.06);
         }
-
         .nav-link-standard.active {
           color: #E8A838;
           background: rgba(232, 168, 56, 0.08);
@@ -179,7 +189,7 @@ export default function Navbar() {
           right: 0,
           zIndex: 900,
           background: isScrolled
-            ? 'rgba(13, 24, 41, 0.92)'
+            ? 'rgba(13, 24, 41, 0.94)'
             : 'linear-gradient(180deg, rgba(13, 24, 41, 0.9) 0%, rgba(13, 24, 41, 0.7) 100%)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
@@ -290,19 +300,31 @@ export default function Navbar() {
               )
             })}
 
-            {/* 🌟 Styled Join Family Button 🌟 */}
-            <Link
-              href="/join-family"
-              className="nav-join-family-btn"
-              style={{
-                marginLeft: '8px',
-                marginRight: '6px',
-                transform: isJoinFamilyActive ? 'scale(1.05)' : 'none',
-              }}
-            >
-              <span className="nav-join-family-sparkle">⭐</span>
-              <span>Join Family</span>
-            </Link>
+            {/* 🌟 Dynamic Join Family Button / Active Status Badge 🌟 */}
+            {isFamilyMember ? (
+              <Link
+                href="/classes"
+                className="nav-family-active-badge"
+                style={{ marginLeft: '8px', marginRight: '6px' }}
+                title="Your family membership is active! Click to view classes."
+              >
+                <span>✓</span>
+                <span>Family Active</span>
+              </Link>
+            ) : (
+              <Link
+                href="/join-family"
+                className="nav-join-family-btn"
+                style={{
+                  marginLeft: '8px',
+                  marginRight: '6px',
+                  transform: isJoinFamilyActive ? 'scale(1.05)' : 'none',
+                }}
+              >
+                <span className="nav-join-family-sparkle">⭐</span>
+                <span>Join Family</span>
+              </Link>
+            )}
 
             {/* ── Auth / User Profile ── */}
             {user ? (
@@ -328,11 +350,11 @@ export default function Navbar() {
                       height: '28px',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #1B2A4A, #243656)',
-                      border: '1px solid #E8A838',
+                      border: isFamilyMember ? '1.5px solid #2A9D8F' : '1px solid #E8A838',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#E8A838',
+                      color: isFamilyMember ? '#5DE8D8' : '#E8A838',
                       fontSize: '12px',
                       fontWeight: 700,
                     }}
@@ -369,7 +391,7 @@ export default function Navbar() {
                       position: 'absolute',
                       top: 'calc(100% + 10px)',
                       right: 0,
-                      width: '200px',
+                      width: '210px',
                       background: '#152036',
                       border: '1px solid rgba(232, 168, 56, 0.2)',
                       borderRadius: '14px',
@@ -378,6 +400,14 @@ export default function Navbar() {
                       zIndex: 1000,
                     }}
                   >
+                    {/* Membership Status in dropdown */}
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '6px' }}>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</p>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: isFamilyMember ? '#5DE8D8' : '#E8A838', marginTop: '2px' }}>
+                        {isFamilyMember ? '⭐ Family Member' : 'Free Tier'}
+                      </p>
+                    </div>
+
                     {user.role === 'admin' && (
                       <Link
                         href="/admin/dashboard"
@@ -503,18 +533,55 @@ export default function Navbar() {
               gap: '6px',
             }}
           >
-            {/* Styled Join Family for Mobile */}
-            <Link
-              href="/join-family"
-              className="mobile-join-family-card"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>⭐</span>
-                <span>Join Family</span>
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: 800 }}>Explore →</span>
-            </Link>
+            {/* Dynamic Join Family Banner for Mobile */}
+            {isFamilyMember ? (
+              <Link
+                href="/classes"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  margin: '8px 0 14px',
+                  padding: '12px 16px',
+                  borderRadius: '14px',
+                  background: 'rgba(42, 157, 143, 0.15)',
+                  border: '1.5px solid #2A9D8F',
+                  color: '#5DE8D8',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textDecoration: 'none',
+                }}
+              >
+                <span>✓ Family Membership Active</span>
+                <span style={{ fontSize: '12px' }}>Classes →</span>
+              </Link>
+            ) : (
+              <Link
+                href="/join-family"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  margin: '8px 0 14px',
+                  padding: '14px 18px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #E8A838 0%, #D4922A 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textDecoration: 'none',
+                  color: '#12203A',
+                  fontWeight: 800,
+                  fontSize: '14.5px',
+                  boxShadow: '0 8px 24px rgba(232, 168, 56, 0.35)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>⭐</span>
+                  <span>Join Family</span>
+                </div>
+                <span style={{ fontSize: '12px', fontWeight: 800 }}>Explore →</span>
+              </Link>
+            )}
 
             {NAV_LINKS.map((link) => {
               const isActive = pathname === link.href

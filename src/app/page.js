@@ -6,6 +6,12 @@ import HeroCarousel from '@/components/home/HeroCarousel'
 import ArticleCard from '@/components/home/ArticleCard'
 import LiveScrollSidebar from '@/components/home/LiveScrollSidebar'
 import HomeVideoSection from '@/components/home/HomeSections'
+import { cookies } from 'next/headers'
+import { verifyToken } from '@/lib/auth'
+import prisma from '@/lib/db'
+
+// Force Next.js to render per-request dynamically so updates reflect instantly 
+export const dynamic = 'force-dynamic'
 
 /* ─────────────────────────────────────────
    DATA FETCHING
@@ -101,7 +107,7 @@ function ViewAllBtn({ href, label, fullWidth = false }) {
 }
 
 /* ─────────────────────────────────────────
-   TOPIC CARD  ← fixed image fitting
+   TOPIC CARD
 ───────────────────────────────────────── */
 function TopicCard({ topic }) {
   const hasThumbnail = !!topic.thumbnail
@@ -113,17 +119,13 @@ function TopicCard({ topic }) {
       className="topic-card"
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
-      {/* ── Thumbnail wrapper ──
-          paddingTop 56.25% = 16/9 ratio trick.
-          position:relative + overflow:hidden keeps the image
-          perfectly cropped regardless of natural image size.        */}
       <div style={{
         position: 'relative',
         width: '100%',
-        paddingTop: '56.25%',   /* 9/16 = 56.25% — true 16:9 */
+        paddingTop: '56.25%',
         overflow: 'hidden',
         background: '#F0EDE8',
-        flexShrink: 0,           /* stop flex from squishing it */
+        flexShrink: 0,
       }}>
         {hasThumbnail ? (
           <>
@@ -133,15 +135,14 @@ function TopicCard({ topic }) {
               className="topic-card-img"
               style={{
                 position: 'absolute',
-                inset: 0,               /* top/right/bottom/left: 0 */
-                width: '90%',
-                height: '90%',
-                objectFit: 'fill',     /* fill & crop — never squish */
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
                 objectPosition: 'center',
                 display: 'block',
               }}
             />
-            {/* bottom gradient overlay */}
             <div style={{
               position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%',
               background: 'linear-gradient(to top,rgba(0,0,0,0.38),transparent)',
@@ -149,7 +150,6 @@ function TopicCard({ topic }) {
             }} />
           </>
         ) : (
-          /* No thumbnail — centered emoji placeholder */
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -158,18 +158,6 @@ function TopicCard({ topic }) {
           }}>{icon}</div>
         )}
 
-        {/* Video count badge — top right */}
-        {/* <div style={{
-          position: 'absolute', top: '8px', right: '8px',
-          fontSize: '10px', fontWeight: 700,
-          color: hasThumbnail ? '#FFFFFF' : t.muted,
-          background: hasThumbnail ? 'rgba(0,0,0,0.52)' : 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(4px)',
-          padding: '4px 10px', borderRadius: '999px',
-          border: hasThumbnail ? 'none' : `1px solid ${t.border}`,
-        }}>{topic.videoCount || 0} Videos</div> */}
-
-        {/* Icon badge — bottom left (only when thumbnail present) */}
         {hasThumbnail && (
           <div style={{
             position: 'absolute', bottom: '8px', left: '10px',
@@ -179,29 +167,27 @@ function TopicCard({ topic }) {
         )}
       </div>
 
-      {/* ── Card body ── */}
       <div style={{
         padding: '14px 16px 16px',
         display: 'flex', flexDirection: 'column', gap: '6px',
-        flex: 1,                /* take remaining height evenly across row */
+        flex: 1,
       }}>
         <h3 style={{
           fontFamily: 'Playfair Display,serif',
-          fontWeight: 700, fontSize: '25px', color: '#b91515',
+          fontWeight: 700, fontSize: '20px', color: '#b91515',
           lineHeight: 1.35, textAlign: 'center',
-          margin: 0,
+          margin: '0 0 4px',
         }}>{topic.name}</h3>
 
         {topic.description && (
           <p style={{
             color: t.muted, fontSize: '12px', lineHeight: 1.55,
-            textAlign: 'center', margin: 0,
+            textAlign: 'center', margin: '0 0 10px',
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>{topic.description}</p>
         )}
 
-        {/* Footer link */}
         <div style={{
           marginTop: 'auto', paddingTop: '10px',
           borderTop: `1px solid ${t.border}`,
@@ -247,7 +233,7 @@ function MarqueeBanner({ articles }) {
 }
 
 /* ─────────────────────────────────────────
-   CTA SECTION
+   CTA SECTION (Removed dynamically if subscribed)
 ───────────────────────────────────────── */
 function CTASection() {
   return (
@@ -312,7 +298,7 @@ function CTASection() {
             background: `linear-gradient(135deg,${t.gold},${t.goldDark})`,
             color: t.navy, fontSize: '15px', fontWeight: 700,
             textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
-          }}>⭐ Get join family</Link>
+          }}>⭐ Join Family</Link>
         </div>
 
         <div style={{
@@ -320,7 +306,7 @@ function CTASection() {
           gap: 'clamp(20px,4vw,40px)', marginTop: '40px',
         }}>
           {[
-            { val: 'join family', lbl: 'Video Lectures' },
+            { val: 'Join Family', lbl: 'Video Lectures' },
             { val: '8+',      lbl: 'Topics Covered' },
             { val: '4 months',lbl: 'Full Access' },
           ].map(s => (
@@ -338,11 +324,33 @@ function CTASection() {
   )
 }
 
-/* ═════════════════════════════════════════
-   PAGE
-═════════════════════════════════════════ */
+/* ─────────────────────────────────────────
+   PAGE RENDERING
+───────────────────────────────────────── */
 export default async function HomePage() {
   const { heroItems, freeVideos, articles, liveArticles, topics } = await getData()
+
+  // 🌟 Check live cookie auth on server-side to hide Join Family promotional elements
+  let isPremiumUser = false
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('token')?.value
+    if (token) {
+      const decoded = verifyToken(token)
+      if (decoded?.userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: { isPremium: true, premiumExpiresAt: true }
+        })
+        isPremiumUser = Boolean(
+          user?.isPremium &&
+          (!user?.premiumExpiresAt || new Date(user?.premiumExpiresAt) > new Date())
+        )
+      }
+    }
+  } catch (err) {
+    console.error("Server-side auth check failed:", err)
+  }
 
   return (
     <>
@@ -368,8 +376,7 @@ export default async function HomePage() {
         .marquee-track:hover { animation-play-state: paused; }
         @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
-        /* ── Topic grid ──
-           align-items:stretch so every card in a row is the same height */
+        /* ── Topic grid ── */
         .topics-grid {
           display: grid;
           grid-template-columns: repeat(3,1fr);
@@ -386,7 +393,7 @@ export default async function HomePage() {
           background: ${t.card};
           border: 1px solid ${t.border};
           display: flex;
-          flex-direction: column;   /* body grows below fixed-ratio image */
+          flex-direction: column;
           transition: box-shadow .25s ease, border-color .25s ease, transform .25s ease;
           box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
@@ -395,9 +402,7 @@ export default async function HomePage() {
           transform: translateY(-4px);
           box-shadow: 0 12px 32px rgba(0,0,0,0.09);
         }
-        /* Scale only the img, not the whole wrapper */
         .topic-card-img {
-    
           transition: transform .4s ease;
           display: block;
         }
@@ -492,9 +497,9 @@ export default async function HomePage() {
           {/* TOPIC-WISE COURSES */}
           <section className="section">
             <SectionHeader
-              badge="join family Content"
+              badge={isPremiumUser ? "Family Library" : "Join Family Content"}
               title="Topic-Wise Courses"
-              subtitle="Comprehensive join family courses. Click to view videos."
+              subtitle={isPremiumUser ? "Browse your topics below to watch premium videos." : "Comprehensive Join Family courses. Click to view videos."}
               center
             />
 
@@ -508,23 +513,23 @@ export default async function HomePage() {
               <div className="empty-state">
                 <div style={{ fontSize: '36px', marginBottom: '10px' }}>📚</div>
                 <p style={{ color: t.muted, fontSize: '14px' }}>
-                  join family topics are being prepared. Stay tuned!
+                  Join Family topics are being prepared. Stay tuned!
                 </p>
               </div>
             )}
 
-            <div style={{ textAlign: 'center', marginTop: '40px' }}>
-              <Link href="/join-family" style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                padding: 'clamp(12px,2vw,15px) clamp(24px,3vw,36px)', borderRadius: '12px',
-                background: `linear-gradient(135deg,${t.gold},${t.goldDark})`,
-                color: t.navy, fontSize: 'clamp(13px,1.5vw,15px)', fontWeight: 700,
-                textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
-              }}>⭐ Get join family Access</Link>
-              <p style={{ color: t.faint, fontSize: '12px', marginTop: '10px' }}>
-                  
-              </p>
-            </div>
+            {/* 🌟 Hide the "Get Join Family Access" Button if already a Premium user */}
+            {!isPremiumUser && (
+              <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                <Link href="/join-family" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  padding: 'clamp(12px,2vw,15px) clamp(24px,3vw,36px)', borderRadius: '12px',
+                  background: `linear-gradient(135deg,${t.gold},${t.goldDark})`,
+                  color: t.navy, fontSize: 'clamp(13px,1.5vw,15px)', fontWeight: 700,
+                  textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
+                }}>⭐ Get Join Family Access</Link>
+              </div>
+            )}
           </section>
 
           <div className="divider" />
@@ -570,7 +575,9 @@ export default async function HomePage() {
 
         </div>
 
-        <CTASection />
+        {/* 🌟 Completely Hide CTASection block if already a Family Member */}
+        {!isPremiumUser && <CTASection />}
+        
         <Footer />
       </div>
     </>
