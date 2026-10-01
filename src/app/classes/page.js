@@ -522,19 +522,26 @@ function ClassesPageInner() {
   }, [])
 
   /* Auth */
+    /* Auth */
   useEffect(() => {
     const user = localStorage.getItem('ldce_user')
     setIsLoggedIn(!!user)
-    if (user) {
-      fetch('/api/user/profile')
-        .then(r => r.json())
-        .then(data => {
-          if (data.success && (data.user?.isPremium || data.user?.subscription?.status === 'active')) {
-            setIsSubscribed(true)
-          }
-        })
-        .catch(() => {})
-    }
+    
+    // Always call the server to check for updated manual Join Family subscriptions
+    fetch('/api/user/profile')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.user) {
+          setIsLoggedIn(true)
+          const isPremiumActive = Boolean(
+            data.user.isPremium &&
+            (!data.user.premiumExpiresAt || new Date(data.user.premiumExpiresAt) > new Date())
+          )
+          setIsSubscribed(isPremiumActive)
+          localStorage.setItem('ldce_user', JSON.stringify(data.user))
+        }
+      })
+      .catch(() => {})
   }, [])
 
   /* Initial load */

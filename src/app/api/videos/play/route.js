@@ -24,7 +24,6 @@ export async function POST(req) {
         data: { views: { increment: 1 } },
       })
 
-      // Generate signed URL (1 hour) or use public URL
       const streamUrl = video.videoKey
         ? await getSignedVideoUrl(video.videoKey, 3600)
         : video.videoUrl
@@ -32,7 +31,7 @@ export async function POST(req) {
       return NextResponse.json({ success: true, canPlay: true, streamUrl })
     }
 
-    /* ── JOIN FAMILY VIDEO ── */
+    /* ── JOIN FAMILY (PREMIUM) VIDEO ── */
     // 1. Check direct isPremium status and expiry
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -96,7 +95,7 @@ export async function POST(req) {
       data: { views: { increment: 1 } },
     })
 
-    // 5. Generate short-lived signed URL (2 hours for join family)
+    // 5. Generate signed URL (2 hours for Join Family videos)
     const streamUrl = video.videoKey
       ? await getSignedVideoUrl(video.videoKey, 7200)
       : video.videoUrl

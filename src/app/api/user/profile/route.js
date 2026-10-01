@@ -1,4 +1,3 @@
-// src/app/api/user/profile/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -24,6 +23,8 @@ export async function GET(req) {
         isEmailVerified: true,
         isMobileVerified: true,
         isActive: true,
+        isPremium: true,
+        premiumExpiresAt: true,
         deviceId: true,
         addressLine: true,
         addressCity: true,
@@ -35,23 +36,38 @@ export async function GET(req) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
+    // Device lock check
     if (deviceId && user.deviceId && user.deviceId !== deviceId) {
       return NextResponse.json({ error: 'Session expired. Please login again.', deviceMismatch: true }, { status: 401 })
     }
 
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: user.id,
-        status: 'active',
-        endDate: { gt: new Date() },
-      }
-    })
+    // Auto-expiry check: If expired, update DB status
+    let isPremiumActive = user.isPremium
+    if (user.isPremium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) <= new Date()) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { isPremium: false }
+      })
+      isPremiumActive = false
+    }
+
+    // Mock an active subscription object for backwards compatibility with legacy UI components
+    const legacySubscriptionMock = isPremiumActive ? {
+      status: 'active',
+      startDate: user.createdAt,
+      endDate: user.premiumExpiresAt || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    } : null;
 
     return NextResponse.json({
       success: true,
-      user: { ...user, subscription: subscription || null },
+      user: { 
+        ...user, 
+        isPremium: isPremiumActive,
+        subscription: legacySubscriptionMock 
+      },
     })
   } catch (error) {
+    console.error('Profile API error:', error)
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
   }
 }
