@@ -522,7 +522,7 @@ export default async function HomePage() {
                 textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
               }}>⭐ Get join family Access</Link>
               <p style={{ color: t.faint, fontSize: '12px', marginTop: '10px' }}>
-                Secure payment via Razorpay
+                  
               </p>
             </div>
           </section>

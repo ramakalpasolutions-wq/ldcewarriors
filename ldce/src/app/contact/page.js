@@ -144,7 +144,7 @@ export default function ContactPage() {
     },
     {
       icon: '📞', label: 'Call Us',
-      value: '+91 91542 42141', sub: 'Mon–Sat, 9am–6pm IST',
+      value: '+91 96668 87998', sub: 'Mon–Sat, 9am–6pm IST',
       href: 'tel:+919912986746',
     },
     {

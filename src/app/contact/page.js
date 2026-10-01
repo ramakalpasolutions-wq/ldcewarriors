@@ -1,4 +1,3 @@
-// src/app/contact/page.js
 'use client'
 import { useState, memo } from 'react'
 import Navbar from '@/components/layout/Navbar'
@@ -14,69 +13,33 @@ const t = {
   muted: '#6B7280', faint: '#9CA3AF',
 }
 
-const GOOGLE_MAPS_EMBED_URL =
-  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15296.687557761139!2d80.53627085016531!3d16.567853346977373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a35ef0835823063%3A0x8667960e6410e041!2sSanjana%26Srujana%20Heights!5e0!3m2!1sen!2sin!4v1777024674407!5m2!1sen!2sin" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade'
-
-// ── Memoized Map — prevents iframe reload on parent state changes ──
-const ContactMap = memo(function ContactMap() {
-  return (
-    <div className="footer-map-wrap" style={{
-      position: 'relative', borderRadius: '20px',
-      overflow: 'hidden',
-      border: '1px solid rgba(232, 168, 56, 0.15)',
-    }}>
-      <div className="footer-map-overlay" style={{
-        position: 'absolute', inset: 0, zIndex: 2,
-        background: 'rgba(27, 42, 74, 0.06)',
-        pointerEvents: 'none',
-        transition: 'opacity 0.35s ease',
-      }} />
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-        background: `linear-gradient(90deg, transparent, ${t.gold}, transparent)`,
-        zIndex: 3, pointerEvents: 'none',
-      }} />
-      <iframe
-        src={GOOGLE_MAPS_EMBED_URL}
-        width="100%" height="380"
-        style={{
-          border: 'none', display: 'block', width: '100%',
-          filter: 'saturate(0.8) contrast(1.05)',
-        }}
-        allowFullScreen loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="LDCE Warriors Location"
-      />
-    </div>
-  )
-})
-
-// ── Memoized Stats — no need to re-render ──
+// ── Memoized Stats ──
 const ContactStats = memo(function ContactStats() {
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px',
+      display: 'flex', flexDirection: 'column', gap: '14px'
     }}>
       {[
         { value: '< 24h', label: 'Response Time', icon: '⚡' },
         { value: '24/7', label: 'Email Support', icon: '✉️' },
-        { value: '100%', label: 'Secure Payment', icon: '🔒' },
+        { value: '100%', label: 'Dedicated Support', icon: '🔒' },
       ].map(stat => (
         <div key={stat.label} style={{
-          padding: '18px 14px', borderRadius: '16px',
+          padding: '24px 20px', borderRadius: '16px',
           background: `linear-gradient(135deg, ${t.navy}, ${t.navyLight})`,
           textAlign: 'center',
           border: '1px solid rgba(232, 168, 56, 0.08)',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.05)'
         }}>
-          <div style={{ fontSize: '18px', marginBottom: '6px' }}>{stat.icon}</div>
+          <div style={{ fontSize: '22px', marginBottom: '8px' }}>{stat.icon}</div>
           <div style={{
             fontFamily: 'Playfair Display, serif',
-            fontSize: '20px', fontWeight: 800,
+            fontSize: '24px', fontWeight: 800,
             color: t.gold, lineHeight: 1,
           }}>{stat.value}</div>
           <div style={{
-            fontSize: '10px', color: 'rgba(255,255,255,0.45)',
-            marginTop: '4px', fontWeight: 600,
+            fontSize: '11px', color: 'rgba(255,255,255,0.45)',
+            marginTop: '6px', fontWeight: 600,
           }}>{stat.label}</div>
         </div>
       ))}
@@ -144,13 +107,13 @@ export default function ContactPage() {
     },
     {
       icon: '📞', label: 'Call Us',
-      value: '+91 91542 42141', sub: 'Mon–Sat, 9am–6pm IST',
-      href: 'tel:+919912986746',
+      value: '+91 96668 87998', sub: 'Mon–Sat, 9am–6pm IST',
+      href: 'tel:+919666887998',
     },
     {
       icon: '💬', label: 'WhatsApp',
       value: 'Chat with us', sub: 'Quick replies on WhatsApp',
-      href: 'https://wa.me/+919912986746',
+      href: 'https://wa.me/+919666887998',
     },
     {
       icon: '📍', label: 'Location',
@@ -179,18 +142,14 @@ export default function ContactPage() {
         }
         .contact-main-grid {
           display: grid;
-          grid-template-columns: 1fr 1.5fr;
+          grid-template-columns: 1.6fr 1fr;
           gap: 32px;
           align-items: start;
         }
 
-        .footer-map-wrap:hover .footer-map-overlay {
-          opacity: 0 !important;
-        }
-
         input::placeholder, textarea::placeholder { color: ${t.faint}; }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 991px) {
           .contact-main-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
@@ -312,7 +271,7 @@ export default function ContactPage() {
             })}
           </div>
 
-          {/* ── Main Grid: Form + Map ── */}
+          {/* ── Main Grid: Form + Stats ── */}
           <div className="contact-main-grid">
 
             {/* ── Left: Contact Form ── */}
@@ -513,34 +472,14 @@ export default function ContactPage() {
               )}
             </div>
 
-            {/* ── Right: Map + Stats (memoized) ── */}
+            {/* ── Right: Support Stats Card ── */}
             <div style={{
               display: 'flex', flexDirection: 'column', gap: '20px',
               animation: 'fadeInUp 0.6s ease 0.3s both',
             }}>
-              <ContactMap />
-
-              <a href="https://maps.google.com/?q=Vijayawada,+Andhra+Pradesh"
-                target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '6px',
-                  fontSize: '12px', fontWeight: 600,
-                  color: t.gold, textDecoration: 'none',
-                  transition: 'color 0.2s',
-                  alignSelf: 'flex-start',
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = t.goldDark}
-                onMouseLeave={e => e.currentTarget.style.color = t.gold}
-              >
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                Open in Google Maps
-              </a>
-
               <ContactStats />
             </div>
+
           </div>
         </div>
 
