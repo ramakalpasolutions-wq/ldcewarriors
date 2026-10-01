@@ -1,4 +1,3 @@
-// src/app/api/admin/users/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -16,61 +15,55 @@ export async function GET(req) {
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { searchParams } = new URL(req.url)
-    const page   = parseInt(searchParams.get('page')  || '1')
-    const limit  = parseInt(searchParams.get('limit') || '20')
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
     const search = searchParams.get('search') || ''
+    const skip = (page - 1) * limit
 
-    const where = { role: 'user' }
+    const where = {}
     if (search) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
-        { email:    { contains: search, mode: 'insensitive' } },
-        { mobile:   { contains: search } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { mobile: { contains: search, mode: 'insensitive' } },
       ]
     }
 
-    const skip = (page - 1) * limit
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: {
-          id: true, fullName: true, email: true, mobile: true,
-          isEmailVerified: true, isMobileVerified: true,
-          isActive: true, createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          mobile: true,
+          isEmailVerified: true,
+          isMobileVerified: true,
+          isActive: true,
+          isPremium: true,
+          premiumExpiresAt: true,
+          createdAt: true,
+        },
       }),
       prisma.user.count({ where }),
     ])
 
-    const userIds = users.map(u => u.id)
-    const subscriptions = await prisma.subscription.findMany({
-      where: {
-        userId: { in: userIds },
-        status: 'active',
-        endDate: { gt: new Date() },
-      },
-    })
-
-    const subMap = {}
-    subscriptions.forEach(s => { subMap[s.userId] = s })
-
-    const enrichedUsers = users.map(u => ({
-      ...u,
-      _id: u.id,
-      subscription: subMap[u.id] || null,
-    }))
-
     return NextResponse.json({
       success: true,
-      users: enrichedUsers,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      users: users.map(u => ({ ...u, _id: u.id })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     })
   } catch (error) {
-    console.error('Users GET:', error)
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
+    console.error('Users API GET error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -80,23 +73,44 @@ export async function PATCH(req) {
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { id, action } = await req.json()
-    if (!id || !action) {
-      return NextResponse.json({ error: 'ID and action are required' }, { status: 400 })
+    if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+
+    let updateData = {}
+
+    if (action === 'block') {
+      updateData = { isActive: false }
+    } else if (action === 'unblock') {
+      updateData = { isActive: true }
+    } else if (action === 'reset-device') {
+      updateData = { deviceId: null }
+    } else if (action === 'activate-premium') {
+      const expiry = new Date()
+      expiry.setDate(expiry.getDate() + 30)
+      updateData = {
+        isPremium: true,
+        premiumExpiresAt: expiry,
+      }
+    } else if (action === 'deactivate-premium') {
+      updateData = {
+        isPremium: false,
+        premiumExpiresAt: null,
+      }
+    } else {
+      return NextResponse.json({ error: 'Invalid action parameter' }, { status: 400 })
     }
 
-    const user = await prisma.user.findUnique({ where: { id } })
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    const updated = await prisma.user.update({
+      where: { id },
+      data: updateData,
+    })
 
-    const updateData = {}
-    if      (action === 'block')        updateData.isActive = false
-    else if (action === 'unblock')      updateData.isActive = true
-    else if (action === 'reset-device') updateData.deviceId = null
-    else return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-
-    await prisma.user.update({ where: { id }, data: updateData })
-    return NextResponse.json({ success: true, message: `User ${action} successful` })
+    return NextResponse.json({
+      success: true,
+      user: { ...updated, _id: updated.id },
+      premiumExpiresAt: updated.premiumExpiresAt,
+    })
   } catch (error) {
-    console.error('Users PATCH:', error)
-    return NextResponse.json({ error: 'Action failed' }, { status: 500 })
+    console.error('Users PATCH action error:', error)
+    return NextResponse.json({ error: 'Action execution failed' }, { status: 500 })
   }
 }

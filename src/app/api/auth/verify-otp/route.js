@@ -1,4 +1,3 @@
-// src/app/api/auth/verify-otp/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { generateToken, generateDeviceId } from '@/lib/auth'
@@ -69,24 +68,37 @@ export async function POST(req) {
         message: 'Login successful',
         token,
         user: {
-          id:       user.id,
-          fullName: user.fullName,
-          email:    user.email,
-          mobile:   user.mobile,
-          role:     user.role,
+          id:        user.id,
+          fullName:  user.fullName,
+          email:     user.email,
+          mobile:    user.mobile,
+          role:      user.role,
+          isPremium: user.isPremium || false,
         },
       })
 
-      response.cookies.set('token', token, {
+      const cookieOptions = {
         httpOnly: true,
         secure:   process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge:   60 * 60 * 24 * 7,
-      })
+        path:     '/',
+        maxAge:   60 * 60 * 24 * 7, // 7 days
+      }
+
+      // 1. Regular user session cookie
+      response.cookies.set('token', token, cookieOptions)
+
+      // 2. 🌟 IF ADMIN: Also set adminToken cookie for /admin access
+      if (user.role === 'admin') {
+        response.cookies.set('adminToken', token, cookieOptions)
+      }
+
+      // 3. Device tracking cookie
       response.cookies.set('deviceId', newDeviceId, {
         httpOnly: false,
         secure:   process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path:     '/',
         maxAge:   60 * 60 * 24 * 365,
       })
 

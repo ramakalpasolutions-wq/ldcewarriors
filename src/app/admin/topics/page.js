@@ -401,7 +401,7 @@ export default function AdminTopicsPage() {
               Topics
             </h1>
             <p style={{ color:'#6B7280', fontSize:'13px' }}>
-              Manage course topics for organizing premium videos
+              Manage course topics for organizing join family videos
               <span style={{ color:'#C94A44', fontWeight:600, marginLeft:'6px' }}>({topics.length} topics)</span>
             </p>
           </div>
@@ -713,7 +713,7 @@ export default function AdminTopicsPage() {
               <div className="adm-card" style={{ textAlign:'center', padding:'60px 24px' }}>
                 <div style={{ fontSize:'48px', marginBottom:'12px' }}>📚</div>
                 <p style={{ color:'#6B7280', fontWeight:600, fontSize:'15px', marginBottom:'6px' }}>No topics yet</p>
-                <p style={{ color:'#9CA3AF', fontSize:'13px' }}>Create your first topic to organize premium videos.</p>
+                <p style={{ color:'#9CA3AF', fontSize:'13px' }}>Create your first topic to organize join family videos.</p>
               </div>
             ) : (
               <div className="tp-grid">

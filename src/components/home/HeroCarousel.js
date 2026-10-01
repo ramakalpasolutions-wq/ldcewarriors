@@ -93,13 +93,13 @@ function DefaultHero({ bp }) {
               color: '#fff', fontWeight: 700, fontSize: isMobile ? '14px' : '15px',
               textDecoration: 'none',
             }}>Start Learning →</Link>
-            <Link href="/premium" style={{
+            <Link href="/join-family" style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: isMobile ? '13px 26px' : '15px 32px', borderRadius: '13px',
               background: 'linear-gradient(135deg,#E8A838,#D4922A)',
               color: '#1B2A4A', fontWeight: 700, fontSize: isMobile ? '14px' : '15px',
               textDecoration: 'none',
-            }}>⭐ Get Premium</Link>
+            }}>⭐ Get join family</Link>
           </div>
         </div>
       </div>
@@ -198,7 +198,7 @@ function TopicScrollPanel({ topics, isTablet }) {
           <span style={{
             fontSize: '10px', fontWeight: 700, color: '#1B2A4A',
             letterSpacing: '1.8px', textTransform: 'uppercase',
-          }}>Premium Topics</span>
+          }}>join family Topics</span>
         </div>
         <p style={{ fontSize: '11px', color: '#9CA3AF', lineHeight: 1.4 }}>
           Click any topic to explore videos
@@ -550,7 +550,7 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
               )}
 
               {/* Text overlay card */}
-              {/* <div style={{
+              <div style={{
                 position: 'absolute',
                 bottom: isMobile ? '10px' : '20px',
                 left: isMobile ? '10px' : '20px',
@@ -571,7 +571,7 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
                 {!isMobile && (
                   <Link href="/classes" style={{ display: 'inline-block', marginTop: '10px', padding: '7px 15px', background: '#F3F4F6', borderRadius: '8px', color: '#1B2A4A', fontSize: '11px', fontWeight: 700, textDecoration: 'none' }}>Browse Classes</Link>
                 )}
-              </div> */}
+              </div>
 
               {/* Slide counter */}
               {slides.length > 1 && (

@@ -130,8 +130,8 @@ html, body {
   background: linear-gradient(to top, rgba(245, 243, 239, 0.9) 0%, transparent 50%);
 }
 
-/* ─── Premium Badge ─── */
-.premium-badge {
+/* ─── join family Badge ─── */
+.join family-badge {
   background: linear-gradient(135deg, #E8A838, #D4922A);
   animation: pulseGold 2s ease-in-out infinite;
 }

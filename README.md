@@ -117,10 +117,10 @@ Admin Panel URL: `http://localhost:3000/admin`
 | Route | Description |
 |-------|-------------|
 | `/` | Homepage with hero, videos, articles |
-| `/classes` | Free + premium topic-wise videos |
+| `/classes` | Free + join family topic-wise videos |
 | `/articles` | Public articles (no login needed) |
 | `/articles/[id]` | Single article page |
-| `/premium` | Subscription page with Razorpay |
+| `/join family` | Subscription page with Razorpay |
 | `/contact` | Contact form |
 | `/auth/login` | User login (with OTP) |
 | `/auth/register` | User registration |
@@ -147,8 +147,8 @@ Admin Panel URL: `http://localhost:3000/admin`
 
 ### Subscription System
 - 4-month subscription via Razorpay
-- Premium videos locked behind active subscription
-- Each premium video: **max 3 plays** per subscription period
+- join family videos locked behind active subscription
+- Each join family video: **max 3 plays** per subscription period
 - Subscription expiry auto-checked on every access
 
 ### Admin Panel
@@ -226,7 +226,7 @@ npm start
 - **User** — Registration, verification, device tracking
 - **OTP** — Time-limited OTPs with TTL index
 - **Topic** — Course topic categories
-- **Video** — Free and premium video metadata
+- **Video** — Free and join family video metadata
 - **VideoPlay** — Per-user play count tracking
 - **Article** — Articles with homepage/live scroll flags
 - **Hero** — Homepage carousel content

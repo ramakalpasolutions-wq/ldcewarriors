@@ -553,12 +553,12 @@ export default function VideoPlayerModal({ video, onClose, onPlayLimitExceeded, 
                 )}
                 <span className="vpm-title-text">{video.title}</span>
                 <span className="vpm-badge" style={{
-                  background: video.type === 'premium' ? 'rgba(232,168,56,0.22)' : 'rgba(42,157,143,0.22)',
-                  color: video.type === 'premium' ? tk.gold : '#5DE8D8',
-                  border:`1px solid ${video.type === 'premium' ? 'rgba(232,168,56,0.38)' : 'rgba(42,157,143,0.38)'}`,
+                  background: video.type === 'join family' ? 'rgba(232,168,56,0.22)' : 'rgba(42,157,143,0.22)',
+                  color: video.type === 'join family' ? tk.gold : '#5DE8D8',
+                  border:`1px solid ${video.type === 'join family' ? 'rgba(232,168,56,0.38)' : 'rgba(42,157,143,0.38)'}`,
                   flexShrink:0,
                 }}>
-                  {video.type === 'premium' ? '⭐ Premium' : '🎬 Free'}
+                  {video.type === 'join family' ? '⭐ join family' : '🎬 Free'}
                 </span>
               </div>
               <button className="vpm-close-btn" onClick={onClose} title="Close (Esc)">×</button>

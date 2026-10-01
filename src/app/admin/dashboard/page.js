@@ -13,7 +13,7 @@ const STAT_CARDS = [
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Upload Video',   icon: '🎬', href: '/admin/videos',   desc: 'Add free or premium video'  },
+  { label: 'Upload Video',   icon: '🎬', href: '/admin/videos',   desc: 'Add free or join family video'  },
   { label: 'Write Article',  icon: '✍️', href: '/admin/articles', desc: 'Create new article'          },
   { label: 'Add Hero Slide', icon: '🖼️', href: '/admin/hero',     desc: 'Update homepage carousel'   },
   { label: 'Create Coupon',  icon: '🎟️', href: '/admin/coupons',  desc: 'Generate discount code'     },
@@ -466,7 +466,7 @@ export default function AdminDashboard() {
           }}>
             {[
               { label: 'Subscription Months',  value: '4 months',   icon: '📰' },
-              { label: 'Play Limit (Premium)', value: '3 plays per video',  icon: '▶️' },
+              { label: 'Play Limit (join family)', value: '3 plays per video',  icon: '▶️' },
               { label: 'Device Limit',         value: '1 device per user',  icon: '📱' },
             ].map(item => (
               <div
