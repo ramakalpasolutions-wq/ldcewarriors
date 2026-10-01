@@ -1,455 +1,627 @@
-// src/components/layout/Navbar.js
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Pacifico } from 'next/font/google'
+import toast from 'react-hot-toast'
+
 const pacifico = Pacifico({
   weight: '400',
   subsets: ['latin'],
 })
 
-const navLinks = [
-  { href: '/',         label: 'Home',     icon: '🏠' },
-  { href: '/classes',  label: 'Classes',  icon: '🎥' },
-  { href: '/articles', label: 'Articles', icon: '📰' },
-  { href: '/contact',  label: 'Contact',  icon: '📞' },
-]
-
 export default function Navbar() {
-  const [scrolled,     setScrolled]     = useState(false)
-  const [menuOpen,     setMenuOpen]     = useState(false)
-  const [user,         setUser]         = useState(null)
-  const [isSubscribed, setIsSubscribed] = useState(false)
   const pathname = usePathname()
-  const router   = useRouter()
+  const router = useRouter()
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
 
+  // Track scroll position for transparent -> glassmorphic transition
   useEffect(() => {
-    const stored = localStorage.getItem('ldce_user')
-    if (stored) {
-      setUser(JSON.parse(stored))
-      const sub = localStorage.getItem('ldce_subscription')
-      if (sub) {
-        try {
-          const parsed = JSON.parse(sub)
-          if (parsed.status === 'active' && new Date(parsed.endDate) > new Date())
-            setIsSubscribed(true)
-        } catch { setIsSubscribed(false) }
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Sync user state from localStorage
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('ldce_user')
+      if (storedUser) {
+        setUser(JSON.parse(storedUser))
       }
-      fetch('/api/user/profile')
-        .then(r => r.json())
-        .then(data => {
-          if (data.success && data.user?.subscription?.status === 'active') {
-            setIsSubscribed(true)
-            localStorage.setItem('ldce_subscription', JSON.stringify(data.user.subscription))
-          }
-        }).catch(() => {})
+    } catch (e) {
+      console.error(e)
     }
   }, [pathname])
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  async function handleLogout() {
+  const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-      localStorage.removeItem('ldce_user')
-      localStorage.removeItem('ldce_token')
-      localStorage.removeItem('ldce_subscription')
-      setUser(null); setIsSubscribed(false); setMenuOpen(false)
-      router.push('/')
-    } catch {}
+    } catch (e) {
+      console.error(e)
+    }
+    localStorage.removeItem('ldce_user')
+    localStorage.removeItem('ldce_token')
+    localStorage.removeItem('ldce_admin')
+    setUser(null)
+    toast.success('Logged out successfully')
+    router.push('/auth/login')
   }
+
+  const NAV_LINKS = [
+    { href: '/', label: 'Home' },
+    { href: '/classes', label: 'Classes' },
+    { href: '/articles', label: 'Articles' },
+    { href: '/contact', label: 'Contact' },
+  ]
+
+  const isJoinFamilyActive = pathname === '/join-family'
 
   return (
     <>
-    
       <style>{`
-      
-        /* ── Reset ── */
-        *,*::before,*::after { box-sizing: border-box; }
+        @keyframes goldShimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 14px rgba(232, 168, 56, 0.35), 0 4px 15px rgba(0, 0, 0, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 24px rgba(232, 168, 56, 0.65), 0 6px 20px rgba(232, 168, 56, 0.3);
+          }
+        }
+        @keyframes sparkleRotate {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.2) rotate(15deg); }
+        }
 
-        /* ── Root ── */
-        .nav-root {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-          transition: all 0.3s ease;
-        }
-        .nav-inner {
-          max-width: 1280px; margin: 0 auto;
-          padding: 0 20px;
-          display: flex; align-items: center;
-          justify-content: space-between;
-          height: 68px; gap: 12px;
-        }
-
-        /* ── Logo ── */
-        .nav-logo-link {
-          display: flex; align-items: center; gap: 10px;
-          text-decoration: none; flex-shrink: 0;
-        }
-        .nav-logo-img {
+        /* ── Special Join Family CTA Button Style ── */
+        .nav-join-family-btn {
           position: relative;
-          width: 60px; height: 60px;
-          border-radius: 10px; overflow: hidden;
-          
-          flex-shrink: 0;
-          transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-        .nav-logo-img:hover { transform: scale(1.15); }
-.nav-logo-title {
-
-  font-size: 24px;
-  font-weight: normal; 
-  color: #F2672A;
-  letter-spacing: -0.3px;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-        .nav-logo-sub {
-          font-size: 9px; font-weight: 600;
-          color: rgba(255,255,255,0.45);
-          letter-spacing: 1.4px; text-transform: uppercase;
-          margin-top: 1px;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 18px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #F0C060 0%, #E8A838 50%, #D4922A 100%);
+          background-size: 200% 100%;
+          color: #12203A !important;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 13.5px;
+          font-weight: 800;
+          letter-spacing: 0.3px;
+          text-decoration: none;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          animation: pulseGlow 3s infinite;
+          border: 1.5px solid rgba(255, 255, 255, 0.45);
+          overflow: hidden;
         }
 
-        /* ── Desktop links ── */
-        .nav-links {
-          display: flex; align-items: center; gap: 4px;
-          flex: 1; justify-content: center;
+        .nav-join-family-btn::before {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%; width: 60%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+          transform: skewX(-20deg);
+          transition: all 0.6s ease;
         }
-        .nav-link {
-          padding: 8px 14px; border-radius: 10px;
-          font-size: 13.5px; font-weight: 600;
-          text-decoration: none; color: rgba(255,255,255,0.7);
-          transition: all 0.2s; white-space: nowrap;
-          border: 1px solid transparent;
+
+        .nav-join-family-btn:hover::before {
+          left: 140%;
         }
-        .nav-link:hover {
-          color: #fff;
-          background: rgba(255,255,255,0.06);
-          border-color: rgba(255,255,255,0.08);
+
+        .nav-join-family-btn:hover {
+          transform: translateY(-2px) scale(1.04);
+          background-position: right center;
+          box-shadow: 0 0 30px rgba(232, 168, 56, 0.8), 0 8px 24px rgba(0,0,0,0.25) !important;
+          color: #0D1829 !important;
         }
-        .nav-link.active {
+
+        .nav-join-family-sparkle {
+          display: inline-block;
+          animation: sparkleRotate 2.4s ease-in-out infinite;
+          font-size: 15px;
+          line-height: 1;
+        }
+
+        /* Mobile Join Family Button */
+        .mobile-join-family-card {
+          margin: 10px 0 16px;
+          padding: 14px 18px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #E8A838 0%, #D4922A 100%);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          text-decoration: none;
+          color: #12203A !important;
+          font-weight: 800;
+          font-size: 14.5px;
+          box-shadow: 0 8px 24px rgba(232, 168, 56, 0.35);
+          border: 1.5px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-link-standard {
+          position: relative;
+          font-size: 14px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.78);
+          text-decoration: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .nav-link-standard:hover {
+          color: #FFFFFF;
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .nav-link-standard.active {
           color: #E8A838;
-          background: rgba(232,168,56,0.1);
-          border-color: rgba(232,168,56,0.2);
-        }
-
-        /* ── Right actions ── */
-        .nav-right {
-          display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-        }
-        .nav-join family-btn {
-          background: linear-gradient(135deg,#E8A838,#D4922A);
-          color: #1B2A4A; padding: 8px 16px; border-radius: 10px;
-          font-size: 12px; font-weight: 700; text-decoration: none;
-          white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
-          transition: opacity 0.2s;
-        }
-        .nav-join family-btn:hover { opacity: 0.9; }
-        .nav-sub-badge {
-          background: rgba(42,157,143,0.1);
-          border: 1px solid rgba(42,157,143,0.3);
-          color: #4DD9CB; padding: 6px 12px; border-radius: 10px;
-          font-size: 11px; font-weight: 700;
-          display: flex; align-items: center; gap: 5px; white-space: nowrap;
-        }
-        .nav-user-chip {
-          display: flex; align-items: center; gap: 7px;
-          padding: 4px 10px 4px 5px; border-radius: 30px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #fff; text-decoration: none; font-size: 12px;
-          transition: background 0.2s;
-        }
-        .nav-user-chip:hover { background: rgba(255,255,255,0.1); }
-        .nav-avatar {
-          width: 26px; height: 26px; border-radius: 50%;
-          background: linear-gradient(135deg,#E8A838,#D4922A);
-          color: #1B2A4A;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 11px; font-weight: 800; flex-shrink: 0;
-        }
-        .nav-logout-btn {
-          background: none; border: none;
-          color: rgba(252,165,165,0.8); font-size: 11px;
-          font-weight: 600; cursor: pointer; padding: 6px 8px;
-          border-radius: 8px; transition: color 0.2s, background 0.2s;
-        }
-        .nav-logout-btn:hover {
-          color: #FCA5A5;
-          background: rgba(252,165,165,0.08);
-        }
-
-        /* ── Hamburger ── */
-        .nav-ham {
-          display: none;
-          width: 42px; height: 42px; border-radius: 10px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          flex-direction: column; justify-content: center;
-          align-items: center; gap: 5px; cursor: pointer;
-          flex-shrink: 0; transition: background 0.2s;
-        }
-        .nav-ham:hover { background: rgba(255,255,255,0.1); }
-        .nav-ham span {
-          width: 18px; height: 2px;
-          background: #E8A838;
-          border-radius: 2px; transition: 0.3s;
-          display: block;
-        }
-
-        /* ── Mobile overlay ── */
-        .nav-overlay {
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.65);
-          backdrop-filter: blur(4px);
-          z-index: 1050; display: none; cursor: pointer;
-        }
-        .nav-overlay.open { display: block; }
-
-        /* ── Mobile drawer ── */
-        .nav-drawer {
-          position: fixed; top: 0; right: 0; bottom: 0;
-          width: min(300px, 85vw);
-          background: linear-gradient(160deg,#1B2A4A,#152038);
-          z-index: 1100;
-          transform: translateX(100%);
-          transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
-          display: flex; flex-direction: column;
-          border-left: 1px solid rgba(232,168,56,0.15);
-          overflow-y: auto;
-        }
-        .nav-drawer.open { transform: translateX(0); }
-        .nav-drawer-head {
-          display: flex; justify-content: space-between;
-          align-items: center; padding: 18px 18px 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-          flex-shrink: 0;
-        }
-        .nav-drawer-close {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #fff; width: 36px; height: 36px;
-          border-radius: 8px; font-size: 20px;
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; line-height: 1;
-        }
-        .nav-drawer-links {
-          display: flex; flex-direction: column;
-          padding: 12px 12px; gap: 4px; flex: 1;
-        }
-        .nav-drawer-link {
-          display: flex; align-items: center; gap: 12px;
-          padding: 12px 14px; border-radius: 12px;
-          font-size: 15px; font-weight: 600;
-          text-decoration: none; color: rgba(255,255,255,0.75);
-          border: 1px solid transparent;
-          transition: all 0.2s;
-        }
-        .nav-drawer-link:hover,
-        .nav-drawer-link.active {
-          color: #E8A838;
-          background: rgba(232,168,56,0.08);
-          border-color: rgba(232,168,56,0.15);
-        }
-        .nav-drawer-icon {
-          width: 34px; height: 34px; border-radius: 9px;
-          background: rgba(255,255,255,0.05);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 16px; flex-shrink: 0;
-        }
-        .nav-drawer-footer {
-          padding: 14px 16px;
-          border-top: 1px solid rgba(255,255,255,0.06);
-          display: flex; flex-direction: column; gap: 8px;
-          flex-shrink: 0;
-        }
-        .nav-drawer-join family {
-          display: flex; align-items: center; justify-content: center;
-          gap: 7px; padding: 12px;
-          background: linear-gradient(135deg,#E8A838,#D4922A);
-          color: #1B2A4A; font-size: 13px; font-weight: 700;
-          border-radius: 12px; text-decoration: none;
-        }
-        .nav-drawer-signin {
-          display: flex; align-items: center; justify-content: center;
-          gap: 7px; padding: 11px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #fff; font-size: 13px; font-weight: 600;
-          border-radius: 12px; text-decoration: none;
-        }
-        .nav-drawer-logout {
-          background: rgba(252,165,165,0.08);
-          border: 1px solid rgba(252,165,165,0.15);
-          color: #FCA5A5; font-size: 13px; font-weight: 600;
-          padding: 11px; border-radius: 12px;
-          cursor: pointer; width: 100%;
-        }
-
-        /* ── Responsive ── */
-        @media (max-width: 1024px) {
-          .nav-links { display: none; }
-          .nav-ham   { display: flex; }
-        }
-        @media (max-width: 768px) {
-          .nav-right { display: none; }
-          .nav-inner { height: 60px; padding: 0 16px; }
-          .nav-logo-title { font-size: 15px; }
-        }
-        @media (max-width: 400px) {
-          .nav-inner { height: 60px; padding: 0 16px;}
-          .nav-logo-title { display: none; }
-          .nav-logo-sub   { display: none; }
+          background: rgba(232, 168, 56, 0.08);
         }
       `}</style>
 
       <nav
-        className="nav-root"
         style={{
-          background: scrolled ? 'rgba(18,28,46,0.98)' : '#1B2A4A',
-          borderBottom: scrolled
-            ? '1px solid rgba(232,168,56,0.18)'
-            : '1px solid rgba(255,255,255,0.05)',
-          boxShadow: scrolled ? '0 6px 24px rgba(0,0,0,0.3)' : 'none',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 900,
+          background: isScrolled
+            ? 'rgba(13, 24, 41, 0.92)'
+            : 'linear-gradient(180deg, rgba(13, 24, 41, 0.9) 0%, rgba(13, 24, 41, 0.7) 100%)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderBottom: isScrolled
+            ? '1px solid rgba(232, 168, 56, 0.15)'
+            : '1px solid rgba(255, 255, 255, 0.05)',
+          transition: 'all 0.35s ease',
+          boxShadow: isScrolled ? '0 10px 30px rgba(0, 0, 0, 0.35)' : 'none',
         }}
       >
-        <div className="nav-inner">
-
-          {/* ── LOGO ── */}
-          <Link href="/" className="nav-logo-link">
-            <div className="nav-logo-img">
-              <Image src="/image.png" alt="LDCE Logo" fill style={{ objectFit:'contain' }} priority />
+        <div
+          style={{
+            maxWidth: '1580px',
+            margin: '0 auto',
+            padding: '0 24px',
+            height: '72px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          {/* ── Brand Logo ── */}
+          <Link
+            href="/"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              textDecoration: 'none',
+            }}
+          >
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                border: '1.5px solid rgba(232, 168, 56, 0.3)',
+                boxShadow: '0 4px 12px rgba(232, 168, 56, 0.15)',
+              }}
+            >
+              <Image
+                src="/image.png"
+                alt="LDCE Logo"
+                width={42}
+                height={42}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                priority
+              />
             </div>
             <div>
-              <div className={`nav-logo-title ${pacifico.className}`}>
-  LDCE Warriors
-</div>
+              <span
+                className={pacifico.className}
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 800,
+                  color: '#F2672A',
+                  display: 'block',
+                  lineHeight: 1,
+                  letterSpacing: '0.2px',
+                }}
+              >
+                LDCE Warriors
+              </span>
+              <span
+                style={{
+                  fontSize: '8.5px',
+                  fontWeight: 700,
+                  color: '#E8A838',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  marginTop: '3px',
+                  display: 'block',
+                }}
+              >
+                Learn • Practice • Succeed
+              </span>
             </div>
           </Link>
 
-          {/* ── DESKTOP LINKS ── */}
-          <div className="nav-links">
-            {navLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`nav-link ${pathname === link.href ? 'active' : ''}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          {/* ── Desktop Navigation Links ── */}
+          <div
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            className="md-flex-nav"
+          >
+            <style>{`
+              @media (min-width: 769px) {
+                .md-flex-nav { display: flex !important; }
+                .mobile-toggle-btn { display: none !important; }
+              }
+            `}</style>
 
-          {/* ── DESKTOP RIGHT ── */}
-          <div className="nav-right">
-            {isSubscribed ? (
-              <div className="nav-sub-badge">
-                <span style={{ width:6, height:6, borderRadius:'50%', background:'#2A9D8F', flexShrink:0 }}/>
-                Subscribed
+            {NAV_LINKS.map((link) => {
+              const isActive = pathname === link.href
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`nav-link-standard ${isActive ? 'active' : ''}`}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
+
+            {/* 🌟 Styled Join Family Button 🌟 */}
+            <Link
+              href="/join-family"
+              className="nav-join-family-btn"
+              style={{
+                marginLeft: '8px',
+                marginRight: '6px',
+                transform: isJoinFamilyActive ? 'scale(1.05)' : 'none',
+              }}
+            >
+              <span className="nav-join-family-sparkle">⭐</span>
+              <span>Join Family</span>
+            </Link>
+
+            {/* ── Auth / User Profile ── */}
+            {user ? (
+              <div style={{ position: 'relative', marginLeft: '6px' }}>
+                <button
+                  onClick={() => setDropdownOpen((p) => !p)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '999px',
+                    padding: '5px 12px 5px 6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    color: '#FFFFFF',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #1B2A4A, #243656)',
+                      border: '1px solid #E8A838',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#E8A838',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user.fullName?.charAt(0) || 'U'}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      maxWidth: '110px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {user.fullName?.split(' ')[0]}
+                  </span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+
+                {dropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 10px)',
+                      right: 0,
+                      width: '200px',
+                      background: '#152036',
+                      border: '1px solid rgba(232, 168, 56, 0.2)',
+                      borderRadius: '14px',
+                      padding: '8px',
+                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.4)',
+                      zIndex: 1000,
+                    }}
+                  >
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/admin/dashboard"
+                        onClick={() => setDropdownOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          color: '#E8A838',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        👑 Admin Panel
+                      </Link>
+                    )}
+                    <Link
+                      href="/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        color: 'rgba(255,255,255,0.85)',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      👤 My Profile
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        handleLogout()
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#EF4444',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      🚪 Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <Link href="/join-family" className="nav-join family-btn">⭐ join family</Link>
+              <Link
+                href="/auth/login"
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                  color: '#FFFFFF',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  transition: 'all 0.25s',
+                  marginLeft: '4px',
+                }}
+              >
+                Sign In
+              </Link>
             )}
+          </div>
+
+          {/* ── Mobile Menu Toggle Button ── */}
+          <button
+            className="mobile-toggle-btn"
+            onClick={() => setMobileMenuOpen((p) => !p)}
+            aria-label="Toggle mobile menu"
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '10px',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              cursor: 'pointer',
+            }}
+          >
+            {mobileMenuOpen ? (
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* ── Mobile Dropdown Menu Drawer ── */}
+        {mobileMenuOpen && (
+          <div
+            style={{
+              background: '#0D1829',
+              borderBottom: '1px solid rgba(232, 168, 56, 0.2)',
+              padding: '16px 24px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            {/* Styled Join Family for Mobile */}
+            <Link
+              href="/join-family"
+              className="mobile-join-family-card"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>⭐</span>
+                <span>Join Family</span>
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 800 }}>Explore →</span>
+            </Link>
+
+            {NAV_LINKS.map((link) => {
+              const isActive = pathname === link.href
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    color: isActive ? '#E8A838' : 'rgba(255, 255, 255, 0.85)',
+                    background: isActive ? 'rgba(232, 168, 56, 0.08)' : 'transparent',
+                    fontWeight: isActive ? 700 : 500,
+                    textDecoration: 'none',
+                    fontSize: '15px',
+                  }}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
+
+            <div
+              style={{
+                height: '1px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                margin: '10px 0',
+              }}
+            />
 
             {user ? (
               <>
-                <Link href="/profile" className="nav-user-chip">
-                  <div className="nav-avatar">{user.fullName?.[0]}</div>
-                  <span>{user.fullName?.split(' ')[0]}</span>
+                {user.role === 'admin' && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      color: '#E8A838',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      fontSize: '15px',
+                    }}
+                  >
+                    👑 Admin Dashboard
+                  </Link>
+                )}
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    color: '#FFFFFF',
+                    fontWeight: 500,
+                    textDecoration: 'none',
+                    fontSize: '15px',
+                  }}
+                >
+                  👤 My Profile ({user.fullName})
                 </Link>
-                <button className="nav-logout-btn" onClick={handleLogout}>Logout</button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    handleLogout()
+                  }}
+                  style={{
+                    textAlign: 'left',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#EF4444',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginTop: '4px',
+                  }}
+                >
+                  🚪 Logout
+                </button>
               </>
             ) : (
-              <Link href="/auth/login" className="nav-link">Sign In</Link>
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  textAlign: 'center',
+                  padding: '13px',
+                  borderRadius: '12px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                  color: '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '14.5px',
+                  textDecoration: 'none',
+                  marginTop: '6px',
+                }}
+              >
+                Sign In / Register
+              </Link>
             )}
           </div>
-
-          {/* ── HAMBURGER ── */}
-          <button className="nav-ham" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-            <span/><span/><span/>
-          </button>
-        </div>
+        )}
       </nav>
-
-      {/* ── MOBILE OVERLAY ── */}
-      <div className={`nav-overlay ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)}/>
-
-      {/* ── MOBILE DRAWER ── */}
-      <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}>
-        <div className="nav-drawer-head">
-          <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-            <div style={{ position:'relative', width:'34px', height:'34px', borderRadius:'8px', overflow:'hidden', border:'1px solid rgba(232,168,56,0.4)', background:'#000' }}>
-              <Image src="/image.png" alt="Logo" fill style={{ objectFit:'contain' }}/>
-            </div>
-            <div>
-              <div className={` ${pacifico.className}`} style={{ fontSize:'13px', fontWeight:800, color:'#F2672A' }}>LDCE Warriors</div>
-              <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.4)', letterSpacing:'1px', textTransform:'uppercase' }}>Exam Prep</div>
-            </div>
-          </div>
-          <button className="nav-drawer-close" onClick={() => setMenuOpen(false)}>×</button>
-        </div>
-
-        <div className="nav-drawer-links">
-          {navLinks.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`nav-drawer-link ${pathname === link.href ? 'active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <div className="nav-drawer-icon">{link.icon}</div>
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Drawer footer */}
-        <div className="nav-drawer-footer">
-          {user ? (
-            <>
-              <div style={{
-                display:'flex', alignItems:'center', gap:'10px',
-                padding:'10px 12px', borderRadius:'12px',
-                background:'rgba(255,255,255,0.04)',
-                border:'1px solid rgba(255,255,255,0.08)',
-              }}>
-                <div className="nav-avatar" style={{ width:'32px', height:'32px', fontSize:'13px' }}>
-                  {user.fullName?.[0]}
-                </div>
-                <div>
-                  <div style={{ fontSize:'13px', fontWeight:700, color:'#fff' }}>{user.fullName}</div>
-                  <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.4)' }}>
-                    {isSubscribed ? '⭐ join family Member' : 'Free Account'}
-                  </div>
-                </div>
-              </div>
-              {!isSubscribed && (
-                <Link href="/join-family" className="nav-drawer-join family" onClick={() => setMenuOpen(false)}>
-                  ⭐ Get join family Access
-                </Link>
-              )}
-              <button className="nav-drawer-logout" onClick={handleLogout}>
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/login" className="nav-drawer-signin" onClick={() => setMenuOpen(false)}>
-                Sign In
-              </Link>
-              <Link href="/join-family" className="nav-drawer-join family" onClick={() => setMenuOpen(false)}>
-                ⭐ Get join family
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
     </>
   )
 }
