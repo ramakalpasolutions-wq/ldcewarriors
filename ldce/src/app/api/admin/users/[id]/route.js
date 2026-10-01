@@ -1,4 +1,3 @@
-// src/app/api/admin/users/[id]/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -33,29 +32,13 @@ export async function GET(req, context) {
         isEmailVerified:  true,
         isMobileVerified: true,
         isActive:         true,
+        isPremium:        true,
+        premiumExpiresAt: true,
         role:             true,
         deviceId:         true,
         profileImage:     true,
         createdAt:        true,
         updatedAt:        true,
-
-        // All subscriptions (full history)
-        subscriptions: {
-          orderBy: { createdAt: 'desc' },
-          select: {
-            id:                true,
-            status:            true,
-            amount:            true,
-            currency:          true,
-            startDate:         true,
-            endDate:           true,
-            couponCode:        true,
-            discountAmount:    true,
-            razorpayOrderId:   true,
-            razorpayPaymentId: true,
-            createdAt:         true,
-          },
-        },
 
         // Video play history with video info
         videoPlays: {

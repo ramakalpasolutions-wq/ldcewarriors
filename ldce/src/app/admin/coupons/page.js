@@ -757,7 +757,7 @@ export default function AdminCouponsPage() {
                     Subscription Pricing
                   </h2>
                   <p style={{ fontSize: '11px', color: '#9CA3AF' }}>
-                    {isMobile ? 'Checkout price' : 'Controls price on premium page & checkout'}
+                    {isMobile ? 'Checkout price' : 'Controls price on join family page & checkout'}
                   </p>
                 </div>
               </div>

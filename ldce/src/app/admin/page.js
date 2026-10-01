@@ -62,6 +62,9 @@ export default function AdminLoginPage() {
     }
   }
 
+  // src/app/admin/page.js
+// Find handleLogin around line 54 and update to:
+
   async function handleLogin(e) {
     e.preventDefault()
     if (!form.email || !form.password) {
@@ -78,7 +81,8 @@ export default function AdminLoginPage() {
       if (data.success) {
         localStorage.setItem('ldce_admin', JSON.stringify(data.user))
         toast.success('Welcome, Admin!')
-        router.push('/admin/dashboard')
+        // 🌟 Use full location redirect to ensure cookies load on SSR Admin Layout
+        window.location.href = '/admin/dashboard'
       } else {
         toast.error(data.error || 'Invalid admin credentials')
       }

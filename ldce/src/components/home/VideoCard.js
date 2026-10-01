@@ -1,4 +1,3 @@
-// src/components/home/VideoCard.js
 'use client'
 import { useState } from 'react'
 
@@ -8,13 +7,13 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
 
   const storageKey     = `ldce_plays_${videoId}`
   const localPlayCount = typeof window !== 'undefined'
-    ? parseInt(localStorage.getItem(storageKey) || '0') : 0
+    ? parseInt(localStorage.getItem(storageKey) || '0', 10) : 0
   const playLimit      = video.playLimit || 3
-  const isPremium      = video.type === 'premium'
+  const isJoinFamily   = video.type === 'premium' || video.type === 'join family'
 
   // Only show limit UI if user is actually subscribed — prevents stale localStorage
   // from showing "Play limit reached" to logged-out or non-subscribed users
-  const isLimitReached = isPremium && isSubscribed && localPlayCount >= playLimit
+  const isLimitReached = isJoinFamily && isSubscribed && localPlayCount >= playLimit
 
   return (
     <>
@@ -72,7 +71,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           line-height: 1;
           z-index: 3;
         }
-        .vc-badge.premium {
+        .vc-badge.join-family {
           background: linear-gradient(135deg,#E8A838,#D4922A);
           color: #1B2A4A;
         }
@@ -184,8 +183,8 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           <div className="vc-thumb-grad"/>
 
           {/* Type badge */}
-          <div className={`vc-badge ${isPremium ? 'premium' : 'free'}`}>
-            {isPremium ? <><span>⭐</span> Premium</> : 'FREE'}
+          <div className={`vc-badge ${isJoinFamily ? 'join-family' : 'free'}`}>
+            {isJoinFamily ? <><span>⭐</span> Join Family</> : 'FREE'}
           </div>
 
           {/* Duration */}
@@ -204,12 +203,12 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
-          {/* Locked: premium but not subscribed */}
+          {/* Locked: join family but not subscribed */}
           {video.isLocked && !isLimitReached && (
             <div className="vc-overlay">
               <div className="vc-overlay-icon">🔒</div>
-              <div className="vc-overlay-title">Premium Content</div>
-              <div className="vc-overlay-sub">Subscribe to unlock</div>
+              <div className="vc-overlay-title">Join Family Content</div>
+              <div className="vc-overlay-sub">Join our family to unlock</div>
             </div>
           )}
 
@@ -237,7 +236,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             )}
 
             {/* Play dots — only shown to subscribed users with some plays used */}
-            {isPremium && isSubscribed && !video.isLocked && localPlayCount > 0 && (
+            {isJoinFamily && isSubscribed && !video.isLocked && localPlayCount > 0 && (
               <div className="vc-plays-dots">
                 {Array(playLimit).fill(null).map((_, i) => (
                   <div

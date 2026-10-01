@@ -143,14 +143,14 @@ export default function Navbar() {
         .nav-right {
           display: flex; align-items: center; gap: 8px; flex-shrink: 0;
         }
-        .nav-premium-btn {
+        .nav-join family-btn {
           background: linear-gradient(135deg,#E8A838,#D4922A);
           color: #1B2A4A; padding: 8px 16px; border-radius: 10px;
           font-size: 12px; font-weight: 700; text-decoration: none;
           white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
           transition: opacity 0.2s;
         }
-        .nav-premium-btn:hover { opacity: 0.9; }
+        .nav-join family-btn:hover { opacity: 0.9; }
         .nav-sub-badge {
           background: rgba(42,157,143,0.1);
           border: 1px solid rgba(42,157,143,0.3);
@@ -269,7 +269,7 @@ export default function Navbar() {
           display: flex; flex-direction: column; gap: 8px;
           flex-shrink: 0;
         }
-        .nav-drawer-premium {
+        .nav-drawer-join family {
           display: flex; align-items: center; justify-content: center;
           gap: 7px; padding: 12px;
           background: linear-gradient(135deg,#E8A838,#D4922A);
@@ -354,7 +354,7 @@ export default function Navbar() {
                 Subscribed
               </div>
             ) : (
-              <Link href="/premium" className="nav-premium-btn">⭐ Premium</Link>
+              <Link href="/join-family" className="nav-join family-btn">⭐ join family</Link>
             )}
 
             {user ? (
@@ -425,13 +425,13 @@ export default function Navbar() {
                 <div>
                   <div style={{ fontSize:'13px', fontWeight:700, color:'#fff' }}>{user.fullName}</div>
                   <div style={{ fontSize:'10px', color:'rgba(255,255,255,0.4)' }}>
-                    {isSubscribed ? '⭐ Premium Member' : 'Free Account'}
+                    {isSubscribed ? '⭐ join family Member' : 'Free Account'}
                   </div>
                 </div>
               </div>
               {!isSubscribed && (
-                <Link href="/premium" className="nav-drawer-premium" onClick={() => setMenuOpen(false)}>
-                  ⭐ Get Premium Access
+                <Link href="/join-family" className="nav-drawer-join family" onClick={() => setMenuOpen(false)}>
+                  ⭐ Get join family Access
                 </Link>
               )}
               <button className="nav-drawer-logout" onClick={handleLogout}>
@@ -443,8 +443,8 @@ export default function Navbar() {
               <Link href="/auth/login" className="nav-drawer-signin" onClick={() => setMenuOpen(false)}>
                 Sign In
               </Link>
-              <Link href="/premium" className="nav-drawer-premium" onClick={() => setMenuOpen(false)}>
-                ⭐ Get Premium
+              <Link href="/join-family" className="nav-drawer-join family" onClick={() => setMenuOpen(false)}>
+                ⭐ Get join family
               </Link>
             </>
           )}

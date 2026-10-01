@@ -1,4 +1,3 @@
-// src/app/admin/users/page.js
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
@@ -61,7 +60,7 @@ export default function AdminUsersPage() {
   function closeDetail() { setSelectedUser(null); setUserDetail(null) }
 
   const filtered = users.filter(u => {
-    if (filter==='subscribed') return u.subscription?.status==='active'
+    if (filter==='subscribed') return u.isPremium && (!u.premiumExpiresAt || new Date(u.premiumExpiresAt) > new Date())
     if (filter==='blocked')    return !u.isActive
     if (filter==='unverified') return !u.isEmailVerified || !u.isMobileVerified
     return true
@@ -69,7 +68,7 @@ export default function AdminUsersPage() {
 
   const stats = {
     total:      pagination.total,
-    premium:    users.filter(u => u.subscription?.status==='active').length,
+    joinFamily: users.filter(u => u.isPremium && (!u.premiumExpiresAt || new Date(u.premiumExpiresAt) > new Date())).length,
     blocked:    users.filter(u => !u.isActive).length,
     unverified: users.filter(u => !u.isEmailVerified || !u.isMobileVerified).length,
   }
@@ -93,7 +92,23 @@ export default function AdminUsersPage() {
           setUsers(prev => prev.map(u => u._id===userId ? { ...u, isActive:true } : u))
           if (selectedUser?._id===userId) { setSelectedUser(p => ({ ...p, isActive:true })); setUserDetail(p => p ? { ...p, isActive:true } : p) }
           toast.success('User unblocked')
-        } else if (action==='reset-device') { toast.success('Device session reset') }
+        } else if (action==='reset-device') { 
+          toast.success('Device session reset') 
+        } else if (action==='activate-premium') {
+          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : u))
+          if (selectedUser?._id===userId) { 
+            setSelectedUser(p => ({ ...p, isPremium:true })); 
+            setUserDetail(p => p ? { ...p, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : p) 
+          }
+          toast.success('Join Family membership activated (30 Days)')
+        } else if (action==='deactivate-premium') {
+          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:false, premiumExpiresAt:null } : u))
+          if (selectedUser?._id===userId) { 
+            setSelectedUser(p => ({ ...p, isPremium:false })); 
+            setUserDetail(p => p ? { ...p, isPremium:false, premiumExpiresAt:null } : p) 
+          }
+          toast.success('Join Family membership deactivated')
+        }
       } else toast.error(data.error || 'Action failed')
     } catch { toast.error('Failed to perform action') }
     setActionLoading(null)
@@ -101,14 +116,14 @@ export default function AdminUsersPage() {
 
   const FILTER_TABS = [
     { id:'all',        label:'All'        },
-    { id:'subscribed', label:'Premium'    },
+    { id:'subscribed', label:'Join Family'    },
     { id:'blocked',    label:'Blocked'    },
     { id:'unverified', label:'Unverified' },
   ]
 
   const STATS_ROW = [
     { label:'Total Users', value:stats.total,      accent:'#3b82f6' },
-    { label:'Premium',     value:stats.premium,    accent:'#f59e0b' },
+    { label:'Join Family', value:stats.joinFamily, accent:'#f59e0b' },
     { label:'Blocked',     value:stats.blocked,    accent:'#ef4444' },
     { label:'Unverified',  value:stats.unverified, accent:'#f97316' },
   ]
@@ -143,6 +158,11 @@ export default function AdminUsersPage() {
         .usr-act-btn.block:hover:not(:disabled) { background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.2); }
         .usr-act-btn.unblock { color:#16a34a; }
         .usr-act-btn.unblock:hover:not(:disabled) { background:rgba(22,163,74,0.07); border-color:rgba(22,163,74,0.2); }
+
+        .usr-act-btn.activate { color:#f59e0b; }
+        .usr-act-btn.activate:hover:not(:disabled) { background:rgba(245,158,11,0.07); border-color:rgba(245,158,11,0.2); }
+        .usr-act-btn.deactivate { color:#6b7280; }
+        .usr-act-btn.deactivate:hover:not(:disabled) { background:rgba(107,114,128,0.07); border-color:rgba(107,114,128,0.2); }
 
         .usr-row { cursor:pointer; transition:background 0.18s; }
         .usr-row:hover { background:rgba(27,42,74,0.025) !important; }
@@ -210,8 +230,8 @@ export default function AdminUsersPage() {
                   {selectedUser.email}
                 </p>
                 <div style={{ display:'flex', gap:'6px', marginTop:'5px', flexWrap:'wrap' }}>
-                  {selectedUser.subscription?.status==='active' && (
-                    <span style={{ background:'rgba(232,168,56,0.2)', color:'#E8A838', border:'1px solid rgba(232,168,56,0.3)', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'20px' }}>⭐ Premium</span>
+                  {selectedUser.isPremium && (
+                    <span style={{ background:'rgba(232,168,56,0.2)', color:'#E8A838', border:'1px solid rgba(232,168,56,0.3)', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'20px' }}>⭐ Join Family</span>
                   )}
                   {!selectedUser.isActive && (
                     <span style={{ background:'rgba(239,68,68,0.2)', color:'#FCA5A5', border:'1px solid rgba(239,68,68,0.3)', fontSize:'10px', fontWeight:700, padding:'2px 8px', borderRadius:'20px' }}>🚫 Blocked</span>
@@ -260,7 +280,8 @@ export default function AdminUsersPage() {
                       { k:'Email',   v:userDetail.isEmailVerified  ? <span style={{ color:'#16a34a', fontWeight:700 }}>✓ Verified</span>   : <span style={{ color:'#dc2626', fontWeight:700 }}>✗ Not Verified</span> },
                       { k:'Mobile',  v:userDetail.isMobileVerified ? <span style={{ color:'#16a34a', fontWeight:700 }}>✓ Verified</span>   : <span style={{ color:'#dc2626', fontWeight:700 }}>✗ Not Verified</span> },
                       { k:'Account', v:userDetail.isActive         ? <span style={{ color:'#16a34a', fontWeight:700 }}>● Active</span>     : <span style={{ color:'#dc2626', fontWeight:700 }}>● Blocked</span> },
-                      { k:'Device',  v:userDetail.deviceId         ? <span style={{ color:'#1B2A4A', fontWeight:600 }}>📱 Bound</span>     : <span style={{ color:'#9CA3AF' }}>No device</span> },
+                      { k:'Join Family Membership', v:userDetail.isPremium ? <span style={{ color:'#f59e0b', fontWeight:700 }}>⭐ Active (Join Family)</span> : <span style={{ color:'#9CA3AF' }}>Inactive</span> },
+                      { k:'Membership Expiry', v:userDetail.premiumExpiresAt ? new Date(userDetail.premiumExpiresAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : 'Lifetime / No Expiry' },
                       { k:'Device ID', v:userDetail.deviceId || '—', mono:true },
                     ].map(r => (
                       <div key={r.k} className="usr-detail-row">
@@ -268,38 +289,6 @@ export default function AdminUsersPage() {
                         <span className={`usr-detail-val ${r.mono ? 'mono' : ''}`}>{r.v}</span>
                       </div>
                     ))}
-                  </div>
-
-                  <div className="usr-detail-section">
-                    <div className="usr-detail-section-hd">
-                      💳 Subscription History
-                      <span style={{ marginLeft:'auto', background:'rgba(27,42,74,0.08)', borderRadius:'6px', padding:'1px 7px', fontSize:'10px', fontWeight:700, color:'#374151' }}>
-                        {userDetail.subscriptions?.length || 0}
-                      </span>
-                    </div>
-                    {userDetail.subscriptions?.length ? userDetail.subscriptions.map((sub, i) => (
-                      <div key={i} className="usr-sub-row">
-                        <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
-                          <span className={`adm-badge ${sub.status==='active' ? 'adm-badge-green' : sub.status==='pending' ? 'adm-badge-yellow' : 'adm-badge-gray'}`}>
-                            {sub.status==='active' ? '● Active' : sub.status}
-                          </span>
-                          <span style={{ fontWeight:700, color:'#1A1D23', fontSize:'13px' }}>₹{sub.amount}</span>
-                          {sub.couponCode && (
-                            <span style={{ fontFamily:'JetBrains Mono,monospace', fontSize:'10px', color:'#7C3AED', background:'rgba(124,58,237,0.07)', border:'1px solid rgba(124,58,237,0.15)', padding:'1px 6px', borderRadius:'5px' }}>
-                              {sub.couponCode}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ display:'flex', gap:'12px', flexWrap:'wrap', marginTop:'3px' }}>
-                          {sub.startDate && <span style={{ fontSize:'11px', color:'#9CA3AF' }}>Start: {new Date(sub.startDate).toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' })}</span>}
-                          {sub.endDate   && <span style={{ fontSize:'11px', color:'#9CA3AF' }}>End: {new Date(sub.endDate).toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' })}</span>}
-                        </div>
-                      </div>
-                    )) : (
-                      <div style={{ padding:'14px', textAlign:'center' }}>
-                        <p style={{ color:'#9CA3AF', fontSize:'12px' }}>No subscriptions yet</p>
-                      </div>
-                    )}
                   </div>
 
                   <div className="usr-detail-section">
@@ -354,6 +343,31 @@ export default function AdminUsersPage() {
                 ) : '📱'} Reset Device
               </button>
 
+              {/* Join Family Manual Status Buttons */}
+              {selectedUser.isPremium ? (
+                <button onClick={e => handleAction(selectedUser._id, 'deactivate-premium', e)}
+                  disabled={actionLoading===`${selectedUser._id}-deactivate-premium`}
+                  style={{ padding:'9px 14px', borderRadius:'11px', border:'1.5px solid rgba(107,114,128,0.3)', background:'rgba(107,114,128,0.06)', color:'#4b5563', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans,sans-serif', display:'flex', alignItems:'center', gap:'5px' }}>
+                  {actionLoading===`${selectedUser._id}-deactivate-premium` ? (
+                    <svg style={{ width:'12px',height:'12px',animation:'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                      <circle style={{ opacity:.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path style={{ opacity:.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                  ) : '⭐'} Remove Family
+                </button>
+              ) : (
+                <button onClick={e => handleAction(selectedUser._id, 'activate-premium', e)}
+                  disabled={actionLoading===`${selectedUser._id}-activate-premium`}
+                  style={{ padding:'9px 14px', borderRadius:'11px', border:'1.5px solid rgba(245,158,11,0.3)', background:'rgba(245,158,11,0.06)', color:'#d97706', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans,sans-serif', display:'flex', alignItems:'center', gap:'5px' }}>
+                  {actionLoading===`${selectedUser._id}-activate-premium` ? (
+                    <svg style={{ width:'12px',height:'12px',animation:'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                      <circle style={{ opacity:.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path style={{ opacity:.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                    </svg>
+                  ) : '⭐'} Add Family
+                </button>
+              )}
+
               {selectedUser.isActive ? (
                 <button onClick={e => handleAction(selectedUser._id, 'block', e)}
                   disabled={actionLoading===`${selectedUser._id}-block`}
@@ -390,7 +404,7 @@ export default function AdminUsersPage() {
         <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'12px', flexWrap:'wrap' }}>
           <div>
             <h1 style={{ fontFamily:'Playfair Display,serif', fontWeight:800, fontSize:isMobile ? '20px' : 'clamp(20px,3vw,26px)', color:'#1A1D23', marginBottom:'4px' }}>Users</h1>
-            <p style={{ color:'#6B7280', fontSize:'13px' }}>Manage registered users and subscriptions</p>
+            <p style={{ color:'#6B7280', fontSize:'13px' }}>Manage registered users and family subscriptions</p>
           </div>
           <button onClick={() => fetchUsers(pagination.page)} disabled={loading}
             className="adm-btn-secondary" style={{ display:'flex', alignItems:'center', gap:'6px' }}>
@@ -448,7 +462,7 @@ export default function AdminUsersPage() {
 
         {!isMobile && (
           <p style={{ fontSize:'12px', color:'#9CA3AF', marginTop:'-6px' }}>
-            💡 Click any row to view full user details
+            💡 Click any row to view full user details & toggle Join Family subscriptions.
           </p>
         )}
 
@@ -484,8 +498,8 @@ export default function AdminUsersPage() {
                     <p style={{ color:'#9CA3AF', fontSize:'11px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.email}</p>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', gap:'4px', alignItems:'flex-end', flexShrink:0 }}>
-                    {user.subscription?.status==='active'
-                      ? <span className="adm-badge adm-badge-yellow" style={{ fontSize:'10px' }}>⭐ Premium</span>
+                    {user.isPremium
+                      ? <span className="adm-badge adm-badge-yellow" style={{ fontSize:'10px' }}>⭐ Join Family</span>
                       : <span className="adm-badge adm-badge-gray" style={{ fontSize:'10px' }}>Free</span>}
                     {!user.isActive && <span className="adm-badge adm-badge-red" style={{ fontSize:'10px' }}>Blocked</span>}
                   </div>
@@ -496,15 +510,17 @@ export default function AdminUsersPage() {
                     className="usr-act-btn reset" style={{ flex:1, textAlign:'center', padding:'7px', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:'8px', color:'#6B7280' }}>
                     📱 Reset
                   </button>
+                  <button onClick={e => handleAction(user._id, user.isPremium ? 'deactivate-premium' : 'activate-premium', e)}
+                    disabled={actionLoading===`${user._id}-activate-premium` || actionLoading===`${user._id}-deactivate-premium`}
+                    className={`usr-act-btn ${user.isPremium ? 'deactivate' : 'activate'}`}
+                    style={{ flex:1, textAlign:'center', padding:'7px', background:user.isPremium ? 'rgba(107,114,128,0.07)' : 'rgba(245,158,11,0.07)', border:`1px solid ${user.isPremium ? 'rgba(107,114,128,0.2)' : 'rgba(245,158,11,0.2)'}`, borderRadius:'8px' }}>
+                    {user.isPremium ? '⭐ Remove' : '⭐ Add'}
+                  </button>
                   <button onClick={e => handleAction(user._id, user.isActive ? 'block' : 'unblock', e)}
                     disabled={actionLoading===`${user._id}-block` || actionLoading===`${user._id}-unblock`}
                     className={`usr-act-btn ${user.isActive ? 'block' : 'unblock'}`}
                     style={{ flex:1, textAlign:'center', padding:'7px', background:user.isActive ? 'rgba(239,68,68,0.07)' : 'rgba(22,163,74,0.07)', border:`1px solid ${user.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(22,163,74,0.2)'}`, borderRadius:'8px' }}>
                     {user.isActive ? '🚫 Block' : '✓ Unblock'}
-                  </button>
-                  <button onClick={() => openDetail(user)}
-                    style={{ flex:1, padding:'7px', borderRadius:'8px', background:'rgba(27,42,74,0.06)', border:'1px solid rgba(27,42,74,0.1)', color:'#1B2A4A', fontSize:'11px', fontWeight:600, cursor:'pointer' }}>
-                    👁 Details
                   </button>
                 </div>
               </div>
@@ -520,7 +536,7 @@ export default function AdminUsersPage() {
                     <th>User</th>
                     <th>Contact</th>
                     {!isTablet && <th style={{ textAlign:'center' }}>Verified</th>}
-                    <th>Subscription</th>
+                    <th>Family Status</th>
                     {!isTablet && <th>Joined</th>}
                     <th style={{ textAlign:'right' }}>Actions</th>
                   </tr>
@@ -559,15 +575,15 @@ export default function AdminUsersPage() {
                         </td>
                       )}
                       <td>
-                        {user.subscription?.status==='active' ? (
+                        {user.isPremium ? (
                           <div>
-                            <span className="adm-badge adm-badge-yellow">⭐ Premium</span>
+                            <span className="adm-badge adm-badge-yellow">⭐ Join Family</span>
                             {!isTablet && <p style={{ color:'#9CA3AF', fontSize:'11px', marginTop:'3px' }}>
-                              Until {new Date(user.subscription.endDate).toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' })}
+                              {user.premiumExpiresAt ? `Until ${new Date(user.premiumExpiresAt).toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' })}` : 'Lifetime Access'}
                             </p>}
                           </div>
                         ) : (
-                          <span className="adm-badge adm-badge-gray">Free</span>
+                          <span className="adm-badge adm-badge-gray">Free Tier</span>
                         )}
                       </td>
                       {!isTablet && (
@@ -582,6 +598,16 @@ export default function AdminUsersPage() {
                             className="usr-act-btn reset" title="Reset Device">
                             {actionLoading===`${user._id}-reset-device` ? '…' : '📱'}
                           </button>
+                          
+                          {/* Main Row Activate / Deactivate Toggle */}
+                          <button onClick={e => handleAction(user._id, user.isPremium ? 'deactivate-premium' : 'activate-premium', e)}
+                            disabled={actionLoading===`${user._id}-activate-premium` || actionLoading===`${user._id}-deactivate-premium`}
+                            className={`usr-act-btn ${user.isPremium ? 'deactivate' : 'activate'}`}
+                            title={user.isPremium ? 'Deactivate Family Access' : 'Activate Family Access'}>
+                            {actionLoading===`${user._id}-activate-premium` || actionLoading===`${user._id}-deactivate-premium` 
+                              ? '…' : user.isPremium ? 'Remove Family' : 'Add Family'}
+                          </button>
+
                           <button onClick={e => handleAction(user._id, user.isActive ? 'block' : 'unblock', e)}
                             disabled={actionLoading===`${user._id}-block` || actionLoading===`${user._id}-unblock`}
                             className={`usr-act-btn ${user.isActive ? 'block' : 'unblock'}`}>

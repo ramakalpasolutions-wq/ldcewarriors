@@ -306,13 +306,13 @@ function CTASection() {
             fontSize: '15px', fontWeight: 700, textDecoration: 'none',
             boxShadow: '0 8px 24px rgba(42,157,143,.3)',
           }}>Register Free →</Link>
-          <Link href="/premium" style={{
+          <Link href="/join-family" style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
             padding: '13px 28px', borderRadius: '12px',
             background: `linear-gradient(135deg,${t.gold},${t.goldDark})`,
             color: t.navy, fontSize: '15px', fontWeight: 700,
             textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
-          }}>⭐ Get Premium</Link>
+          }}>⭐ Get join family</Link>
         </div>
 
         <div style={{
@@ -320,7 +320,7 @@ function CTASection() {
           gap: 'clamp(20px,4vw,40px)', marginTop: '40px',
         }}>
           {[
-            { val: 'Premium', lbl: 'Video Lectures' },
+            { val: 'join family', lbl: 'Video Lectures' },
             { val: '8+',      lbl: 'Topics Covered' },
             { val: '4 months',lbl: 'Full Access' },
           ].map(s => (
@@ -492,9 +492,9 @@ export default async function HomePage() {
           {/* TOPIC-WISE COURSES */}
           <section className="section">
             <SectionHeader
-              badge="Premium Content"
+              badge="join family Content"
               title="Topic-Wise Courses"
-              subtitle="Comprehensive premium courses. Click to view videos."
+              subtitle="Comprehensive join family courses. Click to view videos."
               center
             />
 
@@ -508,19 +508,19 @@ export default async function HomePage() {
               <div className="empty-state">
                 <div style={{ fontSize: '36px', marginBottom: '10px' }}>📚</div>
                 <p style={{ color: t.muted, fontSize: '14px' }}>
-                  Premium topics are being prepared. Stay tuned!
+                  join family topics are being prepared. Stay tuned!
                 </p>
               </div>
             )}
 
             <div style={{ textAlign: 'center', marginTop: '40px' }}>
-              <Link href="/premium" style={{
+              <Link href="/join-family" style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                 padding: 'clamp(12px,2vw,15px) clamp(24px,3vw,36px)', borderRadius: '12px',
                 background: `linear-gradient(135deg,${t.gold},${t.goldDark})`,
                 color: t.navy, fontSize: 'clamp(13px,1.5vw,15px)', fontWeight: 700,
                 textDecoration: 'none', boxShadow: '0 8px 24px rgba(232,168,56,.3)',
-              }}>⭐ Get Premium Access</Link>
+              }}>⭐ Get join family Access</Link>
               <p style={{ color: t.faint, fontSize: '12px', marginTop: '10px' }}>
                 Secure payment via Razorpay
               </p>

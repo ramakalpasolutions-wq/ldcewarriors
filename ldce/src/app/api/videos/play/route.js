@@ -1,4 +1,3 @@
-// src/app/api/videos/play/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -33,17 +32,31 @@ export async function POST(req) {
       return NextResponse.json({ success: true, canPlay: true, streamUrl })
     }
 
-    /* ── PREMIUM VIDEO ── */
-    // 1. Check active subscription
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        userId: decoded.userId,
-        status: 'active',
-        endDate: { gt: new Date() },
-      },
+    /* ── JOIN FAMILY VIDEO ── */
+    // 1. Check direct isPremium status and expiry
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { isPremium: true, premiumExpiresAt: true, isActive: true }
     })
 
-    if (!subscription) {
+    if (!user || !user.isActive) {
+      return NextResponse.json({
+        success: false, canPlay: false, reason: 'account_inactive',
+      })
+    }
+
+    const isSubscribed = user.isPremium && (
+      !user.premiumExpiresAt || new Date(user.premiumExpiresAt) > new Date()
+    )
+
+    if (!isSubscribed) {
+      // Auto-update db state to false if user's subscription expired
+      if (user.isPremium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) <= new Date()) {
+        await prisma.user.update({
+          where: { id: decoded.userId },
+          data: { isPremium: false }
+        })
+      }
       return NextResponse.json({
         success: false, canPlay: false, reason: 'no_subscription',
       })
@@ -83,7 +96,7 @@ export async function POST(req) {
       data: { views: { increment: 1 } },
     })
 
-    // 5. Generate short-lived signed URL (2 hours for premium)
+    // 5. Generate short-lived signed URL (2 hours for join family)
     const streamUrl = video.videoKey
       ? await getSignedVideoUrl(video.videoKey, 7200)
       : video.videoUrl

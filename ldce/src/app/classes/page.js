@@ -113,7 +113,7 @@ function SectionLabel({ color, bg, border, children }) {
   )
 }
 
-/* ─── Tab Bar for mobile/tablet (Free vs Premium) ─── */
+/* ─── Tab Bar for mobile/tablet (Free vs join family) ─── */
 function SectionTabs({ activeTab, onTab }) {
   return (
     <div style={{
@@ -124,7 +124,7 @@ function SectionTabs({ activeTab, onTab }) {
     }}>
       {[
         { id:'free',    label:'🎬 Free Videos',   color:tk.teal },
-        { id:'premium', label:'⭐ Premium Courses', color:tk.gold },
+        { id:'join family', label:'⭐ join family Courses', color:tk.gold },
       ].map(tab => (
         <button
           key={tab.id}
@@ -478,7 +478,7 @@ function ActiveTopicBanner({ topic, videoCount, isSubscribed, isMobile }) {
               color:'#5DE8D8', fontSize: isMobile ? '10px' : '11px', fontWeight:700,
             }}>✓ Full Access</span>
           ) : (
-            <Link href="/premium" style={{
+            <Link href="/join-family" style={{
               display:'inline-flex', alignItems:'center', gap:'5px',
               padding: isMobile ? '7px 11px' : '8px 16px', borderRadius:'9px',
               background:`linear-gradient(135deg,${tk.gold},${tk.goldDark})`,
@@ -519,14 +519,14 @@ function EmptyState({ icon, title, subtitle }) {
 ═══════════════════════════════════════════ */
 function ClassesPageInner() {
   const [freeVideos,    setFreeVideos]    = useState([])
-  const [premiumVideos, setPremiumVideos] = useState([])
+  const [join familyVideos, setjoin familyVideos] = useState([])
   const [topics,        setTopics]        = useState([])
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [isSubscribed,  setIsSubscribed]  = useState(false)
   const [isLoggedIn,    setIsLoggedIn]    = useState(false)
   const [activeTopic,   setActiveTopic]   = useState('')
   const [loading,       setLoading]       = useState(true)
-  const [premiumLoading,setPremiumLoading]= useState(false)
+  const [join familyLoading,setjoin familyLoading]= useState(false)
   const [playLimitHit,  setPlayLimitHit]  = useState(false)
   const [playCounts,    setPlayCounts]    = useState({})
   const [isMobile,      setIsMobile]      = useState(false)
@@ -596,33 +596,33 @@ function ClassesPageInner() {
     const topicParam = searchParams?.get('topic')
     if (topicParam && topics.length > 0 && topics.find(tp => tp._id === topicParam)) {
       setActiveTopic(topicParam)
-      setActiveTab('premium')
+      setActiveTab('join family')
       setTimeout(() => {
-        const el = document.getElementById('premium-section')
+        const el = document.getElementById('join family-section')
         if (el) el.scrollIntoView({ behavior:'smooth', block:'start' })
       }, 300)
     }
   }, [searchParams, topics])
 
-  /* Fetch premium videos */
-  const fetchPremiumVideos = useCallback(async (topicId) => {
+  /* Fetch join family videos */
+  const fetchjoin familyVideos = useCallback(async (topicId) => {
     if (!topicId) return
-    setPremiumLoading(true)
+    setjoin familyLoading(true)
     try {
-      const res  = await fetch(`/api/videos?type=premium&topicId=${topicId}&limit=50`)
+      const res  = await fetch(`/api/videos?type=join family&topicId=${topicId}&limit=50`)
       const data = await res.json()
-      if (data.success) setPremiumVideos(data.videos || [])
+      if (data.success) setjoin familyVideos(data.videos || [])
     } catch {}
-    setPremiumLoading(false)
+    setjoin familyLoading(false)
   }, [])
 
   useEffect(() => {
-    if (activeTopic) fetchPremiumVideos(activeTopic)
-  }, [activeTopic, fetchPremiumVideos])
+    if (activeTopic) fetchjoin familyVideos(activeTopic)
+  }, [activeTopic, fetchjoin familyVideos])
 
   function handleSubscribeClick() {
     toast('Subscribe to unlock video playback!', { icon:'⭐', duration:3000 })
-    router.push('/premium')
+    router.push('/join family')
   }
 
   async function handleVideoClick(video) {
@@ -640,7 +640,7 @@ function ClassesPageInner() {
     }
 
     if (!isLoggedIn) {
-      toast.error('Please login to access premium content', { icon:'🔐' })
+      toast.error('Please login to access join family content', { icon:'🔐' })
       router.push('/auth/login?redirect=/classes'); return
     }
     if (!isSubscribed) { handleSubscribeClick(); return }
@@ -675,7 +675,7 @@ function ClassesPageInner() {
       } else if (data.reason === 'no_subscription') {
         setIsSubscribed(false); localStorage.removeItem('ldce_subscription')
         toast('Your subscription has expired.', { icon:'⭐', duration:5000 })
-        router.push('/premium')
+        router.push('/join family')
       } else {
         toast.error(data.error || 'Failed to play video.')
       }
@@ -692,14 +692,14 @@ function ClassesPageInner() {
   const gridCols = isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)'
   const gridGap  = isMobile ? '12px' : isTablet ? '14px' : '20px'
 
-  /* ── Premium video renderer (shared) ── */
-  function renderPremiumGrid() {
-    if (premiumLoading) return (
+  /* ── join family video renderer (shared) ── */
+  function renderjoin familyGrid() {
+    if (join familyLoading) return (
       <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:gridGap }}>
         {[1,2,3].map(i => <SkeletonCard key={i}/>)}
       </div>
     )
-    if (premiumVideos.length === 0) return (
+    if (join familyVideos.length === 0) return (
       <EmptyState
         icon="📹"
         title={`No videos yet for ${activeTopicData?.name || 'this topic'}`}
@@ -720,14 +720,14 @@ function ClassesPageInner() {
             <span style={{ fontSize:'16px', flexShrink:0 }}>ℹ️</span>
             <p style={{ fontSize: isMobile ? '12px' : '13px', color:tk.muted, lineHeight:1.55 }}>
               <strong style={{ color:tk.text }}>Play limit: </strong>
-              Each premium video can be watched up to{' '}
+              Each join family video can be watched up to{' '}
               <strong style={{ color:tk.gold }}>3 times</strong> per subscription period.
             </p>
           </div>
         )}
 
         <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:gridGap }}>
-          {premiumVideos.map(video => {
+          {join familyVideos.map(video => {
             const videoId     = video._id || video.id
             const serverCount = playCounts[videoId] ?? null
             const limit       = video.playLimit || 3
@@ -907,15 +907,15 @@ function ClassesPageInner() {
                   padding:'5px 13px', borderRadius:'999px',
                   background:'rgba(232,168,56,0.09)', border:'1px solid rgba(232,168,56,0.22)',
                   fontSize: isMobile ? '11px' : '12px', fontWeight:600, color:tk.gold,
-                }}>⭐ Premium access active</span>
+                }}>⭐ join family access active</span>
               ) : (
-                <Link href="/premium" style={{
+                <Link href="/join-family" style={{
                   display:'inline-flex', alignItems:'center', gap:'5px',
                   padding:'5px 13px', borderRadius:'999px',
                   background:'rgba(27,42,74,0.06)', border:'1px solid rgba(27,42,74,0.14)',
                   fontSize: isMobile ? '11px' : '12px', fontWeight:600,
                   color:tk.navy, textDecoration:'none',
-                }}>🔒 Subscribe to play premium</Link>
+                }}>🔒 Subscribe to play join family</Link>
               )}
             </div>
           </header>
@@ -963,22 +963,22 @@ function ClassesPageInner() {
                 </section>
               )}
 
-              {activeTab === 'premium' && (
-                <section id="premium-section">
+              {activeTab === 'join family' && (
+                <section id="join family-section">
                   <div style={{
                     display:'flex', alignItems:'center', justifyContent:'space-between',
                     marginBottom:'14px', gap:'10px', flexWrap:'wrap',
                   }}>
                     <div>
-                      <SectionLabel color={tk.gold} bg='rgba(232,168,56,0.09)' border='rgba(232,168,56,0.22)'>⭐ Premium Content</SectionLabel>
+                      <SectionLabel color={tk.gold} bg='rgba(232,168,56,0.09)' border='rgba(232,168,56,0.22)'>⭐ join family Content</SectionLabel>
                       <h2 style={{ fontFamily:'Playfair Display,serif', fontWeight:800, fontSize: isMobile ? '18px' : '22px', color:tk.text, marginBottom:'3px' }}>Topic-Wise Full Courses</h2>
                       <p style={{ color:tk.faint, fontSize:'12px' }}>
                         {isSubscribed ? '✓ Full access — each video up to 3 plays' : 'Browse all topics — subscribe to play'}
                       </p>
                     </div>
-                    {!premiumLoading && premiumVideos.length > 0 && (
+                    {!join familyLoading && join familyVideos.length > 0 && (
                       <span style={{ fontSize:'11px', color:tk.faint, background:tk.card, border:`1px solid ${tk.border}`, padding:'5px 12px', borderRadius:'999px' }}>
-                        {premiumVideos.length} video{premiumVideos.length !== 1 ? 's' : ''}
+                        {join familyVideos.length} video{join familyVideos.length !== 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
@@ -995,7 +995,7 @@ function ClassesPageInner() {
                         <h3 style={{ fontFamily:'Playfair Display,serif', fontSize: isMobile ? '14px' : '16px', fontWeight:800, color:'#FFF', marginBottom:'3px' }}>Subscribe to start watching</h3>
                         <p style={{ fontSize:'11px', color:'rgba(255,255,255,0.38)' }}>200+ expert videos · 4-month access · 3 plays per video</p>
                       </div>
-                      <Link href="/premium" style={{
+                      <Link href="/join-family" style={{
                         display:'inline-flex', alignItems:'center', gap:'6px',
                         padding:'11px 18px', borderRadius:'10px',
                         background:`linear-gradient(135deg,${tk.gold},${tk.goldDark})`,
@@ -1017,12 +1017,12 @@ function ClassesPageInner() {
                   ) : topics.length > 0 ? (
                     <>
                       {activeTopicData && (
-                        <ActiveTopicBanner topic={activeTopicData} videoCount={premiumVideos.length} isSubscribed={isSubscribed} isMobile={isMobile}/>
+                        <ActiveTopicBanner topic={activeTopicData} videoCount={join familyVideos.length} isSubscribed={isSubscribed} isMobile={isMobile}/>
                       )}
-                      {renderPremiumGrid()}
+                      {renderjoin familyGrid()}
                     </>
                   ) : (
-                    <EmptyState icon="📚" title="Premium courses being prepared" subtitle="Our experts are crafting topic-wise content."/>
+                    <EmptyState icon="📚" title="join family courses being prepared" subtitle="Our experts are crafting topic-wise content."/>
                   )}
                 </section>
               )}
@@ -1071,22 +1071,22 @@ function ClassesPageInner() {
 
               <div className="cls-divider"/>
 
-              {/* ── PREMIUM SECTION ── */}
-              <section id="premium-section" style={{ animation:'fadeInUp 0.55s ease 0.16s both' }}>
+              {/* ── join family SECTION ── */}
+              <section id="join family-section" style={{ animation:'fadeInUp 0.55s ease 0.16s both' }}>
                 <div style={{
                   display:'flex', alignItems:'flex-end', justifyContent:'space-between',
                   marginBottom:'22px', gap:'12px', flexWrap:'wrap',
                 }}>
                   <div>
-                    <SectionLabel color={tk.gold} bg='rgba(232,168,56,0.09)' border='rgba(232,168,56,0.2)'>⭐ Premium Content</SectionLabel>
+                    <SectionLabel color={tk.gold} bg='rgba(232,168,56,0.09)' border='rgba(232,168,56,0.2)'>⭐ join family Content</SectionLabel>
                     <h2 style={{ fontFamily:'Playfair Display,serif', fontWeight:800, fontSize:'clamp(20px,3vw,28px)', color:tk.text, marginBottom:'4px' }}>Topic-Wise Full Courses</h2>
                     <p style={{ color:tk.faint, fontSize:'13px' }}>
                       {isSubscribed ? '✓ Full access — each video can be watched up to 3 times' : 'Browse all topic videos below — subscribe to play them'}
                     </p>
                   </div>
-                  {!premiumLoading && premiumVideos.length > 0 && (
+                  {!join familyLoading && join familyVideos.length > 0 && (
                     <span style={{ fontSize:'12px', color:tk.faint, background:tk.card, border:`1px solid ${tk.border}`, padding:'6px 14px', borderRadius:'999px' }}>
-                      {premiumVideos.length} video{premiumVideos.length !== 1 ? 's' : ''} in topic
+                      {join familyVideos.length} video{join familyVideos.length !== 1 ? 's' : ''} in topic
                     </span>
                   )}
                 </div>
@@ -1106,7 +1106,7 @@ function ClassesPageInner() {
                       </h3>
                      
                     </div>
-                    <Link href="/premium" style={{
+                    <Link href="/join-family" style={{
                       display:'inline-flex', alignItems:'center', gap:'7px',
                       padding:'12px 24px', borderRadius:'12px',
                       background:`linear-gradient(135deg,${tk.gold},${tk.goldDark})`,
@@ -1132,12 +1132,12 @@ function ClassesPageInner() {
                     ) : topics.length > 0 ? (
                       <>
                         {activeTopicData && (
-                          <ActiveTopicBanner topic={activeTopicData} videoCount={premiumVideos.length} isSubscribed={isSubscribed} isMobile={false}/>
+                          <ActiveTopicBanner topic={activeTopicData} videoCount={join familyVideos.length} isSubscribed={isSubscribed} isMobile={false}/>
                         )}
-                        {renderPremiumGrid()}
+                        {renderjoin familyGrid()}
                       </>
                     ) : (
-                      <EmptyState icon="📚" title="Premium courses are being prepared" subtitle="Our experts are crafting topic-wise content. Stay tuned!"/>
+                      <EmptyState icon="📚" title="join family courses are being prepared" subtitle="Our experts are crafting topic-wise content. Stay tuned!"/>
                     )}
                   </div>
 

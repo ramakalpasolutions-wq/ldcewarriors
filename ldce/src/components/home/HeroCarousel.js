@@ -93,13 +93,13 @@ function DefaultHero({ bp }) {
               color: '#fff', fontWeight: 700, fontSize: isMobile ? '14px' : '15px',
               textDecoration: 'none',
             }}>Start Learning →</Link>
-            <Link href="/premium" style={{
+            <Link href="/join-family" style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: isMobile ? '13px 26px' : '15px 32px', borderRadius: '13px',
               background: 'linear-gradient(135deg,#E8A838,#D4922A)',
               color: '#1B2A4A', fontWeight: 700, fontSize: isMobile ? '14px' : '15px',
               textDecoration: 'none',
-            }}>⭐ Get Premium</Link>
+            }}>⭐ Get join family</Link>
           </div>
         </div>
       </div>
@@ -198,7 +198,7 @@ function TopicScrollPanel({ topics, isTablet }) {
           <span style={{
             fontSize: '10px', fontWeight: 700, color: '#1B2A4A',
             letterSpacing: '1.8px', textTransform: 'uppercase',
-          }}>Premium Topics</span>
+          }}>join family Topics</span>
         </div>
         <p style={{ fontSize: '11px', color: '#9CA3AF', lineHeight: 1.4 }}>
           Click any topic to explore videos

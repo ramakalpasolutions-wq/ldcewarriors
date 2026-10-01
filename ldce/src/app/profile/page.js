@@ -1032,7 +1032,7 @@ export default function ProfilePage() {
                       border: '1px solid rgba(232,168,56,0.22)',
                       fontSize: '11px', fontWeight: 700, color: c.gold,
                     }}>
-                      ⭐ Premium Member
+                      ⭐ join family Member
                     </span>
                   ) : (
                     <span style={{
@@ -1191,7 +1191,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="prof-section-title">Subscription</p>
                   <p className="prof-section-sub">
-                    {isActive ? 'Premium plan active' : 'No active subscription'}
+                    {isActive ? 'join family plan active' : 'No active subscription'}
                   </p>
                 </div>
                 <span style={{
@@ -1349,7 +1349,7 @@ export default function ProfilePage() {
                     fontWeight: 800, fontSize: '18px',
                     color: c.text, marginBottom: '8px',
                   }}>
-                    Unlock Premium Access
+                    Unlock join family Access
                   </h4>
                   <p style={{
                     color: c.muted, fontSize: '14px',
@@ -1357,8 +1357,8 @@ export default function ProfilePage() {
                   }}>
                     Get access to 200+ expert video lectures across all topics with a single subscription.
                   </p>
-                  <Link href="/premium" className="prof-btn-primary">
-                    ⭐ Get Premium
+                  <Link href="/join-family" className="prof-btn-primary">
+                    ⭐ Get join family
                   </Link>
                 </div>
               )}

@@ -52,7 +52,7 @@ export async function GET(req) {
         videoKey: undefined,
       }
 
-      if (video.type === 'premium' && !isSubscribed) {
+      if (video.type === 'join family' && !isSubscribed) {
         return { ...base, videoUrl: null, isLocked: true }
       }
       return { ...base, isLocked: false }

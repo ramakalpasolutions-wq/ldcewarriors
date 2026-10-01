@@ -1,14 +1,12 @@
 // src/app/auth/login/page.js
 'use client'
-import { Suspense } from 'react'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import OTPInput from '@/components/ui/OTPInput'
 import AnimatedAuthBackground from '@/components/ui/AnimatedAuthBackground'
 import toast from 'react-hot-toast'
 
-// ── Inner component that uses useSearchParams ──
 function LoginContent() {
   const [step,    setStep   ] = useState('credentials')
   const [form,    setForm   ] = useState({ identifier: '', password: '' })
@@ -91,8 +89,19 @@ function LoginContent() {
         localStorage.setItem('ldce_user',     JSON.stringify(data.user))
         localStorage.setItem('ldce_token',    data.token)
         localStorage.setItem('ldce_deviceId', deviceId)
+
+        if (data.user?.role === 'admin') {
+          localStorage.setItem('ldce_admin', JSON.stringify(data.user))
+        }
+
         toast.success(`Welcome back, ${data.user.fullName?.split(' ')[0]}!`)
-        router.push(redirect)
+
+        // 🌟 REDIRECT TO ADMIN PANEL IF ADMIN
+        if (data.user?.role === 'admin') {
+          window.location.href = '/admin/dashboard'
+        } else {
+          window.location.href = redirect
+        }
       } else {
         toast.error(data.error || 'Invalid OTP')
       }
@@ -378,7 +387,6 @@ function LoginContent() {
   )
 }
 
-// ── Fallback shown while LoginContent loads ──
 function LoginFallback() {
   return (
     <div style={{
@@ -399,7 +407,6 @@ function LoginFallback() {
   )
 }
 
-// ── Default export wraps LoginContent in Suspense ──
 export default function LoginPage() {
   return (
     <Suspense fallback={<LoginFallback />}>

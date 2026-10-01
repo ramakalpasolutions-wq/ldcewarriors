@@ -97,7 +97,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      message: 'Payment verified. Premium access activated!',
+      message: 'Payment verified. join family access activated!',
       subscription: { startDate, endDate, status: 'active' },
     })
   } catch (error) {

@@ -142,9 +142,9 @@ export async function sendOTPEmail({ to, otp, type = 'verification', name = '' }
 export async function sendSubscriptionConfirmationEmail({ to, name, endDate, amount }) {
   const content = `
     <h2>🎉 Subscription Activated!</h2>
-    <p>Hi ${name}, your premium subscription has been activated successfully.</p>
+    <p>Hi ${name}, your join family subscription has been activated successfully.</p>
     <div class="otp-box">
-      <p style="color:#1B2A4A;font-size:18px;font-weight:700;margin:0;">Premium Access Granted</p>
+      <p style="color:#1B2A4A;font-size:18px;font-weight:700;margin:0;">join family Access Granted</p>
       <p style="color:#6B7280;margin:12px 0 0;">
         Valid until:
         <strong style="color:#E8A838;">
@@ -158,13 +158,13 @@ export async function sendSubscriptionConfirmationEmail({ to, name, endDate, amo
       </p>
     </div>
     <p style="font-size:13px;">
-      You now have access to all premium content including topic-wise videos.
+      You now have access to all join family content including topic-wise videos.
     </p>
   `
 
   return sendMail({
     to,
-    subject: 'Premium Subscription Confirmed — LDCE Warriors',
+    subject: 'join family Subscription Confirmed — LDCE Warriors',
     html:    emailTemplate(content),
   })
 }
@@ -282,7 +282,7 @@ export async function sendContactFormEmail({ name, email, mobile, subject, messa
     <ul style="color:#6B7280;font-size:14px;line-height:2;">
       <li>Browse our <a href="${siteUrl}/classes" style="color:#E8A838;text-decoration:none;font-weight:600;">free video lectures</a></li>
       <li>Read our <a href="${siteUrl}/articles" style="color:#E8A838;text-decoration:none;font-weight:600;">latest articles</a></li>
-      <li>Check out <a href="${siteUrl}/premium" style="color:#E8A838;text-decoration:none;font-weight:600;">premium plans</a></li>
+      <li>Check out <a href="${siteUrl}/join family" style="color:#E8A838;text-decoration:none;font-weight:600;">join family plans</a></li>
     </ul>
 
     <p style="font-size:13px;color:#9CA3AF;margin-top:20px;">

@@ -187,11 +187,11 @@ function MobileVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
             <span style={{
               display: 'inline-flex', alignItems: 'center', padding: '2px 7px', borderRadius: '999px',
               fontSize: '10px', fontWeight: 700,
-              background: video.type === 'premium' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)',
-              color: video.type === 'premium' ? tk.goldDark : tk.teal,
-              border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`,
+              background: video.type === 'join family' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)',
+              color: video.type === 'join family' ? tk.goldDark : tk.teal,
+              border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`,
             }}>
-              {video.type === 'premium' ? '⭐ Premium' : '🎬 Free'}
+              {video.type === 'join family' ? '⭐ join family' : '🎬 Free'}
             </span>
             {video.showOnHomepage && (
               <span style={{ fontSize: '10px', fontWeight: 700, color: tk.teal, background: 'rgba(42,157,143,0.1)', border: '1px solid rgba(42,157,143,0.2)', padding: '2px 7px', borderRadius: '999px' }}>Home</span>
@@ -202,7 +202,7 @@ function MobileVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px', marginBottom: '10px', padding: '9px 11px', borderRadius: '9px', background: 'rgba(27,42,74,0.02)', border: `1px solid ${tk.border}` }}>
         {[
           { lbl: 'TOPIC', val: video.topicName || '—' },
-          { lbl: 'PLAYS', val: video.type === 'premium' ? `🔒 ${video.playLimit || 3} max` : 'Unlimited' },
+          { lbl: 'PLAYS', val: video.type === 'join family' ? `🔒 ${video.playLimit || 3} max` : 'Unlimited' },
           { lbl: 'VIEWS', val: video.views || 0 },
           { lbl: 'ADDED', val: fmtDateShort(video.createdAt) },
         ].map(item => (
@@ -244,8 +244,8 @@ function TabletVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
           <p style={{ fontSize: '13px', fontWeight: 700, color: tk.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{video.title}</p>
-          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'premium' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)', color: video.type === 'premium' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`, flexShrink: 0 }}>
-            {video.type === 'premium' ? '⭐' : '🎬'}{' '}{video.type === 'premium' ? 'Premium' : 'Free'}
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'join family' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)', color: video.type === 'join family' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`, flexShrink: 0 }}>
+            {video.type === 'join family' ? '⭐' : '🎬'}{' '}{video.type === 'join family' ? 'join family' : 'Free'}
           </span>
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -512,7 +512,7 @@ export default function AdminVideosPage() {
   const FILTER_TABS = [
     { id: 'all',     label: 'All',                           count: videos.length },
     { id: 'free',    label: isMobile ? '🎬' : '🎬 Free',    count: videos.filter(v => v.type === 'free').length },
-    { id: 'premium', label: isMobile ? '⭐' : '⭐ Premium',  count: videos.filter(v => v.type === 'premium').length },
+    { id: 'join family', label: isMobile ? '⭐' : '⭐ join family',  count: videos.filter(v => v.type === 'join family').length },
   ]
 
   const EmptyState = () => (
@@ -606,7 +606,7 @@ export default function AdminVideosPage() {
           {[
             { val: videos.length, lbl: 'Total' },
             { val: videos.filter(v => v.type === 'free').length, lbl: 'Free' },
-            { val: videos.filter(v => v.type === 'premium').length, lbl: 'Premium' },
+            { val: videos.filter(v => v.type === 'join family').length, lbl: 'join family' },
             { val: topics.length, lbl: 'Topics' },
             { val: videos.reduce((s, v) => s + (v.views || 0), 0), lbl: 'Views' },
           ].map(s => (
@@ -637,7 +637,7 @@ export default function AdminVideosPage() {
                   <label className="vp-lbl">Type <span style={{ color: tk.gold }}>*</span></label>
                   <select className="adm-input" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={uploading}>
                     <option value="free">🎬 Free</option>
-                    <option value="premium">⭐ Premium</option>
+                    <option value="join family">⭐ join family</option>
                   </select>
                 </div>
               </div>
@@ -693,7 +693,7 @@ export default function AdminVideosPage() {
                     onChange={e => setForm({ ...form, showOnHomepage: e.target.checked })} disabled={uploading} />
                   <span>Show on Homepage</span>
                 </label>
-                {form.type === 'premium' && (
+                {form.type === 'join family' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 11px', borderRadius: '9px', background: 'rgba(232,168,56,0.08)', border: '1px solid rgba(232,168,56,0.2)' }}>
                     <span>🔒</span>
                     <span style={{ fontSize: '12px', color: tk.muted, fontWeight: 500 }}>
@@ -790,8 +790,8 @@ export default function AdminVideosPage() {
                             </div>
                           </td>
                           <td>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'premium' ? 'rgba(232,168,56,.12)' : 'rgba(42,157,143,.1)', color: video.type === 'premium' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,.25)' : 'rgba(42,157,143,.2)'}` }}>
-                              {video.type === 'premium' ? '⭐ Premium' : '🎬 Free'}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'join family' ? 'rgba(232,168,56,.12)' : 'rgba(42,157,143,.1)', color: video.type === 'join family' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,.25)' : 'rgba(42,157,143,.2)'}` }}>
+                              {video.type === 'join family' ? '⭐ join family' : '🎬 Free'}
                             </span>
                           </td>
                           <td>
@@ -800,8 +800,8 @@ export default function AdminVideosPage() {
                               : <span style={{ color: '#D1D5DB' }}>—</span>}
                           </td>
                           <td>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: video.type === 'premium' ? tk.gold : tk.faint }}>
-                              {video.type === 'premium' ? `🔒 ${video.playLimit || 3}` : '∞'}
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: video.type === 'join family' ? tk.gold : tk.faint }}>
+                              {video.type === 'join family' ? `🔒 ${video.playLimit || 3}` : '∞'}
                             </span>
                           </td>
                           <td>

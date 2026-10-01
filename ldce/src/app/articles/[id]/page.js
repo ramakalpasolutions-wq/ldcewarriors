@@ -514,7 +514,7 @@ export default async function ArticlePage({ params }) {
                 dangerouslySetInnerHTML={{ __html: article.content }}
               />
 
-              {/* ── Premium CTA ── */}
+              {/* ── join family CTA ── */}
               <div style={{
                 background: `linear-gradient(135deg, ${tk.navy} 0%, ${tk.navyLight} 100%)`,
                 border: `1px solid rgba(232, 168, 56, 0.15)`,
@@ -544,7 +544,7 @@ export default async function ArticlePage({ params }) {
                     color: '#FFFFFF',
                     marginBottom: '8px',
                   }}>
-                    Unlock Premium Video Lectures
+                    Unlock join family Video Lectures
                   </h3>
                   <p style={{
                     color: 'rgba(255,255,255,0.5)',
@@ -564,7 +564,7 @@ export default async function ArticlePage({ params }) {
                     flexWrap: 'wrap',
                   }}>
                     <Link
-                      href="/premium"
+                      href="/join-family"
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -579,7 +579,7 @@ export default async function ArticlePage({ params }) {
                         boxShadow: '0 6px 20px rgba(232, 168, 56, 0.3)',
                       }}
                     >
-                      Get Premium Access →
+                      Get join family Access →
                     </Link>
                     <Link
                       href="/classes"
@@ -624,7 +624,7 @@ export default async function ArticlePage({ params }) {
                   ← Back to Articles
                 </Link>
                 <Link
-                  href="/premium"
+                  href="/join-family"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -639,7 +639,7 @@ export default async function ArticlePage({ params }) {
                     boxShadow: '0 4px 12px rgba(232, 168, 56, 0.25)',
                   }}
                 >
-                  ⭐ Unlock Premium Videos
+                  ⭐ Unlock join family Videos
                 </Link>
               </div>
             </article>
@@ -709,7 +709,7 @@ export default async function ArticlePage({ params }) {
                 ))}
               </div>
 
-              {/* Premium mini CTA */}
+              {/* join family mini CTA */}
               <div style={{
                 background: `linear-gradient(135deg, ${tk.navy}, ${tk.navyLight})`,
                 border: '1px solid rgba(232, 168, 56, 0.15)',
@@ -738,7 +738,7 @@ export default async function ArticlePage({ params }) {
                     color: '#FFFFFF',
                     marginBottom: '6px',
                   }}>
-                    Get Premium Access
+                    Get join family Access
                   </p>
                   <p style={{
                     fontSize: '12px',
@@ -749,7 +749,7 @@ export default async function ArticlePage({ params }) {
                     200+ expert video lectures for ₹999
                   </p>
                   <Link
-                    href="/premium"
+                    href="/join-family"
                     style={{
                       display: 'block',
                       padding: '10px',
