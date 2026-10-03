@@ -1,3 +1,4 @@
+// src/app/api/admin/users/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -85,7 +86,8 @@ export async function PATCH(req) {
       updateData = { deviceId: null }
     } else if (action === 'activate-premium') {
       const expiry = new Date()
-      expiry.setDate(expiry.getDate() + 30)
+      // 🌟 Changed from + 30 to + 365 (1 Year)
+      expiry.setDate(expiry.getDate() + 365)
       updateData = {
         isPremium: true,
         premiumExpiresAt: expiry,

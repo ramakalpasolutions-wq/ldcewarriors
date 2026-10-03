@@ -1,3 +1,4 @@
+// src/app/admin/users/page.js
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
@@ -100,7 +101,8 @@ export default function AdminUsersPage() {
             setSelectedUser(p => ({ ...p, isPremium:true })); 
             setUserDetail(p => p ? { ...p, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : p) 
           }
-          toast.success('Join Family membership activated (30 Days)')
+          // 🌟 Changed toast text to 365 Days
+          toast.success('Join Family membership activated (365 Days)')
         } else if (action==='deactivate-premium') {
           setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:false, premiumExpiresAt:null } : u))
           if (selectedUser?._id===userId) { 
