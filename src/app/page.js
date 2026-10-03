@@ -466,12 +466,23 @@ export default async function HomePage() {
 
           {/* FREE VIDEOS */}
           <section className="section">
-            <div className="section-hrow">
-              <SectionHeader
-                badge="Free Videos"
-                title="Start Learning Today"
-                subtitle="Watch our free sample videos and get a taste of expert-led content."
-              />
+            <div className="section-hrow" style={{ alignItems: 'center', marginBottom: '22px' }}>
+              
+              {/* Banner image — white bg removed, size decreased */}
+              <div style={{ maxWidth: '200px', width: '100%' }}>
+                <img
+                  src="/free-videos-banner.png"
+                  alt="Free videos - Watch demo classes"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain',
+                    mixBlendMode: 'multiply',   /* removes white bg, blends into #F5F3EF */
+                  }}
+                />
+              </div>
+
               <div className="hide-mobile">
                 <ViewAllBtn href="/classes" label="View All Classes →" />
               </div>
@@ -496,12 +507,30 @@ export default async function HomePage() {
 
           {/* TOPIC-WISE COURSES */}
           <section className="section">
-            <SectionHeader
+            
+            {/* 🌟 Added complete lecture banner image here (centered, resized, with white bg blended out) */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+              <div style={{ maxWidth: '350px', width: '150%' }}>
+                <img
+                  src="/complete-lectures-banner.png"
+                  alt="Complete Lectures Banner"
+                  style={{
+                    width: '400%',
+                    height: 'auto',
+                    display: 'block',
+                    objectFit: 'contain',
+                    mixBlendMode: 'multiply',   /* removes white bg, blends into #F5F3EF */
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* <SectionHeader
               badge={isPremiumUser ? "Family Library" : "Join Family Content"}
               title="Topic-Wise Courses"
               subtitle={isPremiumUser ? "Browse your topics below to watch premium videos." : "Comprehensive Join Family courses. Click to view videos."}
               center
-            />
+            /> */}
 
             {topics.length > 0 ? (
               <div className="topics-grid">
