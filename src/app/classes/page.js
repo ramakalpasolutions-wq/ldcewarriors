@@ -1,3 +1,4 @@
+// src/app/classes/page.js
 'use client'
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Navbar from '@/components/layout/Navbar'
@@ -67,14 +68,7 @@ function SkeletonSidebarCard() {
 }
 
 /* ─── Play Count Badge ─── */
-function PlayCountBadge({ videoId, playLimit = 3, serverCount = null }) {
-  const [localCount, setLocalCount] = useState(0)
-  useEffect(() => {
-    if (serverCount === null && typeof window !== 'undefined')
-      setLocalCount(parseInt(localStorage.getItem(`ldce_plays_${videoId}`) || '0', 10))
-  }, [videoId, serverCount])
-
-  const used = serverCount !== null ? serverCount : localCount
+function PlayCountBadge({ playLimit = 3, used = 0 }) {
   const remaining = Math.max(0, playLimit - used)
 
   if (remaining <= 0) return (
@@ -131,7 +125,7 @@ function SectionTabs({ activeTab, onTab }) {
           style={{
             all: 'unset', flex: 1, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '5px', padding: '9px 12px', borderRadius: '9px',
+            gap: '5px', padding: '9px 12px', borderRadius: '999px',
             fontSize: '12px', fontWeight: 700, lineHeight: 1,
             transition: 'all 0.22s ease',
             background: activeTab === tab.id
@@ -501,19 +495,16 @@ function ClassesPageInner() {
   const [activeTopic,       setActiveTopic]       = useState('')
   const [loading,           setLoading]           = useState(true)
   const [joinFamilyLoading, setJoinFamilyLoading] = useState(false)
-  const [playLimitHit,      setPlayLimitHit]      = useState(false)
   const [playCounts,        setPlayCounts]        = useState({})
   const [isMobile,          setIsMobile]          = useState(false)
   const [isTablet,          setIsTablet]          = useState(false)
   const [activeTab,         setActiveTab]         = useState('free')
 
-  // 🌟 Prevents double play deduction from rapid/duplicate clicks
   const isPlayingRef = useRef(false)
-
   const router       = useRouter()
   const searchParams = useSearchParams()
 
-  /* Responsive */
+  /* Responsive screen check */
   useEffect(() => {
     function check() {
       setIsMobile(window.innerWidth < 640)
@@ -524,26 +515,43 @@ function ClassesPageInner() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  /* Auth */
-  useEffect(() => {
-    const user = localStorage.getItem('ldce_user')
-    setIsLoggedIn(!!user)
-    
-    fetch('/api/user/profile')
-      .then(r => r.json())
-      .then(data => {
-        if (data.success && data.user) {
-          setIsLoggedIn(true)
-          const isPremiumActive = Boolean(
-            data.user.isPremium &&
-            (!data.user.premiumExpiresAt || new Date(data.user.premiumExpiresAt) > new Date())
-          )
-          setIsSubscribed(isPremiumActive)
-          localStorage.setItem('ldce_user', JSON.stringify(data.user))
+  /* Complete Database-Driven Session Synchronizer */
+  const syncSessionAndPlayCounts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/profile')
+      const data = await res.json()
+      if (data.success && data.user) {
+        setIsLoggedIn(true)
+        const isPremiumActive = Boolean(
+          (data.user.isPremium && (!data.user.premiumExpiresAt || new Date(data.user.premiumExpiresAt) > new Date())) ||
+          (data.user.role && data.user.role.toLowerCase() === 'admin')
+        )
+        setIsSubscribed(isPremiumActive)
+        
+        // Load fresh counts directly from DB
+        const counts = {}
+        if (data.user.videoPlays) {
+          data.user.videoPlays.forEach(play => {
+            counts[play.videoId] = play.playCount
+          })
         }
-      })
-      .catch(() => {})
+        setPlayCounts(counts)
+        localStorage.setItem('ldce_user', JSON.stringify(data.user))
+      } else {
+        setIsLoggedIn(false)
+        setIsSubscribed(false)
+        setPlayCounts({})
+        localStorage.removeItem('ldce_user')
+      }
+    } catch {
+      setIsLoggedIn(false)
+    }
   }, [])
+
+  // Sync on Mount
+  useEffect(() => {
+    syncSessionAndPlayCounts()
+  }, [syncSessionAndPlayCounts])
 
   /* Initial load */
   useEffect(() => {
@@ -573,7 +581,7 @@ function ClassesPageInner() {
     load()
   }, [])
 
-  /* URL topic param */
+  /* URL topic param handling */
   useEffect(() => {
     const topicParam = searchParams?.get('topic')
     if (topicParam && topics.length > 0 && topics.find(tp => tp._id === topicParam)) {
@@ -607,105 +615,316 @@ function ClassesPageInner() {
     router.push('/join-family')
   }
 
-  // 🌟 Fixed: single-invocation play handler
-// In src/app/classes/page.js
-// Replace your handleVideoClick function with this updated version:
+  /* Single-Invocation API Dispatcher */
+  async function handleVideoClick(video) {
+  if (isPlayingRef.current) {
+    return
+  }
 
-async function handleVideoClick(video) {
-  if (isPlayingRef.current) return
   isPlayingRef.current = true
 
-  setPlayLimitHit(false)
-  const videoId = video._id || video.id
+  const videoId =
+    video._id || video.id
 
   try {
-    /* ── FREE VIDEO ── */
-    if (video.type === 'free') {
-      try {
-        const res = await fetch('/api/videos/play', {
+    /* ─────────────────────────────
+       FREE VIDEO
+    ───────────────────────────── */
+
+    if (video.type?.toLowerCase() === 'free') {
+      const res =
+        await fetch('/api/videos/play', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoId }),
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify({
+            videoId,
+          }),
         })
-        const data = await res.json()
+
+      const data =
+        await res.json()
+
+      if (
+        data.success &&
+        data.canPlay &&
+        data.streamUrl
+      ) {
         setSelectedVideo({
           ...video,
-          videoUrl: data.canPlay && data.streamUrl ? data.streamUrl : video.videoUrl,
+          videoUrl: data.streamUrl,
         })
-      } catch {
-        setSelectedVideo(video)
+      } else {
+        toast.error(
+          data.error ||
+            'Unable to play video.'
+        )
       }
+
       return
     }
 
-    /* ── JOIN FAMILY VIDEO ── */
+    /* ─────────────────────────────
+       LOGIN REQUIRED
+    ───────────────────────────── */
+
     if (!isLoggedIn) {
-      toast.error('Please login to access Join Family content', { icon: '🔐' })
-      router.push('/auth/login?redirect=/classes')
+      toast.error(
+        'Please login to access Join Family content',
+        {
+          icon: '🔐',
+        }
+      )
+
+      router.push(
+        '/auth/login?redirect=/classes'
+      )
+
       return
     }
+
+    /* ─────────────────────────────
+       PREMIUM REQUIRED
+    ───────────────────────────── */
 
     if (!isSubscribed) {
       handleSubscribeClick()
       return
     }
 
-    const res = await fetch('/api/videos/play', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ videoId }),
-    })
-    const data = await res.json()
+    /* ─────────────────────────────
+       LOCAL DB-SYNCED LIMIT CHECK
+    ───────────────────────────── */
 
-    if (data.canPlay && data.streamUrl) {
-      const usedCount = data.playCount ?? 1
-      const serverLimit = data.limit || video.playLimit || 3
-      const remaining = data.remaining ?? Math.max(0, serverLimit - usedCount)
+    const currentUsed =
+      playCounts[videoId] || 0
 
-      // Update state and storage synchronously
-      setPlayCounts(prev => ({ ...prev, [videoId]: usedCount }))
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`ldce_plays_${videoId}`, String(usedCount))
+    const currentLimit =
+      video.playLimit || 3
+
+    if (
+      currentUsed >= currentLimit
+    ) {
+      toast.error(
+        `Play limit reached! All ${currentLimit} plays used.`,
+        {
+          icon: '🔒',
+          duration: 5000,
+        }
+      )
+
+      return
+    }
+
+    /* ─────────────────────────────
+       SERVER AUTHORIZATION
+    ───────────────────────────── */
+
+    const res =
+      await fetch('/api/videos/play', {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          videoId,
+        }),
+      })
+
+    const data =
+      await res.json()
+
+    /* ─────────────────────────────
+       PLAY ALLOWED
+    ───────────────────────────── */
+
+    if (
+      data.success &&
+      data.canPlay &&
+      data.streamUrl
+    ) {
+      const usedCount =
+        Number(data.playCount) || 0
+
+      const serverLimit =
+        Number(data.limit) ||
+        Number(video.playLimit) ||
+        3
+
+      const remaining =
+        typeof data.remaining ===
+        'number'
+          ? data.remaining
+          : Math.max(
+              0,
+              serverLimit - usedCount
+            )
+
+      /*
+       * IMPORTANT:
+       * Never increment client-side.
+       *
+       * Use the exact value returned
+       * by MongoDB/API.
+       */
+
+      setPlayCounts(prev => ({
+        ...prev,
+        [videoId]: usedCount,
+      }))
+
+      setSelectedVideo({
+        ...video,
+
+        videoUrl:
+          data.streamUrl,
+
+        isLocked: false,
+      })
+
+      if (
+        data.duplicateRequest
+      ) {
+        return
       }
-
-      setSelectedVideo({ ...video, videoUrl: data.streamUrl, isLocked: false })
 
       if (remaining === 0) {
-        toast('⚠️ Last play used — this video is now locked.', {
-          duration: 5000,
-          style: { background: '#FEF3C7', color: '#92400E', fontWeight: 600 },
-        })
-      } else if (remaining === 1) {
-        toast('⚠️ Only 1 play remaining!', { icon: '⚠️', duration: 4000 })
+        toast(
+          '⚠️ Last play used — this video is now locked.',
+          {
+            duration: 5000,
+
+            style: {
+              background:
+                '#FEF3C7',
+
+              color:
+                '#92400E',
+
+              fontWeight: 600,
+            },
+          }
+        )
+      } else if (
+        remaining === 1
+      ) {
+        toast(
+          '⚠️ Only 1 play remaining!',
+          {
+            icon: '⚠️',
+            duration: 4000,
+          }
+        )
       } else {
-        toast.success(`${remaining} of ${serverLimit} plays remaining`, { duration: 2500 })
+        toast.success(
+          `${remaining} of ${serverLimit} plays remaining`,
+          {
+            duration: 2500,
+          }
+        )
       }
-    } else if (data.reason === 'play_limit_exceeded') {
-      const serverLimit = data.limit || video.playLimit || 3
-      setPlayCounts(prev => ({ ...prev, [videoId]: serverLimit }))
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`ldce_plays_${videoId}`, String(serverLimit))
-      }
-      setPlayLimitHit(true)
-      toast.error(`Play limit reached! All ${serverLimit} plays used.`, {
-        duration: 6000,
-        style: { background: '#FEE2E2', color: '#991B1B', fontWeight: 600 },
-      })
-    } else if (data.reason === 'no_subscription') {
-      setIsSubscribed(false)
-      toast('Your family membership is inactive.', { icon: '⭐', duration: 5000 })
-      router.push('/join-family')
-    } else {
-      toast.error(data.error || 'Failed to play video.')
+
+      return
     }
-  } catch (err) {
-    console.error('Play error:', err)
-    toast.error('Network error.')
+
+    /* ─────────────────────────────
+       LIMIT REACHED
+    ───────────────────────────── */
+
+    if (
+      data.reason ===
+      'play_limit_exceeded'
+    ) {
+      const serverLimit =
+        Number(data.limit) ||
+        Number(video.playLimit) ||
+        3
+
+      setPlayCounts(prev => ({
+        ...prev,
+        [videoId]:
+          Number(data.playCount) ||
+          serverLimit,
+      }))
+
+      toast.error(
+        `Play limit reached! All ${serverLimit} plays used.`,
+        {
+          icon: '🔒',
+
+          duration: 6000,
+
+          style: {
+            background:
+              '#FEE2E2',
+
+            color:
+              '#991B1B',
+
+            fontWeight: 600,
+          },
+        }
+      )
+
+      return
+    }
+
+    /* ─────────────────────────────
+       PREMIUM EXPIRED / REMOVED
+    ───────────────────────────── */
+
+    if (
+      data.reason ===
+      'no_subscription'
+    ) {
+      setIsSubscribed(false)
+
+      toast(
+        'Your family membership is inactive.',
+        {
+          icon: '⭐',
+          duration: 5000,
+        }
+      )
+
+      return
+    }
+
+    if (
+      data.reason ===
+      'account_inactive'
+    ) {
+      toast.error(
+        'Your account is currently inactive.'
+      )
+
+      return
+    }
+
+    toast.error(
+      data.error ||
+        'Failed to play video.'
+    )
+  } catch (error) {
+    console.error(
+      'Play error:',
+      error
+    )
+
+    toast.error(
+      'Network error. Please try again.'
+    )
   } finally {
     isPlayingRef.current = false
   }
 }
-
   const activeTopicData = topics.find(tp => tp._id === activeTopic)
   const showSidebar     = !isMobile && !isTablet
   const showChips       = isMobile || isTablet
@@ -751,24 +970,18 @@ async function handleVideoClick(video) {
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: gridGap }}>
           {joinFamilyVideos.map(video => {
             const videoId     = video._id || video.id
-            const serverCount = playCounts[videoId] ?? null
+            const usedCount   = playCounts[videoId] || 0
             const limit       = video.playLimit || 3
-            const usedCount   = serverCount !== null
-              ? serverCount
-              : (typeof window !== 'undefined'
-                ? parseInt(localStorage.getItem(`ldce_plays_${videoId}`) || '0', 10) : 0)
-
             const isExhausted = isSubscribed && usedCount >= limit
 
             return (
               <div key={videoId}>
                 {isSubscribed && (
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '5px' }}>
-                    <PlayCountBadge videoId={videoId} playLimit={limit} serverCount={serverCount}/>
+                    <PlayCountBadge playLimit={limit} used={usedCount}/>
                   </div>
                 )}
 
-                {/* 🌟 NO outer onClick wrapper — only VideoCard handles the click */}
                 <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden' }}>
                   <VideoCard
                     video={{ ...video, isLocked: !isSubscribed || isExhausted }}
@@ -780,7 +993,7 @@ async function handleVideoClick(video) {
                     isSubscribed={isSubscribed}
                   />
 
-                  {/* Locked overlay — only for non-subscribers */}
+                  {/* Locked overlay for non-subscribers */}
                   {!isSubscribed && (
                     <div
                       style={{
@@ -1197,8 +1410,11 @@ async function handleVideoClick(video) {
         {selectedVideo && (
           <VideoPlayerModal
             video={selectedVideo}
-            onClose={() => { setSelectedVideo(null); setPlayLimitHit(false) }}
-            onPlayLimitExceeded={() => setPlayLimitHit(true)}
+            onClose={() => {
+              setSelectedVideo(null)
+              // Auto-sync play count remaining badges dynamically when closing video player modal
+              syncSessionAndPlayCounts()
+            }}
           />
         )}
         <Footer/>

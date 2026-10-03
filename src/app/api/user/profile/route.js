@@ -3,69 +3,63 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req) {
   try {
-    const token = req.cookies.get('token')?.value
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const token =
+      req.cookies.get('token')?.value ||
+      req.cookies.get('adminToken')?.value ||
+      req.cookies.get('admin_token')?.value
+
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
 
     const decoded = verifyToken(token)
-    if (!decoded) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    const userId = decoded?.userId || decoded?.id
+    if (!decoded || !userId) {
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 })
+    }
 
-    const deviceId = req.cookies.get('deviceId')?.value
-
+    // Always fetch fresh, un-cached data directly from the DB
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: userId },
       select: {
         id: true,
         fullName: true,
         email: true,
         mobile: true,
-        role: true,
         isEmailVerified: true,
         isMobileVerified: true,
         isActive: true,
         isPremium: true,
         premiumExpiresAt: true,
+        role: true,
+        profileImage: true,
         deviceId: true,
-        addressLine: true,
-        addressCity: true,
-        addressState: true,
-        addressPincode: true,
-        createdAt: true,
-        // 🌟 Include video play records so client browser syncs with DB
         videoPlays: {
           select: {
             videoId: true,
             playCount: true,
-          }
-        }
-      }
+          },
+        },
+      },
     })
 
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-
-    if (deviceId && user.deviceId && user.deviceId !== deviceId) {
-      return NextResponse.json({ error: 'Session expired. Please login again.', deviceMismatch: true }, { status: 401 })
-    }
-
-    let isPremiumActive = user.isPremium
-    if (user.isPremium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) <= new Date()) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { isPremium: false }
-      })
-      isPremiumActive = false
+    if (!user || !user.isActive) {
+      return NextResponse.json({ success: false, error: 'User inactive or not found' }, { status: 403 })
     }
 
     return NextResponse.json({
       success: true,
-      user: { 
-        ...user, 
-        isPremium: isPremiumActive,
+      user: {
+        ...user,
+        _id: user.id,
       },
     })
   } catch (error) {
-    console.error('Profile API error:', error)
-    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
+    console.error('User profile fetch error:', error)
+    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 })
   }
 }

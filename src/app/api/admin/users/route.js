@@ -166,51 +166,132 @@ export async function PATCH(req) {
     }
 
     /* ── 🌟 RESET ALL PLAY LIMITS BACK TO 0 (Reload 3 Plays) ── */
-    if (action === 'reset-plays') {
-      await prisma.videoPlay.updateMany({
-        where: { userId: userId },
-        data: { 
-          playCount: 0, 
-          lastPlayed: new Date(0) 
-        },
-      })
-      return NextResponse.json({ success: true, message: 'All play limits reset to 0' })
-    }
+   /* ─────────────────────────────────────────
+   RESET ALL VIDEO PLAY COUNTS
 
-    /* ── ACTIVATE PREMIUM (JOIN FAMILY) ── */
-    if (action === 'activate-premium') {
-      const expiryDate = new Date()
-      expiryDate.setFullYear(expiryDate.getFullYear() + 1)
+   playCount means USED plays:
+   0 = 3 remaining
+   1 = 2 remaining
+   2 = 1 remaining
+   3 = 0 remaining
+───────────────────────────────────────── */
+if (action === 'reset-plays') {
+  const result = await prisma.videoPlay.updateMany({
+    where: {
+      userId,
+    },
 
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          isPremium: true,
-          premiumExpiresAt: expiryDate,
-        },
-      })
-      return NextResponse.json({
-        success: true,
-        message: 'Activated Premium Membership',
+    data: {
+      playCount: 0,
+
+      // Prevent the 15-second duplicate-play guard
+      // from treating the next play as the old request.
+      lastPlayed: new Date(0),
+    },
+  })
+
+  return NextResponse.json({
+    success: true,
+
+    message:
+      'Video play limits reset successfully',
+
+    resetRecords: result.count,
+
+    playCount: 0,
+  })
+}
+
+/* ─────────────────────────────────────────
+   ACTIVATE PREMIUM / JOIN FAMILY
+───────────────────────────────────────── */
+if (action === 'activate-premium') {
+  const expiryDate = new Date()
+
+  expiryDate.setFullYear(
+    expiryDate.getFullYear() + 1
+  )
+
+  const updatedUser =
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+
+      data: {
+        isPremium: true,
         premiumExpiresAt: expiryDate,
-      })
-    }
+      },
 
-    /* ── DEACTIVATE PREMIUM ── */
-    if (action === 'deactivate-premium') {
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          isPremium: false,
-          premiumExpiresAt: null,
-        },
-      })
-      return NextResponse.json({ success: true, message: 'Revoked Premium Membership' })
-    }
+      select: {
+        id: true,
+        isPremium: true,
+        premiumExpiresAt: true,
+      },
+    })
 
-    return NextResponse.json({ success: false, error: 'Unsupported Action Type' }, { status: 400 })
-  } catch (error) {
-    console.error('Admin PATCH Action Error:', error)
-    return NextResponse.json({ success: false, error: 'Failed to process admin action' }, { status: 500 })
+  return NextResponse.json({
+  success: true,
+  message: 'Join Family membership deactivated',
+  isPremium: updatedUser.isPremium,
+  premiumExpiresAt: updatedUser.premiumExpiresAt,
+})
+}
+
+/* ─────────────────────────────────────────
+   DEACTIVATE PREMIUM / REMOVE FAMILY
+───────────────────────────────────────── */
+if (action === 'deactivate-premium') {
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+
+    data: {
+      isPremium: false,
+      premiumExpiresAt: null,
+    },
+
+    select: {
+      id: true,
+      isPremium: true,
+      premiumExpiresAt: true,
+    },
+  })
+
+  return NextResponse.json({
+    success: true,
+    message: 'Join Family membership deactivated',
+    isPremium: updatedUser.isPremium,
+    premiumExpiresAt: updatedUser.premiumExpiresAt,
+  })
+}
+
+/* ─────────────────────────────────────────
+   INVALID ACTION
+───────────────────────────────────────── */
+
+return NextResponse.json(
+  {
+    success: false,
+    error: 'Invalid action',
+  },
+  {
+    status: 400,
   }
+)
+
+} catch (error) {
+  console.error('Admin users PATCH error:', error)
+
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'Internal Server Error',
+    },
+    {
+      status: 500,
+    }
+  )
+}
 }

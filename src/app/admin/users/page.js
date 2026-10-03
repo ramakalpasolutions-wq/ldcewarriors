@@ -74,53 +74,344 @@ export default function AdminUsersPage() {
     unverified: users.filter(u => !u.isEmailVerified || !u.isMobileVerified).length,
   }
 
-  async function handleAction(userId, action, e) {
-    e?.stopPropagation()
-    setActionLoading(`${userId}-${action}`)
-    try {
-      const res  = await fetch('/api/admin/users', {
-        method:'PATCH', credentials:'include',
-        headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify({ id:userId, action }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        if (action==='block') {
-          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isActive:false } : u))
-          if (selectedUser?._id===userId) { setSelectedUser(p => ({ ...p, isActive:false })); setUserDetail(p => p ? { ...p, isActive:false } : p) }
-          toast.success('User blocked')
-        } else if (action==='unblock') {
-          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isActive:true } : u))
-          if (selectedUser?._id===userId) { setSelectedUser(p => ({ ...p, isActive:true })); setUserDetail(p => p ? { ...p, isActive:true } : p) }
-          toast.success('User unblocked')
-        } else if (action==='reset-device') { 
-          toast.success('Device session reset') 
-        } else if (action==='reset-plays') { 
-          // Reset local play counts to 0 instantly in drawer
-          if (selectedUser?._id===userId) {
-            setUserDetail(p => p ? { ...p, videoPlays: p.videoPlays?.map(vp => ({ ...vp, playCount: 0 })) } : p)
+  async function handleAction(
+  userId,
+  action,
+  e
+) {
+  e?.stopPropagation()
+
+  setActionLoading(
+    `${userId}-${action}`
+  )
+
+  try {
+    const res = await fetch(
+      '/api/admin/users',
+      {
+        method: 'PATCH',
+
+        credentials: 'include',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+        },
+
+        body: JSON.stringify({
+          id: userId,
+          action,
+        }),
+      }
+    )
+
+    const data = await res.json()
+
+    if (!res.ok || !data.success) {
+      toast.error(
+        data.error ||
+          'Action failed'
+      )
+
+      return
+    }
+
+    /* ───────── Block ───────── */
+
+    if (action === 'block') {
+      setUsers(prev =>
+        prev.map(user =>
+          user._id === userId
+            ? {
+                ...user,
+                isActive: false,
+              }
+            : user
+        )
+      )
+
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setSelectedUser(prev =>
+          prev
+            ? {
+                ...prev,
+                isActive: false,
+              }
+            : prev
+        )
+
+        setUserDetail(prev =>
+          prev
+            ? {
+                ...prev,
+                isActive: false,
+              }
+            : prev
+        )
+      }
+
+      toast.success(
+        'User blocked'
+      )
+
+      return
+    }
+
+    /* ───────── Unblock ───────── */
+
+    if (action === 'unblock') {
+      setUsers(prev =>
+        prev.map(user =>
+          user._id === userId
+            ? {
+                ...user,
+                isActive: true,
+              }
+            : user
+        )
+      )
+
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setSelectedUser(prev =>
+          prev
+            ? {
+                ...prev,
+                isActive: true,
+              }
+            : prev
+        )
+
+        setUserDetail(prev =>
+          prev
+            ? {
+                ...prev,
+                isActive: true,
+              }
+            : prev
+        )
+      }
+
+      toast.success(
+        'User unblocked'
+      )
+
+      return
+    }
+
+    /* ───────── Reset Device ───────── */
+
+    if (
+      action ===
+      'reset-device'
+    ) {
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setUserDetail(prev =>
+          prev
+            ? {
+                ...prev,
+                deviceId: null,
+              }
+            : prev
+        )
+      }
+
+      toast.success(
+        'Device session reset'
+      )
+
+      return
+    }
+
+    /* ───────── Reset Plays ───────── */
+
+    if (
+      action ===
+      'reset-plays'
+    ) {
+      /*
+       * MongoDB playCount represents
+       * USED plays.
+       *
+       * Reset = 0 used.
+       * Therefore user gets all
+       * playLimit plays again.
+       */
+
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setUserDetail(prev => {
+          if (!prev) {
+            return prev
           }
-          toast.success('Video play limits reset to 0 for this user')
-        } else if (action==='activate-premium') {
-          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : u))
-          if (selectedUser?._id===userId) { 
-            setSelectedUser(p => ({ ...p, isPremium:true })); 
-            setUserDetail(p => p ? { ...p, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : p) 
+
+          return {
+            ...prev,
+
+            videoPlays:
+              (
+                prev.videoPlays ||
+                []
+              ).map(play => ({
+                ...play,
+
+                playCount: 0,
+
+                lastPlayed:
+                  new Date(0)
+                    .toISOString(),
+              })),
           }
-          toast.success('Join Family membership activated (365 Days)')
-        } else if (action==='deactivate-premium') {
-          setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:false, premiumExpiresAt:null } : u))
-          if (selectedUser?._id===userId) { 
-            setSelectedUser(p => ({ ...p, isPremium:false })); 
-            setUserDetail(p => p ? { ...p, isPremium:false, premiumExpiresAt:null } : p) 
-          }
-          toast.success('Join Family membership deactivated')
-        }
-      } else toast.error(data.error || 'Action failed')
-    } catch { toast.error('Failed to perform action') }
+        })
+      }
+
+      toast.success(
+        'Play limits reset — user has all plays available again'
+      )
+
+      return
+    }
+
+    /* ───────── Add Family ───────── */
+
+    if (
+      action ===
+      'activate-premium'
+    ) {
+      setUsers(prev =>
+        prev.map(user =>
+          user._id === userId
+            ? {
+                ...user,
+
+                isPremium: true,
+
+                premiumExpiresAt:
+                  data.premiumExpiresAt,
+              }
+            : user
+        )
+      )
+
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setSelectedUser(prev =>
+          prev
+            ? {
+                ...prev,
+
+                isPremium: true,
+
+                premiumExpiresAt:
+                  data.premiumExpiresAt,
+              }
+            : prev
+        )
+
+        setUserDetail(prev =>
+          prev
+            ? {
+                ...prev,
+
+                isPremium: true,
+
+                premiumExpiresAt:
+                  data.premiumExpiresAt,
+              }
+            : prev
+        )
+      }
+
+      toast.success(
+        'Join Family membership activated for 365 days'
+      )
+
+      return
+    }
+
+    /* ───────── Remove Family ───────── */
+
+    if (
+      action ===
+      'deactivate-premium'
+    ) {
+      setUsers(prev =>
+        prev.map(user =>
+          user._id === userId
+            ? {
+                ...user,
+
+                isPremium: false,
+
+                premiumExpiresAt:
+                  null,
+              }
+            : user
+        )
+      )
+
+      if (
+        selectedUser?._id ===
+        userId
+      ) {
+        setSelectedUser(prev =>
+          prev
+            ? {
+                ...prev,
+
+                isPremium: false,
+
+                premiumExpiresAt:
+                  null,
+              }
+            : prev
+        )
+
+        setUserDetail(prev =>
+          prev
+            ? {
+                ...prev,
+
+                isPremium: false,
+
+                premiumExpiresAt:
+                  null,
+              }
+            : prev
+        )
+      }
+
+      toast.success(
+        'Join Family membership deactivated'
+      )
+
+      return
+    }
+  } catch (error) {
+    console.error(
+      'Admin user action error:',
+      error
+    )
+
+    toast.error(
+      'Failed to perform action'
+    )
+  } finally {
     setActionLoading(null)
   }
-
+}
   const FILTER_TABS = [
     { id:'all',        label:'All'        },
     { id:'subscribed', label:'Join Family'    },
@@ -336,9 +627,71 @@ export default function AdminUsersPage() {
                             {new Date(vp.lastPlayed).toLocaleDateString('en-IN',{ day:'numeric', month:'short', year:'numeric' })}
                           </p>
                         </div>
-                        <span style={{ fontSize:'11px', fontWeight:700, color:vp.playCount>=3 ? '#ef4444' : '#1B2A4A', background:vp.playCount>=3 ? 'rgba(239,68,68,0.08)' : 'rgba(27,42,74,0.06)', padding:'2px 8px', borderRadius:'6px', flexShrink:0 }}>
-                          {vp.playCount}/3
-                        </span>
+                        {(() => {
+  const playLimit =
+    Number(
+      vp.video?.playLimit
+    ) || 3
+
+  const usedPlays =
+    Math.max(
+      0,
+      Number(vp.playCount) || 0
+    )
+
+  const remaining =
+    Math.max(
+      0,
+      playLimit - usedPlays
+    )
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        gap: '2px',
+        flexShrink: 0,
+      }}
+    >
+      <span
+        style={{
+          fontSize: '11px',
+          fontWeight: 700,
+
+          color:
+            remaining === 0
+              ? '#ef4444'
+              : remaining === 1
+                ? '#f59e0b'
+                : '#16a34a',
+
+          background:
+            remaining === 0
+              ? 'rgba(239,68,68,0.08)'
+              : remaining === 1
+                ? 'rgba(245,158,11,0.08)'
+                : 'rgba(22,163,74,0.08)',
+
+          padding: '3px 8px',
+          borderRadius: '6px',
+        }}
+      >
+        {remaining}/{playLimit} left
+      </span>
+
+      <span
+        style={{
+          fontSize: '9px',
+          color: '#9CA3AF',
+        }}
+      >
+        {usedPlays} used
+      </span>
+    </div>
+  )
+})()}
                       </div>
                     )) : (
                       <div style={{ padding:'14px', textAlign:'center' }}>
