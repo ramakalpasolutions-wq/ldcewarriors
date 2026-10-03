@@ -19,7 +19,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
-  // Track scroll position for glassmorphic transition
+  // Track scroll position for border and shadow updates
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -86,18 +86,18 @@ export default function Navbar() {
       <style>{`
         @keyframes pulseGlow {
           0%, 100% {
-            box-shadow: 0 0 14px rgba(232, 168, 56, 0.35), 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 14px rgba(232, 168, 56, 0.35), 0 4px 15px rgba(0, 0, 0, 0.1);
           }
           50% {
-            box-shadow: 0 0 24px rgba(232, 168, 56, 0.65), 0 6px 20px rgba(232, 168, 56, 0.3);
+            box-shadow: 0 0 24px rgba(232, 168, 56, 0.65), 0 6px 20px rgba(232, 168, 56, 0.2);
           }
         }
         @keyframes activeGlow {
           0%, 100% {
-            box-shadow: 0 0 12px rgba(42, 157, 143, 0.35);
+            box-shadow: 0 0 12px rgba(42, 157, 143, 0.2);
           }
           50% {
-            box-shadow: 0 0 20px rgba(42, 157, 143, 0.65);
+            box-shadow: 0 0 20px rgba(42, 157, 143, 0.45);
           }
         }
         @keyframes sparkleRotate {
@@ -123,12 +123,12 @@ export default function Navbar() {
           text-decoration: none;
           transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
           animation: pulseGlow 3s infinite;
-          border: 1.5px solid rgba(255, 255, 255, 0.45);
+          border: 1.5px solid rgba(255, 255, 255, 0.6);
           overflow: hidden;
         }
         .nav-join-family-btn:hover {
           transform: translateY(-2px) scale(1.04);
-          box-shadow: 0 0 30px rgba(232, 168, 56, 0.8), 0 8px 24px rgba(0,0,0,0.25) !important;
+          box-shadow: 0 0 30px rgba(232, 168, 56, 0.8), 0 8px 24px rgba(0,0,0,0.15) !important;
         }
 
         /* ── Active Family Member Badge (When ACTIVATED) ── */
@@ -138,9 +138,9 @@ export default function Navbar() {
           gap: 6px;
           padding: 7px 16px;
           border-radius: 999px;
-          background: rgba(42, 157, 143, 0.15);
-          border: 1.5px solid rgba(42, 157, 143, 0.4);
-          color: #5DE8D8 !important;
+          background: rgba(42, 157, 143, 0.08);
+          border: 1.5px solid rgba(42, 157, 143, 0.3);
+          color: #2A9D8F !important;
           font-family: 'DM Sans', sans-serif;
           font-size: 13px;
           font-weight: 700;
@@ -149,8 +149,8 @@ export default function Navbar() {
           animation: activeGlow 3s infinite;
         }
         .nav-family-active-badge:hover {
-          background: rgba(42, 157, 143, 0.25);
-          border-color: #5DE8D8;
+          background: rgba(42, 157, 143, 0.15);
+          border-color: #2A9D8F;
           transform: translateY(-1px);
         }
 
@@ -161,22 +161,23 @@ export default function Navbar() {
           line-height: 1;
         }
 
+        /* Light theme link states */
         .nav-link-standard {
           position: relative;
           font-size: 14px;
           font-weight: 600;
-          color: rgba(255, 255, 255, 0.78);
+          color: rgba(27, 42, 74, 0.75);
           text-decoration: none;
           padding: 6px 12px;
           border-radius: 8px;
           transition: all 0.2s ease;
         }
         .nav-link-standard:hover {
-          color: #FFFFFF;
-          background: rgba(255, 255, 255, 0.06);
+          color: #1B2A4A;
+          background: rgba(27, 42, 74, 0.05);
         }
         .nav-link-standard.active {
-          color: #E8A838;
+          color: #D4922A;
           background: rgba(232, 168, 56, 0.08);
         }
       `}</style>
@@ -189,15 +190,15 @@ export default function Navbar() {
           right: 0,
           zIndex: 900,
           background: isScrolled
-            ? 'rgba(13, 24, 41, 0.94)'
-            : 'linear-gradient(180deg, rgba(13, 24, 41, 0.9) 0%, rgba(13, 24, 41, 0.7) 100%)',
+            ? 'rgba(255, 255, 255, 0.95)'
+            : 'rgba(255, 255, 255, 0.88)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: isScrolled
-            ? '1px solid rgba(232, 168, 56, 0.15)'
-            : '1px solid rgba(255, 255, 255, 0.05)',
+            ? '1px solid rgba(0, 0, 0, 0.08)'
+            : '1px solid rgba(0, 0, 0, 0.04)',
           transition: 'all 0.35s ease',
-          boxShadow: isScrolled ? '0 10px 30px rgba(0, 0, 0, 0.35)' : 'none',
+          boxShadow: isScrolled ? '0 10px 30px rgba(0, 0, 0, 0.06)' : 'none',
         }}
       >
         <div
@@ -229,7 +230,7 @@ export default function Navbar() {
                 overflow: 'hidden',
                 flexShrink: 0,
                 border: '1.5px solid rgba(232, 168, 56, 0.3)',
-                boxShadow: '0 4px 12px rgba(232, 168, 56, 0.15)',
+                boxShadow: '0 4px 12px rgba(232, 168, 56, 0.1)',
               }}
             >
               <Image
@@ -259,7 +260,7 @@ export default function Navbar() {
                 style={{
                   fontSize: '8.5px',
                   fontWeight: 700,
-                  color: '#E8A838',
+                  color: '#D4922A',
                   letterSpacing: '2px',
                   textTransform: 'uppercase',
                   marginTop: '3px',
@@ -332,15 +333,15 @@ export default function Navbar() {
                 <button
                   onClick={() => setDropdownOpen((p) => !p)}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1.5px solid rgba(255, 255, 255, 0.12)',
+                    background: 'rgba(27, 42, 74, 0.04)',
+                    border: '1.5px solid rgba(27, 42, 74, 0.08)',
                     borderRadius: '999px',
                     padding: '5px 12px 5px 6px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                     cursor: 'pointer',
-                    color: '#FFFFFF',
+                    color: '#1B2A4A',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -392,18 +393,18 @@ export default function Navbar() {
                       top: 'calc(100% + 10px)',
                       right: 0,
                       width: '210px',
-                      background: '#152036',
-                      border: '1px solid rgba(232, 168, 56, 0.2)',
+                      background: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
                       borderRadius: '14px',
                       padding: '8px',
-                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.4)',
+                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
                       zIndex: 1000,
                     }}
                   >
                     {/* Membership Status in dropdown */}
-                    <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '6px' }}>
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</p>
-                      <p style={{ fontSize: '12px', fontWeight: 700, color: isFamilyMember ? '#5DE8D8' : '#E8A838', marginTop: '2px' }}>
+                    <div style={{ padding: '8px 12px', borderBottom: '1px solid #F3F4F6', marginBottom: '6px' }}>
+                      <p style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</p>
+                      <p style={{ fontSize: '12px', fontWeight: 700, color: isFamilyMember ? '#2A9D8F' : '#D4922A', marginTop: '2px' }}>
                         {isFamilyMember ? '⭐ Family Member' : 'Free Tier'}
                       </p>
                     </div>
@@ -418,7 +419,7 @@ export default function Navbar() {
                           gap: '8px',
                           padding: '10px 12px',
                           borderRadius: '8px',
-                          color: '#E8A838',
+                          color: '#D4922A',
                           fontSize: '13px',
                           fontWeight: 700,
                           textDecoration: 'none',
@@ -436,7 +437,7 @@ export default function Navbar() {
                         gap: '8px',
                         padding: '10px 12px',
                         borderRadius: '8px',
-                        color: 'rgba(255,255,255,0.85)',
+                        color: '#1A1D23',
                         fontSize: '13px',
                         fontWeight: 600,
                         textDecoration: 'none',
@@ -476,9 +477,9 @@ export default function Navbar() {
                 style={{
                   padding: '8px 18px',
                   borderRadius: '999px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  color: '#FFFFFF',
+                  background: 'rgba(27, 42, 74, 0.05)',
+                  border: '1.5px solid rgba(27, 42, 74, 0.12)',
+                  color: '#1B2A4A',
                   fontSize: '13.5px',
                   fontWeight: 700,
                   textDecoration: 'none',
@@ -497,15 +498,15 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen((p) => !p)}
             aria-label="Toggle mobile menu"
             style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'rgba(27, 42, 74, 0.04)',
+              border: '1px solid rgba(27, 42, 74, 0.08)',
               borderRadius: '10px',
               width: '40px',
               height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
+              color: '#1B2A4A',
               cursor: 'pointer',
             }}
           >
@@ -525,12 +526,13 @@ export default function Navbar() {
         {mobileMenuOpen && (
           <div
             style={{
-              background: '#0D1829',
-              borderBottom: '1px solid rgba(232, 168, 56, 0.2)',
+              background: '#FFFFFF',
+              borderBottom: '1px solid #E5E7EB',
               padding: '16px 24px 24px',
               display: 'flex',
               flexDirection: 'column',
               gap: '6px',
+              boxShadow: '0 10px 20px rgba(0, 0, 0, 0.05)',
             }}
           >
             {/* Dynamic Join Family Banner for Mobile */}
@@ -542,9 +544,9 @@ export default function Navbar() {
                   margin: '8px 0 14px',
                   padding: '12px 16px',
                   borderRadius: '14px',
-                  background: 'rgba(42, 157, 143, 0.15)',
+                  background: 'rgba(42, 157, 143, 0.08)',
                   border: '1.5px solid #2A9D8F',
-                  color: '#5DE8D8',
+                  color: '#2A9D8F',
                   fontWeight: 700,
                   fontSize: '14px',
                   display: 'flex',
@@ -572,7 +574,7 @@ export default function Navbar() {
                   color: '#12203A',
                   fontWeight: 800,
                   fontSize: '14.5px',
-                  boxShadow: '0 8px 24px rgba(232, 168, 56, 0.35)',
+                  boxShadow: '0 8px 24px rgba(232, 168, 56, 0.25)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -593,8 +595,8 @@ export default function Navbar() {
                   style={{
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    color: isActive ? '#E8A838' : 'rgba(255, 255, 255, 0.85)',
-                    background: isActive ? 'rgba(232, 168, 56, 0.08)' : 'transparent',
+                    color: isActive ? '#D4922A' : '#1A1D23',
+                    background: isActive ? 'rgba(232, 168, 56, 0.06)' : 'transparent',
                     fontWeight: isActive ? 700 : 500,
                     textDecoration: 'none',
                     fontSize: '15px',
@@ -608,7 +610,7 @@ export default function Navbar() {
             <div
               style={{
                 height: '1px',
-                background: 'rgba(255, 255, 255, 0.08)',
+                background: '#F3F4F6',
                 margin: '10px 0',
               }}
             />
@@ -622,7 +624,7 @@ export default function Navbar() {
                     style={{
                       padding: '12px 14px',
                       borderRadius: '10px',
-                      color: '#E8A838',
+                      color: '#D4922A',
                       fontWeight: 700,
                       textDecoration: 'none',
                       fontSize: '15px',
@@ -637,7 +639,7 @@ export default function Navbar() {
                   style={{
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    color: '#FFFFFF',
+                    color: '#1A1D23',
                     fontWeight: 500,
                     textDecoration: 'none',
                     fontSize: '15px',
@@ -654,8 +656,8 @@ export default function Navbar() {
                     textAlign: 'left',
                     padding: '12px 14px',
                     borderRadius: '10px',
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    background: 'rgba(239, 68, 68, 0.05)',
+                    border: '1px solid rgba(239, 68, 68, 0.15)',
                     color: '#EF4444',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -674,9 +676,9 @@ export default function Navbar() {
                   textAlign: 'center',
                   padding: '13px',
                   borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                  color: '#FFFFFF',
+                  background: 'rgba(27, 42, 74, 0.05)',
+                  border: '1.5px solid rgba(27, 42, 74, 0.12)',
+                  color: '#1B2A4A',
                   fontWeight: 700,
                   fontSize: '14.5px',
                   textDecoration: 'none',

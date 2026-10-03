@@ -1,4 +1,3 @@
-// src/components/home/HeroCarousel.js
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
@@ -26,7 +25,7 @@ const TOPIC_ICONS = {
 function getTopicIcon(name) { return TOPIC_ICONS[name?.toLowerCase()] || '📚' }
 
 /* ─────────────────────────────────────────
-   DEFAULT HERO
+   DEFAULT HERO (Shown when no slides are uploaded)
 ───────────────────────────────────────── */
 function DefaultHero({ bp }) {
   const isMobile = bp === 'mobile'
@@ -99,7 +98,7 @@ function DefaultHero({ bp }) {
               background: 'linear-gradient(135deg,#E8A838,#D4922A)',
               color: '#1B2A4A', fontWeight: 700, fontSize: isMobile ? '14px' : '15px',
               textDecoration: 'none',
-            }}>⭐ Get join family</Link>
+            }}>⭐ Join Family</Link>
           </div>
         </div>
       </div>
@@ -198,7 +197,7 @@ function TopicScrollPanel({ topics, isTablet }) {
           <span style={{
             fontSize: '10px', fontWeight: 700, color: '#1B2A4A',
             letterSpacing: '1.8px', textTransform: 'uppercase',
-          }}>join family Topics</span>
+          }}>Join Family Topics</span>
         </div>
         <p style={{ fontSize: '11px', color: '#9CA3AF', lineHeight: 1.4 }}>
           Click any topic to explore videos
@@ -255,7 +254,6 @@ function MobileTopicMarquee({ topics }) {
 
   if (topics.length === 0) return null
 
-  // Triple clone for seamless loop
   const tripled = [...topics, ...topics, ...topics]
   const cardW = 110
   const totalW = topics.length * (cardW + 10)
@@ -265,7 +263,7 @@ function MobileTopicMarquee({ topics }) {
       background: '#FFFFFF',
       borderTop: '1px solid #E5E7EB',
       paddingBottom: '4px',
-      overflow: 'hidden',   // ← keeps marquee from bleeding out of its lane
+      overflow: 'hidden',
     }}>
       <style>{`
         @keyframes mobileTopicScroll {
@@ -276,7 +274,6 @@ function MobileTopicMarquee({ topics }) {
           display: flex;
           flex-direction: row;
           gap: 10px;
-          /* ← FIXED: symmetric padding so last card never clips against the edge */
           padding: 10px 10px 10px 10px;
           animation: mobileTopicScroll ${topics.length * 3.5}s linear infinite;
           width: max-content;
@@ -306,7 +303,6 @@ function MobileTopicMarquee({ topics }) {
         }
       `}</style>
 
-      {/* Header row */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '10px 14px 6px',
@@ -321,7 +317,6 @@ function MobileTopicMarquee({ topics }) {
         </span>
       </div>
 
-      {/* Scrolling track */}
       <div
         style={{ overflow: 'hidden', position: 'relative' }}
         onTouchStart={() => setPaused(true)}
@@ -336,7 +331,6 @@ function MobileTopicMarquee({ topics }) {
                 className="mobile-topic-card"
                 onClick={() => router.push(`/classes?topic=${topic._id}`)}
               >
-                {/* Thumbnail or Icon */}
                 <div style={{
                   width: '56px', height: '56px', borderRadius: '10px',
                   overflow: 'hidden', background: '#F5F3EF',
@@ -354,7 +348,6 @@ function MobileTopicMarquee({ topics }) {
                   )}
                 </div>
 
-                {/* Name */}
                 <span style={{
                   fontSize: '10px', fontWeight: 700, color: '#1B2A4A',
                   textAlign: 'center', lineHeight: 1.3,
@@ -367,7 +360,6 @@ function MobileTopicMarquee({ topics }) {
                   {topic.name}
                 </span>
 
-                {/* Video count badge */}
                 <span style={{
                   fontSize: '9px', fontWeight: 600, color: '#E8A838',
                   background: 'rgba(232,168,56,0.1)',
@@ -458,7 +450,6 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
       display: 'flex',
       flexDirection: 'column',
       contain: isMobile ? 'none' : 'layout style',
-      // ← FIXED: push content below the fixed navbar on mobile (60px tall)
       paddingTop: isMobile ? '60px' : 0,
     }}>
       <style>{`
@@ -493,7 +484,6 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: isMobile ? 'center' : 'left',
-          // ← FIXED: removed extra top padding on mobile since section handles it now
           padding: isMobile ? '12px 14px 14px' : isTablet ? '28px' : '40px',
         }}>
 
@@ -549,31 +539,7 @@ export default function HeroCarousel({ slides = [], topics = [] }) {
                 />
               )}
 
-              {/* Text overlay card */}
-              <div style={{
-                position: 'absolute',
-                bottom: isMobile ? '10px' : '20px',
-                left: isMobile ? '10px' : '20px',
-                background: 'rgba(255,255,255,0.95)',
-                backdropFilter: 'blur(10px)',
-                padding: isMobile ? '10px 14px' : '15px 25px',
-                borderRadius: isMobile ? '12px' : '18px',
-                maxWidth: isMobile ? '200px' : '280px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                border: '1px solid #F0F0F0',
-              }}>
-                <span style={{ fontSize: '9px', fontWeight: 800, color: '#E8A838', letterSpacing: '1px', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>LDCE PREP</span>
-                <h2 style={{
-                  fontSize: isMobile ? '14px' : '22px',
-                  fontWeight: 800, color: '#1B2A4A',
-                  margin: 0, fontFamily: 'Playfair Display, serif',
-                }}>{slide.title}</h2>
-                {!isMobile && (
-                  <Link href="/classes" style={{ display: 'inline-block', marginTop: '10px', padding: '7px 15px', background: '#F3F4F6', borderRadius: '8px', color: '#1B2A4A', fontSize: '11px', fontWeight: 700, textDecoration: 'none' }}>Browse Classes</Link>
-                )}
-              </div>
-
-              {/* Slide counter */}
+              {/* Slide counter only — overlay box has been removed */}
               {slides.length > 1 && (
                 <div style={{
                   position: 'absolute',

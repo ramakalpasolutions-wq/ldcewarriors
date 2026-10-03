@@ -11,8 +11,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
   const playLimit      = video.playLimit || 3
   const isJoinFamily   = video.type === 'premium' || video.type === 'join family'
 
-  // Only show limit UI if user is actually subscribed — prevents stale localStorage
-  // from showing "Play limit reached" to logged-out or non-subscribed users
+  // Only show limit UI if user is actually subscribed
   const isLimitReached = isJoinFamily && isSubscribed && localPlayCount >= playLimit
 
   return (
@@ -54,30 +53,28 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           transform: scale(1.06);
         }
 
-        /* Subtle gradient at bottom of thumb */
         .vc-thumb-grad {
           position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
           background: linear-gradient(to top, rgba(0,0,0,0.22), transparent);
           pointer-events: none;
         }
 
-        /* ── Type badge ── */
-        .vc-badge {
-          position: absolute; top: 10px; left: 10px;
-          padding: 4px 10px; border-radius: 999px;
-          font-size: 10px; font-weight: 700;
-          letter-spacing: 0.3px;
+        /* ── Inline Badge near Title ── */
+        .vc-badge-inline {
           display: inline-flex; align-items: center; gap: 4px;
-          line-height: 1;
-          z-index: 3;
+          padding: 3px 8px; border-radius: 6px;
+          font-size: 10px; font-weight: 700;
+          letter-spacing: 0.3px; line-height: 1;
         }
-        .vc-badge.join-family {
-          background: linear-gradient(135deg,#E8A838,#D4922A);
-          color: #1B2A4A;
+        .vc-badge-inline.join-family {
+          background: rgba(232,168,56,0.12);
+          color: #D4922A;
+          border: 1px solid rgba(232,168,56,0.3);
         }
-        .vc-badge.free {
-          background: rgba(42,157,143,0.92);
-          color: #fff;
+        .vc-badge-inline.free {
+          background: rgba(42,157,143,0.12);
+          color: #2A9D8F;
+          border: 1px solid rgba(42,157,143,0.25);
         }
 
         /* ── Duration ── */
@@ -182,17 +179,12 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
           />
           <div className="vc-thumb-grad"/>
 
-          {/* Type badge */}
-          <div className={`vc-badge ${isJoinFamily ? 'join-family' : 'free'}`}>
-            {isJoinFamily ? <><span>⭐</span> Join Family</> : 'FREE'}
-          </div>
-
           {/* Duration */}
           {video.duration && (
             <div className="vc-duration">{video.duration}</div>
           )}
 
-          {/* Play button — only when not locked and not limit reached */}
+          {/* Play button */}
           {!video.isLocked && !isLimitReached && (
             <div className="vc-play">
               <div className="vc-play-circle">
@@ -203,7 +195,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
-          {/* Locked: join family but not subscribed */}
+          {/* Locked */}
           {video.isLocked && !isLimitReached && (
             <div className="vc-overlay">
               <div className="vc-overlay-icon">🔒</div>
@@ -212,7 +204,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
             </div>
           )}
 
-          {/* Play limit exhausted — only shown to subscribed users */}
+          {/* Play limit exhausted */}
           {isLimitReached && (
             <div className="vc-overlay exhausted">
               <div className="vc-overlay-icon">🚫</div>
@@ -224,6 +216,13 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
 
         {/* ── Info ── */}
         <div className="vc-info">
+          {/* Badge moved here right near/above the title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className={`vc-badge-inline ${isJoinFamily ? 'join-family' : 'free'}`}>
+              {isJoinFamily ? <><span>⭐</span> Join Family</> : 'FREE'}
+            </span>
+          </div>
+
           <h3 className={`vc-title${isLimitReached ? ' limit-color' : ''}`}>
             {video.title}
           </h3>
@@ -235,7 +234,7 @@ export default function VideoCard({ video, onClick, isSubscribed = false }) {
               </span>
             )}
 
-            {/* Play dots — only shown to subscribed users with some plays used */}
+            {/* Play dots */}
             {isJoinFamily && isSubscribed && !video.isLocked && localPlayCount > 0 && (
               <div className="vc-plays-dots">
                 {Array(playLimit).fill(null).map((_, i) => (
