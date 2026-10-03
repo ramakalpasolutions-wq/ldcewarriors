@@ -95,13 +95,18 @@ export default function AdminUsersPage() {
           toast.success('User unblocked')
         } else if (action==='reset-device') { 
           toast.success('Device session reset') 
+        } else if (action==='reset-plays') { 
+          // Reset local play counts to 0 instantly in drawer
+          if (selectedUser?._id===userId) {
+            setUserDetail(p => p ? { ...p, videoPlays: p.videoPlays?.map(vp => ({ ...vp, playCount: 0 })) } : p)
+          }
+          toast.success('Video play limits reset to 0 for this user')
         } else if (action==='activate-premium') {
           setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : u))
           if (selectedUser?._id===userId) { 
             setSelectedUser(p => ({ ...p, isPremium:true })); 
             setUserDetail(p => p ? { ...p, isPremium:true, premiumExpiresAt:data.premiumExpiresAt } : p) 
           }
-          // 🌟 Changed toast text to 365 Days
           toast.success('Join Family membership activated (365 Days)')
         } else if (action==='deactivate-premium') {
           setUsers(prev => prev.map(u => u._id===userId ? { ...u, isPremium:false, premiumExpiresAt:null } : u))
@@ -155,6 +160,7 @@ export default function AdminUsersPage() {
 
         .usr-act-btn { font-size:11px; font-weight:600; background:none; border:1.5px solid transparent; cursor:pointer; padding:4px 10px; border-radius:7px; transition:all 0.2s; font-family:'DM Sans',sans-serif; white-space:nowrap; }
         .usr-act-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .usr-act-btn.reset { color:#6B7280; }
         .usr-act-btn.reset:hover:not(:disabled) { background:rgba(107,114,128,0.08); border-color:rgba(107,114,128,0.2); }
         .usr-act-btn.block { color:#ef4444; }
         .usr-act-btn.block:hover:not(:disabled) { background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.2); }
@@ -201,8 +207,6 @@ export default function AdminUsersPage() {
 
         .usr-play-row { display:flex; align-items:center; gap:10px; padding:${isMobile ? '8px 12px' : '9px 14px'}; border-bottom:1px solid #F3F4F6; transition:background 0.15s; }
         .usr-play-row:last-child { border-bottom:none; }
-        .usr-sub-row { display:flex; flex-direction:column; gap:4px; padding:${isMobile ? '8px 12px' : '10px 14px'}; border-bottom:1px solid #F3F4F6; }
-        .usr-sub-row:last-child { border-bottom:none; }
 
         /* Mobile user card */
         .usr-mob-card { background:#FFFFFF; border:1.5px solid #F0F1F3; border-radius:14px; padding:12px; transition:border-color .2s; cursor:pointer; }
@@ -240,7 +244,7 @@ export default function AdminUsersPage() {
                   )}
                 </div>
               </div>
-              <button onClick={closeDetail} style={{ marginLeft:'auto', width:'30px', height:'30px', borderRadius:'9px', background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.8)', fontSize:'15px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>✕</button>
+              <button onClick={closeDetail} style={{ marginLeft:'auto', width:'30px', height:'30px', borderRadius:'99px', background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.15)', color:'rgba(255,255,255,0.8)', fontSize:'15px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>✕</button>
             </div>
 
             <div className="usr-drawer-body">
@@ -294,12 +298,29 @@ export default function AdminUsersPage() {
                   </div>
 
                   <div className="usr-detail-section">
-                    <div className="usr-detail-section-hd">
-                      🎬 Video Play History
-                      <span style={{ marginLeft:'auto', background:'rgba(27,42,74,0.08)', borderRadius:'6px', padding:'1px 7px', fontSize:'10px', fontWeight:700, color:'#374151' }}>
-                        {userDetail.videoPlays?.length || 0}
-                      </span>
+                    <div className="usr-detail-section-hd" style={{ justifyContent:'space-between' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
+                        🎬 Video Play History
+                        <span style={{ background:'rgba(27,42,74,0.08)', borderRadius:'6px', padding:'1px 7px', fontSize:'10px', fontWeight:700, color:'#374151' }}>
+                          {userDetail.videoPlays?.length || 0}
+                        </span>
+                      </div>
+                      
+                      {/* 🌟 Reset All Plays Button inside Drawer Header 🌟 */}
+                      <button
+                        onClick={e => handleAction(selectedUser._id, 'reset-plays', e)}
+                        disabled={actionLoading===`${selectedUser._id}-reset-plays`}
+                        style={{
+                          fontSize:'11px', fontWeight:700, padding:'3px 10px',
+                          borderRadius:'6px', background:'#E8A838', color:'#1B2A4A',
+                          border:'none', cursor:'pointer', transition:'all 0.2s',
+                          display:'flex', alignItems:'center', gap:'4px'
+                        }}
+                      >
+                        {actionLoading===`${selectedUser._id}-reset-plays` ? '...' : '🔄 Reset All Plays'}
+                      </button>
                     </div>
+
                     {userDetail.videoPlays?.length ? userDetail.videoPlays.map((vp, i) => (
                       <div key={i} className="usr-play-row">
                         {vp.video?.thumbnail ? (
@@ -345,7 +366,18 @@ export default function AdminUsersPage() {
                 ) : '📱'} Reset Device
               </button>
 
-              {/* Join Family Manual Status Buttons */}
+              {/* 🌟 Reset Plays Button in Drawer Footer 🌟 */}
+              <button onClick={e => handleAction(selectedUser._id, 'reset-plays', e)}
+                disabled={actionLoading===`${selectedUser._id}-reset-plays`}
+                style={{ padding:'9px 14px', borderRadius:'11px', border:'1.5px solid rgba(232,168,56,0.3)', background:'rgba(232,168,56,0.1)', color:'#1B2A4A', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans,sans-serif', display:'flex', alignItems:'center', gap:'5px' }}>
+                {actionLoading===`${selectedUser._id}-reset-plays` ? (
+                  <svg style={{ width:'12px',height:'12px',animation:'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                    <circle style={{ opacity:.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path style={{ opacity:.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                ) : '🎬'} Reset Plays
+              </button>
+
               {selectedUser.isPremium ? (
                 <button onClick={e => handleAction(selectedUser._id, 'deactivate-premium', e)}
                   disabled={actionLoading===`${selectedUser._id}-deactivate-premium`}
@@ -510,7 +542,13 @@ export default function AdminUsersPage() {
                   <button onClick={e => handleAction(user._id, 'reset-device', e)}
                     disabled={actionLoading===`${user._id}-reset-device`}
                     className="usr-act-btn reset" style={{ flex:1, textAlign:'center', padding:'7px', background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:'8px', color:'#6B7280' }}>
-                    📱 Reset
+                    📱 Device
+                  </button>
+                  {/* 🌟 Reset Plays button on mobile 🌟 */}
+                  <button onClick={e => handleAction(user._id, 'reset-plays', e)}
+                    disabled={actionLoading===`${user._id}-reset-plays`}
+                    className="usr-act-btn reset" style={{ flex:1, textAlign:'center', padding:'7px', background:'rgba(232,168,56,0.08)', border:'1px solid rgba(232,168,56,0.25)', borderRadius:'8px', color:'#1B2A4A' }}>
+                    🎬 Plays
                   </button>
                   <button onClick={e => handleAction(user._id, user.isPremium ? 'deactivate-premium' : 'activate-premium', e)}
                     disabled={actionLoading===`${user._id}-activate-premium` || actionLoading===`${user._id}-deactivate-premium`}
@@ -522,7 +560,7 @@ export default function AdminUsersPage() {
                     disabled={actionLoading===`${user._id}-block` || actionLoading===`${user._id}-unblock`}
                     className={`usr-act-btn ${user.isActive ? 'block' : 'unblock'}`}
                     style={{ flex:1, textAlign:'center', padding:'7px', background:user.isActive ? 'rgba(239,68,68,0.07)' : 'rgba(22,163,74,0.07)', border:`1px solid ${user.isActive ? 'rgba(239,68,68,0.2)' : 'rgba(22,163,74,0.2)'}`, borderRadius:'8px' }}>
-                    {user.isActive ? '🚫 Block' : '✓ Unblock'}
+                    {user.isActive ? '🚫' : '✓'}
                   </button>
                 </div>
               </div>
@@ -595,13 +633,24 @@ export default function AdminUsersPage() {
                       )}
                       <td style={{ textAlign:'right' }}>
                         <div style={{ display:'flex', justifyContent:'flex-end', gap:'4px' }} onClick={e => e.stopPropagation()}>
+                          
+                          {/* Reset Device Session */}
                           <button onClick={e => handleAction(user._id, 'reset-device', e)}
                             disabled={actionLoading===`${user._id}-reset-device`}
-                            className="usr-act-btn reset" title="Reset Device">
-                            {actionLoading===`${user._id}-reset-device` ? '…' : '📱'}
+                            className="usr-act-btn reset" title="Reset Device Session">
+                            {actionLoading===`${user._id}-reset-device` ? '…' : '📱 Device'}
+                          </button>
+
+                          {/* 🌟 Reset Video Plays 🌟 */}
+                          <button onClick={e => handleAction(user._id, 'reset-plays', e)}
+                            disabled={actionLoading===`${user._id}-reset-plays`}
+                            className="usr-act-btn reset" 
+                            style={{ background:'rgba(232,168,56,0.08)', border:'1px solid rgba(232,168,56,0.2)', color:'#1B2A4A' }}
+                            title="Reset All Video Play Limits to 0">
+                            {actionLoading===`${user._id}-reset-plays` ? '…' : '🎬 Reset Plays'}
                           </button>
                           
-                          {/* Main Row Activate / Deactivate Toggle */}
+                          {/* Family Toggle */}
                           <button onClick={e => handleAction(user._id, user.isPremium ? 'deactivate-premium' : 'activate-premium', e)}
                             disabled={actionLoading===`${user._id}-activate-premium` || actionLoading===`${user._id}-deactivate-premium`}
                             className={`usr-act-btn ${user.isPremium ? 'deactivate' : 'activate'}`}
@@ -610,12 +659,14 @@ export default function AdminUsersPage() {
                               ? '…' : user.isPremium ? 'Remove Family' : 'Add Family'}
                           </button>
 
+                          {/* Block/Unblock */}
                           <button onClick={e => handleAction(user._id, user.isActive ? 'block' : 'unblock', e)}
                             disabled={actionLoading===`${user._id}-block` || actionLoading===`${user._id}-unblock`}
                             className={`usr-act-btn ${user.isActive ? 'block' : 'unblock'}`}>
                             {actionLoading===`${user._id}-block` || actionLoading===`${user._id}-unblock`
                               ? '…' : user.isActive ? 'Block' : 'Unblock'}
                           </button>
+
                         </div>
                       </td>
                     </tr>

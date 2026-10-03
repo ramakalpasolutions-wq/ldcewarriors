@@ -507,6 +507,9 @@ function ClassesPageInner() {
   const [isTablet,          setIsTablet]          = useState(false)
   const [activeTab,         setActiveTab]         = useState('free')
 
+  // 🌟 Prevents double play deduction from rapid/duplicate clicks
+  const isPlayingRef = useRef(false)
+
   const router       = useRouter()
   const searchParams = useSearchParams()
 
@@ -522,12 +525,10 @@ function ClassesPageInner() {
   }, [])
 
   /* Auth */
-    /* Auth */
   useEffect(() => {
     const user = localStorage.getItem('ldce_user')
     setIsLoggedIn(!!user)
     
-    // Always call the server to check for updated manual Join Family subscriptions
     fetch('/api/user/profile')
       .then(r => r.json())
       .then(data => {
@@ -606,42 +607,68 @@ function ClassesPageInner() {
     router.push('/join-family')
   }
 
+  // 🌟 Fixed: single-invocation play handler
   async function handleVideoClick(video) {
-    setPlayLimitHit(false)
-    if (video.type === 'free') {
-      try {
-        const res  = await fetch('/api/videos/play', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoId: video._id || video.id }),
-        })
-        const data = await res.json()
-        setSelectedVideo({ ...video, videoUrl: data.canPlay && data.streamUrl ? data.streamUrl : video.videoUrl })
-      } catch { setSelectedVideo(video) }
-      return
-    }
+    // Block parallel / double clicks
+    if (isPlayingRef.current) return
+    isPlayingRef.current = true
 
-    if (!isLoggedIn) {
-      toast.error('Please login to access Join Family content', { icon: '🔐' })
-      router.push('/auth/login?redirect=/classes'); return
-    }
-    if (!isSubscribed) { handleSubscribeClick(); return }
+    setPlayLimitHit(false)
+    const videoId = video._id || video.id
 
     try {
-      const res  = await fetch('/api/videos/play', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoId: video._id || video.id }),
+      /* ── FREE VIDEO ── */
+      if (video.type === 'free') {
+        try {
+          const res = await fetch('/api/videos/play', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoId }),
+          })
+          const data = await res.json()
+          setSelectedVideo({
+            ...video,
+            videoUrl: data.canPlay && data.streamUrl ? data.streamUrl : video.videoUrl,
+          })
+        } catch {
+          setSelectedVideo(video)
+        }
+        return
+      }
+
+      /* ── JOIN FAMILY VIDEO ── */
+      if (!isLoggedIn) {
+        toast.error('Please login to access Join Family content', { icon: '🔐' })
+        router.push('/auth/login?redirect=/classes')
+        return
+      }
+
+      if (!isSubscribed) {
+        handleSubscribeClick()
+        return
+      }
+
+      const res = await fetch('/api/videos/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId }),
       })
       const data = await res.json()
 
       if (data.canPlay && data.streamUrl) {
-        const usedCount   = data.playCount || 0
+        const usedCount = data.playCount || 0
         const serverLimit = data.limit || video.playLimit || 3
-        const remaining   = data.remaining ?? Math.max(0, serverLimit - usedCount)
-        setPlayCounts(prev => ({ ...prev, [video._id]: usedCount }))
-        localStorage.setItem(`ldce_plays_${video._id}`, String(usedCount))
+        const remaining = data.remaining ?? Math.max(0, serverLimit - usedCount)
+
+        setPlayCounts(prev => ({ ...prev, [videoId]: usedCount }))
+        localStorage.setItem(`ldce_plays_${videoId}`, String(usedCount))
         setSelectedVideo({ ...video, videoUrl: data.streamUrl, isLocked: false })
+
         if (remaining === 0) {
-          toast('⚠️ Last play used — this video is now locked.', { duration: 5000, style: { background: '#FEF3C7', color: '#92400E', fontWeight: 600 } })
+          toast('⚠️ Last play used — this video is now locked.', {
+            duration: 5000,
+            style: { background: '#FEF3C7', color: '#92400E', fontWeight: 600 },
+          })
         } else if (remaining === 1) {
           toast('⚠️ Only 1 play remaining!', { icon: '⚠️', duration: 4000 })
         } else {
@@ -649,10 +676,13 @@ function ClassesPageInner() {
         }
       } else if (data.reason === 'play_limit_exceeded') {
         const serverLimit = data.limit || video.playLimit || 3
-        setPlayCounts(prev => ({ ...prev, [video._id]: serverLimit }))
-        localStorage.setItem(`ldce_plays_${video._id}`, String(serverLimit))
+        setPlayCounts(prev => ({ ...prev, [videoId]: serverLimit }))
+        localStorage.setItem(`ldce_plays_${videoId}`, String(serverLimit))
         setPlayLimitHit(true)
-        toast.error(`Play limit reached! All ${serverLimit} plays used.`, { duration: 6000, style: { background: '#FEE2E2', color: '#991B1B', fontWeight: 600 } })
+        toast.error(`Play limit reached! All ${serverLimit} plays used.`, {
+          duration: 6000,
+          style: { background: '#FEE2E2', color: '#991B1B', fontWeight: 600 },
+        })
       } else if (data.reason === 'no_subscription') {
         setIsSubscribed(false)
         toast('Your family membership is inactive.', { icon: '⭐', duration: 5000 })
@@ -661,7 +691,11 @@ function ClassesPageInner() {
         toast.error(data.error || 'Failed to play video.')
       }
     } catch (err) {
-      console.error('Play error:', err); toast.error('Network error.')
+      console.error('Play error:', err)
+      toast.error('Network error.')
+    } finally {
+      // Always release the lock
+      isPlayingRef.current = false
     }
   }
 
@@ -726,20 +760,20 @@ function ClassesPageInner() {
                     <PlayCountBadge videoId={videoId} playLimit={limit} serverCount={serverCount}/>
                   </div>
                 )}
-                <div
-                  style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden' }}
-                  onClick={() => {
-                    if (!isSubscribed) { handleSubscribeClick(); return }
-                    if (isExhausted) { toast.error('Play limit reached for this video.', { icon: '🔒' }); return }
-                    handleVideoClick(video)
-                  }}
-                >
+
+                {/* 🌟 NO outer onClick wrapper — only VideoCard handles the click */}
+                <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden' }}>
                   <VideoCard
-                    video={{ ...video, isLocked: isExhausted }}
-                    onClick={() => {}}
+                    video={{ ...video, isLocked: !isSubscribed || isExhausted }}
+                    onClick={(v) => {
+                      if (!isSubscribed) { handleSubscribeClick(); return }
+                      if (isExhausted)   { toast.error('Play limit reached for this video.', { icon: '🔒' }); return }
+                      handleVideoClick(v)
+                    }}
                     isSubscribed={isSubscribed}
                   />
 
+                  {/* Locked overlay — only for non-subscribers */}
                   {!isSubscribed && (
                     <div
                       style={{
@@ -748,6 +782,10 @@ function ClassesPageInner() {
                         borderRadius: '14px',
                         transition: 'background 0.28s ease',
                         zIndex: 3, cursor: 'pointer',
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleSubscribeClick()
                       }}
                       onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.48)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0)'}

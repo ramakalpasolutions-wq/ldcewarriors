@@ -9,7 +9,7 @@ export async function POST(req) {
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const decoded = verifyToken(token)
-    if (!decoded) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    if (!decoded || !decoded.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
 
     const { videoId } = await req.json()
     if (!videoId) return NextResponse.json({ error: 'videoId required' }, { status: 400 })
@@ -32,70 +32,137 @@ export async function POST(req) {
     }
 
     /* ── JOIN FAMILY (PREMIUM) VIDEO ── */
-    // 1. Check direct isPremium status and expiry
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: { isPremium: true, premiumExpiresAt: true, isActive: true }
+      select: { id: true, isPremium: true, premiumExpiresAt: true, isActive: true }
     })
 
     if (!user || !user.isActive) {
       return NextResponse.json({
-        success: false, canPlay: false, reason: 'account_inactive',
+        success: false,
+        canPlay: false,
+        reason: 'account_inactive',
       })
     }
 
-    const isSubscribed = user.isPremium && (
-      !user.premiumExpiresAt || new Date(user.premiumExpiresAt) > new Date()
+    const isSubscribed = Boolean(
+      user.isPremium &&
+      (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > new Date())
     )
 
     if (!isSubscribed) {
-      // Auto-update db state to false if user's subscription expired
-      if (user.isPremium && user.premiumExpiresAt && new Date(user.premiumExpiresAt) <= new Date()) {
-        await prisma.user.update({
-          where: { id: decoded.userId },
-          data: { isPremium: false }
-        })
-      }
       return NextResponse.json({
-        success: false, canPlay: false, reason: 'no_subscription',
-      })
-    }
-
-    // 2. Find or create play record
-    let playRecord = await prisma.videoPlay.findUnique({
-      where: { userId_videoId: { userId: decoded.userId, videoId } },
-    })
-
-    if (!playRecord) {
-      playRecord = await prisma.videoPlay.create({
-        data: { userId: decoded.userId, videoId, playCount: 0 },
+        success: false,
+        canPlay: false,
+        reason: 'no_subscription',
       })
     }
 
     const limit = video.playLimit || 3
+    const now = new Date()
 
-    // 3. Check play limit
+    // 1. Fetch play record
+    let playRecord = await prisma.videoPlay.findUnique({
+      where: { userId_videoId: { userId: user.id, videoId } },
+    })
+
+    // 🌟 2. ATOMIC FIRST-TIME PLAY CREATION
+    // Creating directly with playCount: 1 and lastPlayed: now prevents race-condition double logs!
+    if (!playRecord) {
+      try {
+        playRecord = await prisma.videoPlay.create({
+          data: { 
+            userId: user.id, 
+            videoId, 
+            playCount: 1, 
+            lastPlayed: now 
+          },
+        })
+
+        // Increment global video views
+        await prisma.video.update({
+          where: { id: videoId },
+          data: { views: { increment: 1 } },
+        })
+
+        const streamUrl = video.videoKey
+          ? await getSignedVideoUrl(video.videoKey, 7200)
+          : video.videoUrl
+
+        return NextResponse.json({
+          success: true,
+          canPlay: true,
+          streamUrl,
+          playCount: 1,
+          limit,
+          remaining: limit - 1,
+        })
+      } catch (err) {
+        // Fallback if another concurrent request created it first
+        playRecord = await prisma.videoPlay.findUnique({
+          where: { userId_videoId: { userId: user.id, videoId } },
+        })
+        if (!playRecord) throw err
+      }
+    }
+
+    // 🌟 3. TEN-SECOND SAFETY WINDOW (Debounce)
+    // If played within last 10s, return stream immediately without incrementing playCount
+    const timeSinceLastPlay = now.getTime() - new Date(playRecord.lastPlayed).getTime()
+    if (timeSinceLastPlay < 10000 && playRecord.playCount > 0) {
+      const streamUrl = video.videoKey
+        ? await getSignedVideoUrl(video.videoKey, 7200)
+        : video.videoUrl
+
+      return NextResponse.json({
+        success: true,
+        canPlay: true,
+        streamUrl,
+        playCount: playRecord.playCount,
+        limit,
+        remaining: limit - playRecord.playCount,
+      })
+    }
+
+    // 4. Check play limit
     if (playRecord.playCount >= limit) {
       return NextResponse.json({
-        success: false, canPlay: false,
+        success: false,
+        canPlay: false,
         reason: 'play_limit_exceeded',
         playCount: playRecord.playCount,
         limit,
       })
     }
 
-    // 4. Increment play count
-    playRecord = await prisma.videoPlay.update({
-      where: { id: playRecord.id },
-      data: { playCount: { increment: 1 }, lastPlayed: new Date() },
+    // 🌟 5. RACE-CONDITION OPTIMISTIC UPDATE
+    const updateResult = await prisma.videoPlay.updateMany({
+      where: { 
+        id: playRecord.id,
+        playCount: playRecord.playCount
+      },
+      data: { 
+        playCount: { increment: 1 }, 
+        lastPlayed: now 
+      },
     })
 
+    let finalPlayCount = playRecord.playCount
+    if (updateResult.count === 0) {
+      // Parallel request updated it first; fetch the newly written count
+      const freshRecord = await prisma.videoPlay.findUnique({ where: { id: playRecord.id } })
+      finalPlayCount = freshRecord ? freshRecord.playCount : playRecord.playCount + 1
+    } else {
+      finalPlayCount += 1
+    }
+
+    // 6. Increment global video views
     await prisma.video.update({
       where: { id: videoId },
       data: { views: { increment: 1 } },
     })
 
-    // 5. Generate signed URL (2 hours for Join Family videos)
+    // 7. Generate signed URL (2 hours)
     const streamUrl = video.videoKey
       ? await getSignedVideoUrl(video.videoKey, 7200)
       : video.videoUrl
@@ -104,9 +171,9 @@ export async function POST(req) {
       success: true,
       canPlay: true,
       streamUrl,
-      playCount: playRecord.playCount,
+      playCount: finalPlayCount,
       limit,
-      remaining: limit - playRecord.playCount,
+      remaining: limit - finalPlayCount,
     })
   } catch (error) {
     console.error('Video play error:', error)
