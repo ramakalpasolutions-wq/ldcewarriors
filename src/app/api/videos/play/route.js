@@ -1,3 +1,4 @@
+// src/app/api/videos/play/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
@@ -5,11 +6,16 @@ import { getSignedVideoUrl } from '@/lib/r2'
 
 export async function POST(req) {
   try {
-    const token = req.cookies.get('token')?.value
+    const token =
+      req.cookies.get('token')?.value ||
+      req.cookies.get('adminToken')?.value ||
+      req.cookies.get('admin_token')?.value
+
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const decoded = verifyToken(token)
-    if (!decoded || !decoded.userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    const userId = decoded?.userId || decoded?.id
+    if (!decoded || !userId) return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
 
     const { videoId } = await req.json()
     if (!videoId) return NextResponse.json({ error: 'videoId required' }, { status: 400 })
@@ -33,8 +39,8 @@ export async function POST(req) {
 
     /* ── JOIN FAMILY (PREMIUM) VIDEO ── */
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: { id: true, isPremium: true, premiumExpiresAt: true, isActive: true }
+      where: { id: userId },
+      select: { id: true, isPremium: true, premiumExpiresAt: true, isActive: true, role: true }
     })
 
     if (!user || !user.isActive) {
@@ -46,8 +52,8 @@ export async function POST(req) {
     }
 
     const isSubscribed = Boolean(
-      user.isPremium &&
-      (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > new Date())
+      (user.isPremium && (!user.premiumExpiresAt || new Date(user.premiumExpiresAt) > new Date())) ||
+      (user.role && user.role.toLowerCase() === 'admin')
     )
 
     if (!isSubscribed) {
@@ -61,25 +67,23 @@ export async function POST(req) {
     const limit = video.playLimit || 3
     const now = new Date()
 
-    // 1. Fetch play record
+    // 1. Fetch current play record
     let playRecord = await prisma.videoPlay.findUnique({
       where: { userId_videoId: { userId: user.id, videoId } },
     })
 
-    // 🌟 2. ATOMIC FIRST-TIME PLAY CREATION
-    // Creating directly with playCount: 1 and lastPlayed: now prevents race-condition double logs!
+    // 🌟 2. FIRST-TIME PLAY: Create atomically with playCount: 1
     if (!playRecord) {
       try {
         playRecord = await prisma.videoPlay.create({
-          data: { 
-            userId: user.id, 
-            videoId, 
-            playCount: 1, 
-            lastPlayed: now 
+          data: {
+            userId: user.id,
+            videoId,
+            playCount: 1,
+            lastPlayed: now,
           },
         })
 
-        // Increment global video views
         await prisma.video.update({
           where: { id: videoId },
           data: { views: { increment: 1 } },
@@ -98,7 +102,7 @@ export async function POST(req) {
           remaining: limit - 1,
         })
       } catch (err) {
-        // Fallback if another concurrent request created it first
+        // Handle concurrent creation
         playRecord = await prisma.videoPlay.findUnique({
           where: { userId_videoId: { userId: user.id, videoId } },
         })
@@ -106,10 +110,9 @@ export async function POST(req) {
       }
     }
 
-    // 🌟 3. TEN-SECOND SAFETY WINDOW (Debounce)
-    // If played within last 10s, return stream immediately without incrementing playCount
+    // 🌟 3. 15-SECOND DEBOUNCE WINDOW: Do not deduct credit if called in quick succession
     const timeSinceLastPlay = now.getTime() - new Date(playRecord.lastPlayed).getTime()
-    if (timeSinceLastPlay < 10000 && playRecord.playCount > 0) {
+    if (timeSinceLastPlay < 15000 && playRecord.playCount > 0) {
       const streamUrl = video.videoKey
         ? await getSignedVideoUrl(video.videoKey, 7200)
         : video.videoUrl
@@ -120,11 +123,11 @@ export async function POST(req) {
         streamUrl,
         playCount: playRecord.playCount,
         limit,
-        remaining: limit - playRecord.playCount,
+        remaining: Math.max(0, limit - playRecord.playCount),
       })
     }
 
-    // 4. Check play limit
+    // 4. Check if play limit was already reached
     if (playRecord.playCount >= limit) {
       return NextResponse.json({
         success: false,
@@ -132,37 +135,24 @@ export async function POST(req) {
         reason: 'play_limit_exceeded',
         playCount: playRecord.playCount,
         limit,
+        remaining: 0,
       })
     }
 
-    // 🌟 5. RACE-CONDITION OPTIMISTIC UPDATE
-    const updateResult = await prisma.videoPlay.updateMany({
-      where: { 
-        id: playRecord.id,
-        playCount: playRecord.playCount
-      },
-      data: { 
-        playCount: { increment: 1 }, 
-        lastPlayed: now 
+    // 🌟 5. INCREMENT COUNT EXACTLY BY 1
+    const updated = await prisma.videoPlay.update({
+      where: { id: playRecord.id },
+      data: {
+        playCount: { increment: 1 },
+        lastPlayed: now,
       },
     })
 
-    let finalPlayCount = playRecord.playCount
-    if (updateResult.count === 0) {
-      // Parallel request updated it first; fetch the newly written count
-      const freshRecord = await prisma.videoPlay.findUnique({ where: { id: playRecord.id } })
-      finalPlayCount = freshRecord ? freshRecord.playCount : playRecord.playCount + 1
-    } else {
-      finalPlayCount += 1
-    }
-
-    // 6. Increment global video views
     await prisma.video.update({
       where: { id: videoId },
       data: { views: { increment: 1 } },
     })
 
-    // 7. Generate signed URL (2 hours)
     const streamUrl = video.videoKey
       ? await getSignedVideoUrl(video.videoKey, 7200)
       : video.videoUrl
@@ -171,9 +161,9 @@ export async function POST(req) {
       success: true,
       canPlay: true,
       streamUrl,
-      playCount: finalPlayCount,
+      playCount: updated.playCount,
       limit,
-      remaining: limit - finalPlayCount,
+      remaining: Math.max(0, limit - updated.playCount),
     })
   } catch (error) {
     console.error('Video play error:', error)

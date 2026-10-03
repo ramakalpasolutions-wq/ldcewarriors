@@ -1,20 +1,42 @@
+// src/app/api/admin/users/[id]/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 
-function requireAdmin(req) {
-  const token = req.cookies.get('adminToken')?.value
-  if (!token) return null
-  const decoded = verifyToken(token)
-  return decoded?.role === 'admin' ? decoded : null
+async function requireAdmin(req) {
+  try {
+    const token =
+      req.cookies.get('adminToken')?.value ||
+      req.cookies.get('admin_token')?.value ||
+      req.cookies.get('token')?.value
+
+    if (!token) return null
+    const decoded = verifyToken(token)
+    if (!decoded) return null
+
+    const targetId = decoded.userId || decoded.id || decoded.adminId
+    if (!targetId) return null
+
+    const user = await prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, role: true, isActive: true },
+    })
+
+    if (!user || !user.isActive || user.role?.toLowerCase() !== 'admin') {
+      return null
+    }
+
+    return user
+  } catch {
+    return null
+  }
 }
 
 export async function GET(req, context) {
   try {
-    const admin = requireAdmin(req)
+    const admin = await requireAdmin(req)
     if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Next.js 15: params is a Promise — must await it
     const { id } = await context.params
     if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 })
 
@@ -39,8 +61,6 @@ export async function GET(req, context) {
         profileImage:     true,
         createdAt:        true,
         updatedAt:        true,
-
-        // Video play history with video info
         videoPlays: {
           orderBy: { lastPlayed: 'desc' },
           take: 50,
@@ -55,6 +75,7 @@ export async function GET(req, context) {
                 thumbnail: true,
                 type:      true,
                 duration:  true,
+                playLimit: true,
               },
             },
           },
