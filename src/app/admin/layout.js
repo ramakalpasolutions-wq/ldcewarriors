@@ -40,6 +40,10 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname()
   const router   = useRouter()
 
+
+
+  
+
   const isLoginPage = pathname === '/admin'
 
   /* ── Screen size detection ── */
