@@ -1,3 +1,5 @@
+// /Users/krishnatejaanangi/ldcewarriors/src/components/layout/Navbar.js
+
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'

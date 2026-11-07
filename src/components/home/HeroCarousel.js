@@ -1,3 +1,4 @@
+// /Users/krishnatejaanangi/ldcewarriors/src/components/home/HeroCarousel.js
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
