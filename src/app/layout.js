@@ -4,9 +4,16 @@ import { Toaster } from 'react-hot-toast'
 import Script from 'next/script'
 
 export const metadata = {
-  title: 'LDCE Warriors — Limited Departmental Competitive Exams',
-  description: 'Comprehensive preparation platform for Limited Departmental Competitive Examinations',
-  keywords: 'LDCE, departmental exam, competitive exam, government preparation',
+  title: 'LDCE Warriors — Limited Departmental Competitive Examinations',
+  description:
+    'LDCE Warriors is an online preparation platform for Limited Departmental Competitive Examinations (LDCE), providing courses, video lectures, study materials and exam preparation resources.',
+  keywords: [
+    'LDCE',
+    'Limited Departmental Competitive Examinations',
+    'LDCE preparation',
+    'Departmental competitive exams',
+    'Government exam preparation',
+  ],
 }
 
 export default function RootLayout({ children }) {
