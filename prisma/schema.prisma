@@ -8,30 +8,32 @@ datasource db {
 }
 
 model User {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
   fullName         String
-  email            String         @unique
-  mobile           String         @unique
+  email            String        @unique
+  mobile           String        @unique
   password         String
   addressLine      String?
   addressCity      String?
   addressState     String?
   addressPincode   String?
-  isEmailVerified  Boolean        @default(false)
-  isMobileVerified Boolean        @default(false)
-  isActive         Boolean        @default(true)
-  isPremium        Boolean        @default(false)
+  isEmailVerified  Boolean       @default(false)
+  isMobileVerified Boolean       @default(false)
+  isActive         Boolean       @default(true)
+  isPremium        Boolean       @default(false)
   premiumExpiresAt DateTime?
-  role             String         @default("user")
+  role             String        @default("user")
   deviceId         String?
   profileImage     String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  quizAttempts     QuizAttempt[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   otps          OTP[]
   videoPlays    VideoPlay[]
   subscriptions Subscription[]
 }
+
 model OTP {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   userId     String   @db.ObjectId
@@ -51,6 +53,7 @@ model Topic {
   description       String?
   slug              String   @unique
   thumbnail         String?
+  quizzes           Quiz[]
   thumbnailPublicId String?
   order             Int      @default(0)
   isActive          Boolean  @default(true)
@@ -60,22 +63,23 @@ model Topic {
 }
 
 model Video {
-  id                String    @id @default(auto()) @map("_id") @db.ObjectId
-  title             String
-  description       String?
-  type              String
-  topicId           String?   @db.ObjectId
-  thumbnail         String
-  videoUrl          String
-  videoKey          String?
-  thumbnailPublicId String?
-  duration          String?
-  order             Int       @default(0)
-  isActive          Boolean   @default(true)
-  showOnHomepage    Boolean   @default(false)
-  playLimit         Int       @default(3)
-  views             Int       @default(0)
-  createdAt         DateTime  @default(now())
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  title                 String
+  description           String?
+  type                  String
+  topicId               String?  @db.ObjectId
+  thumbnail             String
+  videoUrl              String
+  videoKey              String?
+  thumbnailPublicId     String?
+  explanationForQuizzes Quiz[]
+  duration              String?
+  order                 Int      @default(0)
+  isActive              Boolean  @default(true)
+  showOnHomepage        Boolean  @default(false)
+  playLimit             Int      @default(3)
+  views                 Int      @default(0)
+  createdAt             DateTime @default(now())
 
   topic      Topic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
   videoPlays VideoPlay[]
@@ -166,4 +170,55 @@ model Setting {
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model Quiz {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  mode        String  @default("TOPIC")
+  topicId     String? @db.ObjectId
+  topic       Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  questions       Json
+  durationMinutes Int    @default(20)
+  accessType      String @default("FREE")
+
+  explanationVideoKey     String?
+  explanationVideoName    String?
+  explanationThumbnailKey String?
+
+  isPublished Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attempts QuizAttempt[]
+  video    Video?        @relation(fields: [videoId], references: [id])
+  videoId  String?       @db.ObjectId
+
+  @@index([topicId, mode, isPublished])
+}
+
+model QuizAttempt {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  quizId String @db.ObjectId
+  userId String @db.ObjectId
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  snapshot  Json
+  answers   Json
+  status    String  @default("IN_PROGRESS")
+  score     Int?
+  maxScore  Int?
+  endReason String?
+
+  startedAt  DateTime  @default(now())
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([userId, quizId, status])
 }

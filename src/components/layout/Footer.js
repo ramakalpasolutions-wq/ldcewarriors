@@ -58,6 +58,7 @@ const QUICK_LINKS = [
   { href: '/classes', label: 'Classes', icon: '🎥' },
   { href: '/articles', label: 'Articles', icon: '📰' },
   { href: '/join-family', label: 'Join Family', icon: '⭐' },
+  { href: '/quiz', label: 'Test Yourself', icon: '📝' },
   { href: '/contact', label: 'Contact', icon: '📩' },
   { href: '/profile', label: 'My Profile', icon: '👤' },
 ]

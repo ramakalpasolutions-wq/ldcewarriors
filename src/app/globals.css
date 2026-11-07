@@ -394,3 +394,245 @@ html, body {
 .mobile-menu.open {
   transform: translateX(0);
 }
+
+/* LDCE Warriors - Learning Gateway */
+
+.learning-gateway {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 36px 24px 65px;
+}
+
+.learning-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(27, 42, 74, 0.1);
+}
+
+.learning-heading {
+  text-align: center;
+  margin: 30px 0;
+}
+
+.learning-heading span {
+  color: #d4922a;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.learning-heading h2 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(26px, 4vw, 38px);
+  color: #1b2a4a;
+  margin: 10px 0;
+}
+
+.learning-heading p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.learning-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.learning-card {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.learning-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 36px rgba(27, 42, 74, 0.12);
+}
+
+.learning-card > img {
+  width: 100%;
+  aspect-ratio: 16 / 8;
+  object-fit: cover;
+}
+
+.learning-card-content {
+  padding: 24px;
+}
+
+.learning-card h3 {
+  font-family: "Playfair Display", serif;
+  color: #1b2a4a;
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.learning-card p {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.learning-card-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #e8a838, #d4922a);
+  color: #1b2a4a;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 12px 22px;
+  border-radius: 11px;
+}
+
+@media (max-width: 640px) {
+  .learning-gateway {
+    padding: 20px 16px 40px;
+  }
+
+  .learning-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .learning-card-content {
+    padding: 18px;
+  }
+}
+
+/* Quiz examination sidebar */
+
+.ldce-exam-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Explanation video preview */
+
+.ldce-explanation-preview {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 3px 12px rgba(27, 42, 74, 0.04);
+}
+
+.ldce-explanation-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1B2A4A;
+  margin-bottom: 15px;
+}
+
+.ldce-explanation-heading h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.ldce-explanation-thumbnail {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(
+    135deg,
+    #1B2A4A,
+    #0D1730
+  );
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.ldce-explanation-lock {
+  width: 54px;
+  height: 54px;
+  background: rgba(232, 168, 56, 0.16);
+  color: #E8A838;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ldce-explanation-thumbnail strong {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.ldce-explanation-thumbnail > span:last-child {
+  font-size: 11px;
+  color: #CDD5E4;
+}
+
+.ldce-explanation-description {
+  margin-top: 14px;
+  color: #6B7280;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.ldce-explanation-status {
+  margin-top: 14px;
+  padding: 10px;
+  background: #FFF6DF;
+  border-radius: 9px;
+  color: #9B690B;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ldce-explanation-thumbnail {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #1B2A4A;
+}
+
+.ldce-explanation-preview-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #111C34;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ldce-explanation-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  color: #E8A838;
+  text-align: center;
+}
+
+.ldce-explanation-placeholder span {
+  font-size: 12px;
+  color: #FFFFFF;
+  font-weight: 700;
+}

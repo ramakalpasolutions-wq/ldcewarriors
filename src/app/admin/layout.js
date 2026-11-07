@@ -25,6 +25,12 @@ const NAV_ITEMS = [
   { href: '/admin/videos',    label: 'Videos',        icon: '🎥', desc: 'Manage video content'  },
   { href: '/admin/articles',  label: 'Articles',      icon: '📰', desc: 'Blog & study material' },
   { href: '/admin/hero',      label: 'Hero Carousel', icon: '🎞️', desc: 'Homepage banners'      },
+  {
+  href: '/admin/quizzes',
+  label: 'Quizzes',
+  icon: '📝',
+  desc: 'Questions & mock tests',
+},
   { href: '/admin/topics',    label: 'Topics',        icon: '🏷️', desc: 'Course categories'     },
   // { href: '/admin/coupons',   label: 'Coupons',       icon: '🎟️', desc: 'Discount codes'        },
   { href: '/admin/users',     label: 'Users',         icon: '👥', desc: 'User management'       },

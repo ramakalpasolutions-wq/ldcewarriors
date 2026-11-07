@@ -69,11 +69,12 @@ export default function Navbar() {
   }
 
   const NAV_LINKS = [
-    { href: '/', label: 'Home' },
-    { href: '/classes', label: 'Classes' },
-    { href: '/articles', label: 'Articles' },
-    { href: '/contact', label: 'Contact' },
-  ]
+  { href: '/', label: 'Home' },
+  { href: '/classes', label: 'Classes' },
+  { href: '/articles', label: 'Articles' },
+  { href: '/quiz', label: 'Test Yourself' },
+  { href: '/contact', label: 'Contact' },
+]
 
   // Check if current user is active in Join Family
   const isFamilyMember = Boolean(
