@@ -262,13 +262,13 @@ export default function QuizResultsPage() {
                 Topic Quizzes
               </Link>
 
-              <Link
+              {/* <Link
                 href="/mock-tests"
                 className="btn-gold"
                 style={{ textDecoration: 'none' }}
               >
                 Full Mock Tests
-              </Link>
+              </Link> */}
             </div>
           </>
         )}

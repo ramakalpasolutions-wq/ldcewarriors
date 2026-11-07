@@ -116,7 +116,7 @@ export default function QuizPage() {
               Select a topic to explore available quizzes.
             </p>
 
-            <Link
+            {/* <Link
               href="/mock-tests"
               className="btn-gold"
               style={{
@@ -126,7 +126,7 @@ export default function QuizPage() {
               }}
             >
               Explore Full Mock Tests →
-            </Link>
+            </Link> */}
           </div>
 
           {loading && (
