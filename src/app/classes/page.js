@@ -1084,7 +1084,7 @@ function ClassesPageInner() {
             marginBottom: isMobile ? '24px' : isTablet ? '32px' : 'clamp(32px,5vw,52px)',
             animation: 'fadeInUp 0.55s ease both',
           }}>
-            <div style={{ marginBottom: '10px' }}>
+            {/* <div style={{ marginBottom: '10px' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                 fontSize: '10px', fontWeight: 700, color: tk.navy,
@@ -1096,23 +1096,25 @@ function ClassesPageInner() {
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: tk.gold, animation: 'pulse 2s infinite' }}/>
                 All Classes
               </span>
-            </div>
+            </div> */}
 
-            <h1 style={{
-              fontFamily: 'Playfair Display,serif', fontWeight: 800,
-              fontSize: isMobile ? 'clamp(22px,7vw,30px)' : 'clamp(28px,5vw,50px)',
-              color: tk.text, lineHeight: 1.14,
-              marginBottom: isMobile ? '9px' : '13px',
-              letterSpacing: '-1px',
-            }}>
-              Learn at Your{' '}
-              <span style={{
-                background: `linear-gradient(135deg,${tk.navy},${tk.navyLight})`,
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>Own Pace</span>
-            </h1>
+            <h1
+  style={{
+    fontFamily: 'Playfair Display, serif',
+    fontWeight: 800,
+    fontSize: isMobile
+      ? 'clamp(22px, 7vw, 30px)'
+      : 'clamp(28px, 5vw, 50px)',
+    color: '#C8102E',
+    lineHeight: 1.14,
+    marginBottom: isMobile ? '9px' : '13px',
+    letterSpacing: '-1px',
+  }}
+>
+  Classes
+</h1>
 
-            <p style={{
+            {/* <p style={{
               color: tk.muted,
               fontSize: isMobile ? '13px' : 'clamp(14px,2vw,16px)',
               lineHeight: 1.7,
@@ -1120,36 +1122,84 @@ function ClassesPageInner() {
               margin: isMobile ? '0 0 12px' : '0 auto 16px',
             }}>
               Start with free sample videos. Join our family for full topic-wise video playback.
-            </p>
+            </p> */}
 
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: '7px', flexWrap: 'wrap',
-            }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '5px 13px', borderRadius: '999px',
-                background: 'rgba(42,157,143,0.08)', border: '1px solid rgba(42,157,143,0.18)',
-                fontSize: isMobile ? '11px' : '12px', fontWeight: 600, color: tk.teal,
-              }}>✓ Free videos — open to all</span>
+            
+<div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: isMobile ? '12px' : '18px',
+    flexWrap: 'wrap',
+  }}
+>
+  {/* FREE VIDEOS */}
+  <span
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '9px',
+      padding: isMobile ? '12px 18px' : '14px 26px',
+      borderRadius: '999px',
+      background: 'rgba(42,157,143,0.08)',
+      border: '2px solid rgba(42,157,143,0.25)',
+      fontSize: isMobile ? '14px' : '17px',
+      fontWeight: 800,
+      color: tk.teal,
+      lineHeight: 1.4,
+    }}
+  >
+    ✓ Free videos — open to all
+  </span>
 
-              {isSubscribed ? (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 13px', borderRadius: '999px',
-                  background: 'rgba(232,168,56,0.09)', border: '1px solid rgba(232,168,56,0.22)',
-                  fontSize: isMobile ? '11px' : '12px', fontWeight: 600, color: tk.gold,
-                }}>⭐ Join Family Active</span>
-              ) : (
-                <Link href="/join-family" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                  padding: '5px 13px', borderRadius: '999px',
-                  background: 'rgba(27,42,74,0.06)', border: '1px solid rgba(27,42,74,0.14)',
-                  fontSize: isMobile ? '11px' : '12px', fontWeight: 600,
-                  color: tk.navy, textDecoration: 'none',
-                }}>🔒 Join Family to Play</Link>
-              )}
-            </div>
+  {isSubscribed ? (
+    /* FAMILY MEMBERSHIP ACTIVE */
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '9px',
+        padding: isMobile ? '12px 18px' : '14px 26px',
+        borderRadius: '999px',
+        background: 'rgba(232,168,56,0.09)',
+        border: '2px solid rgba(232,168,56,0.3)',
+        fontSize: isMobile ? '14px' : '17px',
+        fontWeight: 800,
+        color: tk.gold,
+        lineHeight: 1.4,
+      }}
+    >
+      ⭐ Join Family Active
+    </span>
+  ) : (
+    /* JOIN FAMILY BUTTON */
+    <Link
+      href="/join-family"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '9px',
+        padding: isMobile ? '12px 18px' : '14px 26px',
+        borderRadius: '999px',
+        background: 'rgba(27,42,74,0.06)',
+        border: '2px solid rgba(27,42,74,0.2)',
+        fontSize: isMobile ? '14px' : '17px',
+        fontWeight: 800,
+        color: tk.navy,
+        textDecoration: 'none',
+        lineHeight: 1.4,
+        transition: 'all 0.2s ease',
+      }}
+    >
+      🔒 Join Family to Play
+    </Link>
+  )}
+</div>
+
           </header>
 
           {/* ════════════════════════════════════════
@@ -1223,7 +1273,7 @@ function ClassesPageInner() {
                       border: '1px solid rgba(232,168,56,0.15)',
                     }}>
                       <div>
-                        <p style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(232,168,56,0.75)', letterSpacing: '1.4px', textTransform: 'uppercase', marginBottom: '4px' }}>⭐ Membership Required</p>
+                        <p style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(232,168,56,0.75)', letterSpacing: '1.4px', textTransform: 'uppercase', marginBottom: '4px' }}></p>
                         <h3 style={{ fontFamily: 'Playfair Display,serif', fontSize: isMobile ? '14px' : '16px', fontWeight: 800, color: '#FFF', marginBottom: '3px' }}>Join our family to start watching</h3>
                         <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.38)' }}>200+ expert videos · unlimited topic access · 3 plays per video</p>
                       </div>
@@ -1331,7 +1381,7 @@ function ClassesPageInner() {
                     border: '1px solid rgba(232,168,56,0.15)', flexWrap: 'wrap',
                   }}>
                     <div>
-                      <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(232,168,56,0.75)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>⭐ Membership Required to Play</p>
+                      <p style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(232,168,56,0.75)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}></p>
                       <h3 style={{ fontFamily: 'Playfair Display,serif', fontSize: 'clamp(15px,2.5vw,19px)', fontWeight: 800, color: '#FFF', marginBottom: '3px' }}>
                         You can browse all videos — join our family to start watching
                       </h3>
