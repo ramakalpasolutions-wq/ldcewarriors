@@ -573,59 +573,131 @@ export default function ExamPage() {
 
         {/* BEFORE START */}
 
-        {status === 'ready' && (
-          <section
-            style={{
-              ...panel,
-              maxWidth: 750,
-              margin: '40px auto',
-            }}
-          >
-            <h2 className="ldce-instruction-title">
-              Examination Instructions
-            </h2>
+      
+{/* BEFORE START - GENERAL INSTRUCTIONS */}
 
-            <p className="ldce-instruction-text">
-              This is a timed examination.
-              Switching browser tabs, changing windows,
-              minimizing the browser, leaving fullscreen
-              when available, or navigating away may end
-              your examination attempt.
-            </p>
+{status === 'ready' && (
+  <section className="ldce-instructions-page">
 
-            <p className="ldce-instruction-text">
-              Copying, text selection, right-click and
-              common keyboard copy shortcuts are restricted.
-            </p>
+    <div className="ldce-instructions-heading">
+      <span className="ldce-instructions-brand">
+        LDCE WARRIORS
+      </span>
 
-            <p className="ldce-instruction-text">
-              After successful submission, you can watch
-              the explanation video uploaded for this quiz.
-            </p>
+      <h3 className="ldce-instructions-series">
+        TEST SERIES
+      </h3>
 
-            {message && (
-              <p className="ldce-exam-error">
-                <FiAlertCircle size={17} />
-                {message}
-              </p>
-            )}
+      <span className="ldce-instructions-label">
+        BEFORE YOU BEGIN
+      </span>
 
-            <button
-              type="button"
-              className="ldce-start-button"
-              onClick={startExam}
-            >
-              Start Examination
-              <FiArrowRight />
-            </button>
+      <h2>General Instructions</h2>
 
-            <p style={{ marginTop: 22 }}>
-              <Link href="/quiz">
-                ← Back to Quizzes
-              </Link>
-            </p>
-          </section>
-        )}
+      <p>
+        Please read the following instructions carefully
+      </p>
+    </div>
+
+    <div className="ldce-instructions-divider" />
+
+    <div className="ldce-instructions-list">
+      {[
+        {
+          number: '01',
+          title: 'Read Carefully',
+          description: 'Read each question carefully.',
+        },
+        {
+          number: '02',
+          title: 'Choose One Option',
+          description: 'Select only one correct option.',
+        },
+        {
+          number: '03',
+          title: 'Review Your Answers',
+          description:
+            'Navigate and change answers before submission.',
+        },
+        {
+          number: '04',
+          title: 'Submit on Time',
+          description:
+            'Submit before time expires. Auto-submission applies.',
+        },
+        {
+          number: '05',
+          title: 'Check Your Performance',
+          description:
+            'Review your results and explanations after submission.',
+        },
+      ].map((item, index) => (
+        <div
+          key={item.number}
+          className={`ldce-instruction-card ${
+            index % 2 === 0
+              ? 'ldce-instruction-blue'
+              : 'ldce-instruction-pink'
+          }`}
+        >
+          <div className="ldce-instruction-number">
+            {item.number}
+          </div>
+
+          <div className="ldce-instruction-content">
+            <h3>{item.title}</h3>
+            <p>{item.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* EXAM SECURITY NOTICE */}
+
+    <div className="ldce-instruction-warning">
+      <FiAlertCircle size={22} />
+
+      <div>
+        <strong>Important Examination Rules</strong>
+
+        <p>
+          Switching tabs, minimizing the window,
+          leaving fullscreen mode or navigating away
+          may terminate your examination.
+        </p>
+      </div>
+    </div>
+
+    {message && (
+      <div
+        className="ldce-instruction-error"
+        role="alert"
+      >
+        <FiAlertCircle size={18} />
+        <span>{message}</span>
+      </div>
+    )}
+
+    {/* START EXAM BUTTON */}
+
+    <button
+      type="button"
+      onClick={startExam}
+      className="ldce-instructions-start"
+    >
+      Start Examination
+      <FiArrowRight size={22} />
+    </button>
+
+    <Link
+      href="/quiz"
+      className="ldce-instructions-back"
+    >
+      ← Back to Quizzes
+    </Link>
+  </section>
+)}
+
 
         {/* LOADING */}
 
@@ -1338,6 +1410,267 @@ export default function ExamPage() {
             max-height: 220px;
           }
         }
+
+/* EXAM GENERAL INSTRUCTIONS */
+
+.ldce-instructions-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 25px auto 50px;
+  padding: 30px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 22px;
+}
+
+.ldce-instructions-heading {
+  text-align: center;
+}
+
+.ldce-instructions-brand {
+  display: block;
+  font-size: 19px;
+  font-weight: 900;
+  color: #8298B8;
+  letter-spacing: 1px;
+}
+
+.ldce-instructions-series {
+  margin-top: 10px;
+  font-size: 25px;
+  font-weight: 900;
+  color: #3374C9;
+  letter-spacing: 1px;
+}
+
+.ldce-instructions-label {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 7px 16px;
+  border-radius: 25px;
+  background: #E2F2FF;
+  color: #145287;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ldce-instructions-heading h2 {
+  margin-top: 17px;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 900;
+  color: #1B355C;
+  line-height: 1.2;
+}
+
+.ldce-instructions-heading > p {
+  margin-top: 15px;
+  color: #667085;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.ldce-instructions-divider {
+  width: 100%;
+  height: 1px;
+  background: #DCE3EC;
+  margin: 30px 0;
+}
+
+/* NUMBERED INSTRUCTION CARDS */
+
+.ldce-instructions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ldce-instruction-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 19px;
+  min-height: 115px;
+  border-radius: 20px;
+}
+
+.ldce-instruction-blue {
+  background: #EBF4FF;
+}
+
+.ldce-instruction-pink {
+  background: #FFF0F5;
+}
+
+.ldce-instruction-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 78px;
+  height: 78px;
+  border-radius: 15px;
+  font-size: 31px;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.ldce-instruction-blue .ldce-instruction-number {
+  background: #246BB7;
+}
+
+.ldce-instruction-pink .ldce-instruction-number {
+  background: #D82772;
+}
+
+.ldce-instruction-content {
+  min-width: 0;
+}
+
+.ldce-instruction-content h3 {
+  color: #111827;
+  font-size: 22px;
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.ldce-instruction-content p {
+  margin-top: 9px;
+  color: #526070;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+/* EXAM SECURITY NOTICE */
+
+.ldce-instruction-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px;
+  margin-top: 23px;
+  border-radius: 15px;
+  background: #FFF7E8;
+  border: 1px solid #F4D49B;
+  color: #8B5C0B;
+}
+
+.ldce-instruction-warning > svg {
+  flex-shrink: 0;
+}
+
+.ldce-instruction-warning strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 850;
+}
+
+.ldce-instruction-warning p {
+  margin-top: 7px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.ldce-instruction-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #B42318;
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+/* START BUTTON */
+
+.ldce-instructions-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 26px;
+  padding: 17px 24px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    #246BB7,
+    #114A90
+  );
+  color: #FFFFFF;
+  font-size: 18px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.ldce-instructions-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(36,107,183,.22);
+}
+
+.ldce-instructions-back {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+  color: #667085;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 600px) {
+  .ldce-instructions-page {
+    margin: 15px auto 35px;
+    padding: 18px 14px 24px;
+    border-radius: 16px;
+  }
+
+  .ldce-instructions-brand {
+    font-size: 17px;
+  }
+
+  .ldce-instructions-series {
+    font-size: 22px;
+  }
+
+  .ldce-instructions-heading h2 {
+    font-size: 30px;
+  }
+
+  .ldce-instructions-heading > p {
+    font-size: 13px;
+  }
+
+  .ldce-instruction-card {
+    gap: 14px;
+    padding: 14px;
+    min-height: 104px;
+    border-radius: 17px;
+  }
+
+  .ldce-instruction-number {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    font-size: 26px;
+  }
+
+  .ldce-instruction-content h3 {
+    font-size: 17px;
+  }
+
+  .ldce-instruction-content p {
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .ldce-instructions-start {
+    font-size: 16px;
+  }
+}
+
       `}</style>
     </main>
   )
