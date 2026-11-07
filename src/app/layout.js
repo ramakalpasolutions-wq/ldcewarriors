@@ -1,6 +1,7 @@
-// src/app/layout.js
+
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import Script from 'next/script'
 
 export const metadata = {
   title: 'LDCE Warriors — Limited Departmental Competitive Exams',
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
+
         <style>{`
           /* Telegram Floating Button Styles */
           .telegram-float {
@@ -187,7 +189,74 @@ export default function RootLayout({ children }) {
           }
         `}</style>
       </head>
+
       <body>
+        {/* ========================================= */}
+        {/* GOOGLE TAG MANAGER */}
+        {/* Container ID: GTM-P82BN6HX */}
+        {/* ========================================= */}
+
+        <Script
+          id="google-tag-manager"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){
+                w[l]=w[l]||[];
+                w[l].push({
+                  'gtm.start': new Date().getTime(),
+                  event:'gtm.js'
+                });
+                var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),
+                dl=l!='dataLayer'?'&l='+l:'';
+                j.async=true;
+                j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+                f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-P82BN6HX');
+            `,
+          }}
+        />
+
+        {/* GOOGLE TAG MANAGER NOSCRIPT FALLBACK */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-P82BN6HX"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+            title="Google Tag Manager"
+          />
+        </noscript>
+
+        {/* ========================================= */}
+        {/* MICROSOFT CLARITY */}
+        {/* Project ID: z9vhz0p45j */}
+        {/* ========================================= */}
+
+        <Script
+          id="microsoft-clarity"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){
+                  (c[a].q=c[a].q||[]).push(arguments)
+                };
+                t=l.createElement(r);
+                t.async=1;
+                t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];
+                y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "z9vhz0p45j");
+            `,
+          }}
+        />
+
+        {/* ========================================= */}
+        {/* REACT HOT TOAST */}
+        {/* ========================================= */}
+
         <Toaster
           position="top-right"
           toastOptions={{
@@ -209,11 +278,15 @@ export default function RootLayout({ children }) {
           }}
         />
 
-        {/* ── Telegram Floating Button ── */}
+        {/* ========================================= */}
+        {/* TELEGRAM FLOATING BUTTON */}
+        {/* ========================================= */}
+
         <div className="telegram-float">
           <span className="telegram-tooltip">
             <span style={{ color: '#E8A838' }}>⚡</span> Join Telegram Group
           </span>
+
           <a
             href={telegramURL}
             target="_blank"
@@ -222,12 +295,15 @@ export default function RootLayout({ children }) {
             aria-label="Join our Telegram group - LDCE Warriors"
             title="Join Telegram Group"
           >
-            {/* Official Telegram Paper Airplane SVG Icon */}
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.535-.194 1.006.128.828.942z"/>
             </svg>
           </a>
         </div>
+
+        {/* ========================================= */}
+        {/* PAGE CONTENT */}
+        {/* ========================================= */}
 
         {children}
       </body>
