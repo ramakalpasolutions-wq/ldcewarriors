@@ -253,7 +253,7 @@ export default function Footer() {
                 fontSize: '13.5px', lineHeight: 1.75,
                 maxWidth: '280px', marginBottom: '24px',
               }}>
-                Your comprehensive preparation platform for Lower Departmental Competitive
+                Your comprehensive preparation platform for Limited Departmental Competitive
                 Examinations. Expert video lectures, structured courses, and proven study material.
               </p>
 

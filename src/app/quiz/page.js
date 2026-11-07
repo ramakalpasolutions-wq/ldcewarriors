@@ -91,20 +91,20 @@ export default function QuizPage() {
                 fontWeight: 800,
               }}
             >
-              LDCE WARRIORS EXAM PREPARATION
+              {/* LDCE WARRIORS EXAM PREPARATION */}
             </span>
 
             <h1
-              style={{
-                fontFamily: 'Playfair Display, serif',
-                color: colors.navy,
-                fontWeight: 800,
-                fontSize: 'clamp(30px, 5vw, 46px)',
-                margin: '12px 0',
-              }}
-            >
-              Test Yourself
-            </h1>
+  style={{
+    fontFamily: 'Playfair Display, serif',
+    color: '#C8102E',
+    fontWeight: 800,
+    fontSize: 'clamp(30px, 5vw, 46px)',
+    margin: '12px 0',
+  }}
+>
+  Mock Tests
+</h1>
 
             <p
               style={{
@@ -113,7 +113,7 @@ export default function QuizPage() {
                 lineHeight: 1.7,
               }}
             >
-              Select a topic to explore available quizzes.
+              {/* Select a topic to explore available quizzes. */}
             </p>
 
             {/* <Link

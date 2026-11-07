@@ -1,6 +1,6 @@
 # 📚 LDCE Platform — Setup Guide
 
-## Full-Stack Next.js platform for Lower Departmental Competitive Exams
+## Full-Stack Next.js platform for Limited Departmental Competitive Exams
 
 ---
 
