@@ -3,8 +3,8 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata = {
-  title: 'LDCE Warriors — Lower Departmental Competitive Exams',
-  description: 'Comprehensive preparation platform for Lower Departmental Competitive Examinations',
+  title: 'LDCE Warriors — Limited Departmental Competitive Exams',
+  description: 'Comprehensive preparation platform for Limited Departmental Competitive Examinations',
   keywords: 'LDCE, departmental exam, competitive exam, government preparation',
 }
 
