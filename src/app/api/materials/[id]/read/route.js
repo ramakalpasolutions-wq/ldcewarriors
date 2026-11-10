@@ -20,7 +20,7 @@ async function currentUser(req) {
   const user = await prisma.user.findUnique({
     where: { id },
     select: {
-      id: true, fullName: true, email: true, mobile: true,
+      id: true, fullName: true, email: true,
       isActive: true, isPremium: true, premiumExpiresAt: true,
     },
   })
@@ -72,7 +72,7 @@ export async function POST(req, { params }) {
     const url = await getSignedVideoUrl(material.pdfKey, 60)
 
     const watermark = user
-      ? [user.fullName, user.mobile, user.email].filter(Boolean).join(' • ')
+      ? [user.fullName, user.email].filter(Boolean).join(' • ')
       : admin
         ? 'LDCE Warriors • Admin preview'
         : 'LDCE Warriors'

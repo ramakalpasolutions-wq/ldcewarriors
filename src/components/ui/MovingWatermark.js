@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 /*
-  Viewer watermark: the signed-in student's name and phone number.
+  Viewer watermark (used by the textbook reader): the reader's name and email.
   Screenshots and screen recordings can't be blocked on phones,
   so every capture shows who made it.
 
@@ -11,34 +11,6 @@ import { useEffect, useState } from 'react'
     (so it can't be cropped out of a recording)
   - A faint repeating pattern across the whole area
 */
-
-let profilePromise = null
-
-// Fetch the profile once per page load and share it
-function loadViewer() {
-  if (!profilePromise) {
-    profilePromise = fetch('/api/user/profile', { cache: 'no-store' })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => (d?.success ? d.user : null))
-      .catch(() => null)
-  }
-  return profilePromise
-}
-
-// "Ravi Kumar • 98765 43210"  (null while loading or when signed out)
-export function useViewerWatermark() {
-  const [text, setText] = useState(null)
-  useEffect(() => {
-    let cancelled = false
-    loadViewer().then(user => {
-      if (cancelled || !user) return
-      const phone = user.mobile ? String(user.mobile).replace(/(\d{5})(\d{5})$/, '$1 $2') : ''
-      setText([user.fullName, phone || user.email].filter(Boolean).join(' • '))
-    })
-    return () => { cancelled = true }
-  }, [])
-  return text
-}
 
 function tileDataUri(text, dark) {
   const fill = dark ? 'rgba(255,255,255,0.10)' : 'rgba(27,42,74,0.07)'

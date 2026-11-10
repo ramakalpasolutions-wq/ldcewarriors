@@ -1,7 +1,6 @@
   // src/components/ui/VideoPlayerModal.js
   'use client'
   import { useEffect, useRef, useState } from 'react'
-  import MovingWatermark, { useViewerWatermark } from '@/components/ui/MovingWatermark'
 
   const tk = {
     navy: '#1B2A4A', navyLight: '#243656',
@@ -40,9 +39,7 @@
     )
   }
 
-  export default function VideoPlayerModal({ video, onClose, onPlayLimitExceeded, watermarkText }) {
-    // Student's name + phone over the video (screen captures can't be blocked on phones)
-    const viewerMark = useViewerWatermark()
+  export default function VideoPlayerModal({ video, onClose, onPlayLimitExceeded }) {
     const videoRef         = useRef(null)
     const containerRef     = useRef(null)
     const controlsTimerRef = useRef(null)
@@ -481,7 +478,6 @@
                 onDoubleClick={toggleFullscreen}
               />
 
-              <MovingWatermark text={watermarkText || viewerMark || video.watermark || null} dark zIndex={5}/>
 
               {/* Loading */}
               {loading && !error && (

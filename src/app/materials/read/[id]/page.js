@@ -309,10 +309,10 @@ export default function TextbookReaderPage() {
         )}
       </main>
 
-      {/* Moving name + phone on top of the pages (printed watermark is on each page too) */}
+      {/* Moving name + email on top of the pages (printed watermark is on each page too) */}
       {status === 'ready' && info?.watermark && (
         <MovingWatermark
-          text={info.watermark.split(' • ').slice(0, 2).join(' • ')}
+          text={info.watermark}
           mode="page"
           zIndex={10000}
         />
