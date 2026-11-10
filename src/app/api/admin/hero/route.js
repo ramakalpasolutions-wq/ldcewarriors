@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
 import { deleteImage } from '@/lib/cloudinary'
-import { deleteVideoFromR2 } from '@/lib/r2'
+import { deleteVideoFromR2, getSignedVideoUrl } from '@/lib/r2'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,10 +101,25 @@ export async function GET(req) {
       },
     })
 
-    const mapped = items.map((item) => ({
-      ...item,
-      _id: item.id,
-    }))
+    // Admins get the stored values (needed for editing).
+    // Visitors get short-lived links for hero videos,
+    // so the storage bucket doesn't need public access.
+    const isAdmin = Boolean(requireAdmin(req))
+
+    const mapped = await Promise.all(
+      items.map(async ({ videoKey, ...item }) =>
+        isAdmin
+          ? { ...item, videoKey, _id: item.id }
+          : {
+              ...item,
+              _id: item.id,
+              mediaUrl:
+                item.type === 'video' && videoKey
+                  ? await getSignedVideoUrl(videoKey, 12 * 60 * 60).catch(() => item.mediaUrl)
+                  : item.mediaUrl,
+            }
+      )
+    )
 
     return NextResponse.json({
       success: true,

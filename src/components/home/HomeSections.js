@@ -1,11 +1,36 @@
 // src/components/home/HomeSections.js
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import VideoCard from '@/components/home/VideoCard'
 import VideoPlayerModal from '@/components/ui/VideoPlayerModal'
 
 export default function HomeVideoSection({ freeVideos = [] }) {
   const [selectedVideo, setSelectedVideo] = useState(null)
+  const loadingRef = useRef(false)
+
+  // Ask the server for a short-lived link, then open the player
+  async function playVideo(video) {
+    if (loadingRef.current) return
+    loadingRef.current = true
+    try {
+      const res = await fetch('/api/videos/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId: video._id || video.id }),
+      })
+      const data = await res.json()
+      if (data.success && data.canPlay && data.streamUrl) {
+        setSelectedVideo({ ...video, videoUrl: data.streamUrl })
+      } else {
+        toast.error(data.error || 'Unable to play video.')
+      }
+    } catch {
+      toast.error('Network error. Please try again.')
+    } finally {
+      loadingRef.current = false
+    }
+  }
 
   if (freeVideos.length === 0) {
     return (
@@ -47,7 +72,7 @@ export default function HomeVideoSection({ freeVideos = [] }) {
           <VideoCard
             key={video._id || video.id}
             video={video}
-            onClick={setSelectedVideo}
+            onClick={playVideo}
             isSubscribed={false}
           />
         ))}

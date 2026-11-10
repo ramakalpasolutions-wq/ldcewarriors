@@ -4,7 +4,7 @@ export default function VideoCard({
   video,
   onClick,
   isSubscribed = false,
-  playCount = 0,
+  playCount,
 }) {
   const videoId = video._id || video.id
 
@@ -21,7 +21,7 @@ export default function VideoCard({
 
   const usedPlays = Math.max(
     0,
-    Number(playCount) || 0
+    Number(playCount ?? video.playCount) || 0
   )
 
   const playLimit =

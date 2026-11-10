@@ -46,6 +46,7 @@ export async function GET(req, { params }) {
           select: {
             title: true,
             explanationVideoKey: true,
+            explanationThumbnailKey: true,
           },
         },
       },
@@ -96,6 +97,12 @@ export async function GET(req, { params }) {
         hasExplanationVideo: Boolean(
           submitted &&
           attempt.quiz.explanationVideoKey
+        ),
+
+        hasExplanationThumbnail: Boolean(
+          submitted &&
+          attempt.quiz.explanationVideoKey &&
+          attempt.quiz.explanationThumbnailKey
         ),
 
         review,

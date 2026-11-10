@@ -106,50 +106,19 @@ function SectionLabel({ color, bg, border, children }) {
   )
 }
 
-/* ─── Tab Bar for mobile/tablet ─── */
-function SectionTabs({ activeTab, onTab }) {
-  return (
-    <div style={{
-      display: 'flex', gap: '6px',
-      background: tk.card, border: `1.5px solid ${tk.border}`,
-      borderRadius: '12px', padding: '5px',
-      marginBottom: '20px',
-    }}>
-      {[
-        { id: 'free',        label: '🎬 Free Videos',         color: tk.teal },
-        { id: 'join-family', label: '⭐ Join Family Courses', color: tk.gold },
-      ].map(tab => (
-        <button
-          key={tab.id}
-          onClick={() => onTab(tab.id)}
-          style={{
-            all: 'unset', flex: 1, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '5px', padding: '9px 12px', borderRadius: '999px',
-            fontSize: '12px', fontWeight: 700, lineHeight: 1,
-            transition: 'all 0.22s ease',
-            background: activeTab === tab.id
-              ? `linear-gradient(135deg,${tk.navy},${tk.navyLight})`
-              : 'transparent',
-            color: activeTab === tab.id ? '#fff' : tk.muted,
-            boxShadow: activeTab === tab.id
-              ? '0 2px 10px rgba(27,42,74,0.18)' : 'none',
-          }}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 /* ─── Topic Chips (mobile/tablet) ─── */
 function TopicChips({ topics, activeTopic, onSelect, isMobile }) {
   const trackRef = useRef(null)
   useEffect(() => {
     if (!trackRef.current || !activeTopic) return
-    const active = trackRef.current.querySelector('.chip-act')
-    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth' })
+    const track = trackRef.current
+    const active = track.querySelector('.chip-act')
+    if (active) {
+      track.scrollTo({
+        left: active.offsetLeft - (track.clientWidth - active.offsetWidth) / 2,
+        behavior: 'smooth',
+      })
+    }
   }, [activeTopic])
 
   return (
@@ -216,8 +185,14 @@ function TopicSidebar({ topics, activeTopic, onSelect }) {
 
   useEffect(() => {
     if (!sidebarRef.current || !activeTopic) return
-    const el = sidebarRef.current.querySelector('.sidebar-card-active')
-    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    // Scroll only the sidebar list (scrollIntoView would also move the page)
+    const list = sidebarRef.current
+    const el = list.querySelector('.sidebar-card-active')
+    if (!el) return
+    const top = el.offsetTop - list.offsetTop
+    if (top < list.scrollTop || top + el.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTo({ top: top - 12, behavior: 'smooth' })
+    }
   }, [activeTopic])
 
   return (
@@ -498,7 +473,6 @@ function ClassesPageInner() {
   const [playCounts,        setPlayCounts]        = useState({})
   const [isMobile,          setIsMobile]          = useState(false)
   const [isTablet,          setIsTablet]          = useState(false)
-  const [activeTab,         setActiveTab]         = useState('free')
 
   const isPlayingRef = useRef(false)
   const router       = useRouter()
@@ -586,11 +560,6 @@ function ClassesPageInner() {
     const topicParam = searchParams?.get('topic')
     if (topicParam && topics.length > 0 && topics.find(tp => tp._id === topicParam)) {
       setActiveTopic(topicParam)
-      setActiveTab('join-family')
-      setTimeout(() => {
-        const el = document.getElementById('join-family-section')
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 300)
     }
   }, [searchParams, topics])
 
@@ -599,7 +568,8 @@ function ClassesPageInner() {
     if (!topicId) return
     setJoinFamilyLoading(true)
     try {
-      const res  = await fetch(`/api/videos?topicId=${topicId}&limit=50`)
+      // Only Join Family videos here — free videos are listed in the free section
+      const res  = await fetch(`/api/videos?topicId=${topicId}&type=premium&limit=50`)
       const data = await res.json()
       if (data.success) setJoinFamilyVideos(data.videos || [])
     } catch {}
@@ -961,8 +931,17 @@ function ClassesPageInner() {
             <span style={{ fontSize: '16px', flexShrink: 0 }}>ℹ️</span>
             <p style={{ fontSize: isMobile ? '12px' : '13px', color: tk.muted, lineHeight: 1.55 }}>
               <strong style={{ color: tk.text }}>Play limit: </strong>
-              Each Join Family video can be watched up to{' '}
-              <strong style={{ color: tk.gold }}>3 times</strong> per membership period.
+              {(() => {
+                const limits = [...new Set(joinFamilyVideos.map(v => v.playLimit || 3))]
+                return limits.length === 1 ? (
+                  <>
+                    Each Join Family video can be watched up to{' '}
+                    <strong style={{ color: tk.gold }}>{limits[0]} {limits[0] === 1 ? 'time' : 'times'}</strong> per membership period.
+                  </>
+                ) : (
+                  <>Each Join Family video can be watched a limited number of times per membership period — see the plays left on each video.</>
+                )
+              })()}
             </p>
           </div>
         )}
@@ -985,6 +964,7 @@ function ClassesPageInner() {
                 <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden' }}>
                   <VideoCard
                     video={{ ...video, isLocked: !isSubscribed || isExhausted }}
+                    playCount={usedCount}
                     onClick={(v) => {
                       if (!isSubscribed) { handleSubscribeClick(); return }
                       if (isExhausted)   { toast.error('Play limit reached for this video.', { icon: '🔒' }); return }
@@ -1203,13 +1183,11 @@ function ClassesPageInner() {
           </header>
 
           {/* ════════════════════════════════════════
-              MOBILE / TABLET — Tab layout
+              MOBILE / TABLET — Free videos, then Join Family
           ════════════════════════════════════════ */}
           {showTabs && (
             <div style={{ animation: 'fadeInUp 0.55s ease 0.1s both' }}>
-              <SectionTabs activeTab={activeTab} onTab={setActiveTab}/>
-
-              {activeTab === 'free' && (
+              {(
                 <section>
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1245,7 +1223,9 @@ function ClassesPageInner() {
                 </section>
               )}
 
-              {activeTab === 'join-family' && (
+              <div className="cls-divider"/>
+
+              {(
                 <section id="join-family-section">
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',

@@ -2,10 +2,10 @@
   "name": "ldce-platform",
   "version": "0.1.0",
   "private": true,
-   "scripts": {
+  "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate && node scripts/copy-pdf-worker.js",
     "start": "next start",
     "lint": "next lint"
   },
@@ -26,6 +26,7 @@
     "next": "^16.2.4",
     "next-auth": "^4.24.5",
     "nodemailer": "^7.0.13",
+    "pdfjs-dist": "^4.10.38",
     "postcss": "^8.4.38",
     "prisma": "^6.19.3",
     "razorpay": "^2.9.2",

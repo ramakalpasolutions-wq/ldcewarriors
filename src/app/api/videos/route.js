@@ -21,7 +21,10 @@ export async function GET(req) {
       isActive: true,
     }
 
-    if (type) {
+    if (type === 'premium' || type === 'join family') {
+      // Join Family videos have been saved under both names
+      where.type = { in: ['premium', 'Premium', 'join family', 'Join Family'] }
+    } else if (type) {
       where.type = type
     }
 
@@ -174,11 +177,9 @@ export async function GET(req) {
         // Never expose R2 key publicly
         videoKey: undefined,
 
-        // Never expose premium URL directly.
-        // User must request /api/videos/play
-        videoUrl: isJoinFamily
-          ? null
-          : video.videoUrl,
+        // Never expose file URLs in listings.
+        // Players request a short-lived link from /api/videos/play
+        videoUrl: null,
 
         playCount: usedPlays,
 

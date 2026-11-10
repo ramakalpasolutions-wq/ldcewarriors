@@ -38,6 +38,13 @@ function parseQuiz(body) {
 
   const isPublished = Boolean(body.isPublished)
 
+  // Optional display order (Mock Test – 01, 02 …)
+  const orderValue = parseInt(body.order, 10)
+  const order =
+    Number.isInteger(orderValue) && orderValue > 0 && orderValue < 10000
+      ? orderValue
+      : null
+
   if (!title || title.length > 160) {
     throw new Error('Enter a valid quiz title')
   }
@@ -114,6 +121,7 @@ function parseQuiz(body) {
 
     mode,
     topicId,
+    order,
     durationMinutes,
 
     accessType:

@@ -17,7 +17,6 @@ import {
   FiUnlock,
   FiPlay,
   FiArrowRight,
-  FiRefreshCw,
 } from 'react-icons/fi'
 
 import Navbar from '@/components/layout/Navbar'
@@ -64,24 +63,18 @@ function Stat({ icon, label, value, type }) {
    QUIZ CARD
 --------------------------------- */
 
-function QuizCard({
-  quiz,
-  index,
-  membership,
-  onRetryMembership,
-}) {
-  const isFamily = membership === 'family'
-  const isChecking = membership === 'checking'
-  const hasError = membership === 'error'
+function QuizCard({ quiz, index }) {
+  // The server decides: Free → open to everyone, Premium → family members only
+  const locked = Boolean(quiz.locked)
 
-  const displayNumber = String(index + 1)
+  const displayNumber = String(quiz.order || index + 1)
     .padStart(2, '0')
 
   const totalMarks = Number(quiz.totalMarks) || 0
 
-  const href = isFamily
-    ? `/exam/${quiz.id}`
-    : '/join-family'
+  const href = locked
+    ? '/join-family'
+    : `/exam/${quiz.id}`
 
   return (
     <article className="mock-card">
@@ -90,21 +83,9 @@ function QuizCard({
         {/* TITLE */}
 
         <div className="mock-card-top">
-          <span className="mock-category">
-            LDCE WARRIORS
-          </span>
-
           <h2 className="mock-title">
-            Mock Test - {displayNumber}
+            Mock Test – {displayNumber}
           </h2>
-
-          <p className="mock-subtitle">
-            Practice Today
-            <span className="mock-subtitle-arrow">
-              →
-            </span>
-            Perform Better Tomorrow
-          </p>
 
           <div className="mock-gold-line" />
 
@@ -140,42 +121,26 @@ function QuizCard({
 
         {/* FAMILY / NON FAMILY BUTTON */}
 
-        {hasError ? (
-          <button
-            type="button"
-            className="mock-action mock-action-retry"
-            onClick={onRetryMembership}
-          >
-            <FiRefreshCw />
-            <span>Check Membership</span>
-            <FiArrowRight />
-          </button>
-        ) : isChecking ? (
-          <div className="mock-action mock-action-loading">
-            Checking Membership...
-          </div>
-        ) : (
-          <Link
-            href={href}
-            className={`mock-action ${
-              isFamily
-                ? 'mock-action-start'
-                : 'mock-action-unlock'
-            }`}
-          >
-            <span className="mock-action-icon-wrap">
-              {isFamily ? <FiPlay /> : <FiUnlock />}
-            </span>
+        <Link
+          href={href}
+          className={`mock-action ${
+            locked
+              ? 'mock-action-unlock'
+              : 'mock-action-start'
+          }`}
+        >
+          <span className="mock-action-icon-wrap">
+            {locked ? <FiUnlock /> : <FiPlay />}
+          </span>
 
-            <span className="mock-action-divider" />
+          <span className="mock-action-divider" />
 
-            <span className="mock-action-text">
-              {isFamily ? 'Start Test' : 'Unlock Now'}
-            </span>
+          <span className="mock-action-text">
+            {locked ? 'Unlock Now' : 'Start Test'}
+          </span>
 
-            <FiArrowRight className="mock-action-arrow" />
-          </Link>
-        )}
+          <FiArrowRight className="mock-action-arrow" />
+        </Link>
       </div>
     </article>
   )
@@ -252,7 +217,7 @@ export default function TopicQuizzesPage() {
         const [topicsResponse, quizzesResponse] =
           await Promise.all([
             fetch('/api/admin/topics'),
-            fetch('/api/quizzes'),
+            fetch('/api/quizzes', { cache: 'no-store' }),
           ])
 
         const [topicsData, quizzesData] =
@@ -393,8 +358,6 @@ export default function TopicQuizzesPage() {
                   key={quiz.id}
                   quiz={quiz}
                   index={index}
-                  membership={membership}
-                  onRetryMembership={loadMembership}
                 />
               ))}
             </div>
@@ -506,8 +469,9 @@ export default function TopicQuizzesPage() {
 
         .mock-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+          justify-content: center;
+          gap: 22px;
           align-items: stretch;
         }
 
@@ -520,9 +484,9 @@ export default function TopicQuizzesPage() {
           display: flex;
           min-width: 0;
           background: #FFFFFF;
-          border: 1.5px solid #D5DFF1;
-          border-radius: 26px;
-          box-shadow: 0 12px 28px rgba(27, 42, 74, .08);
+          border: 1px solid #E4E2F3;
+          border-radius: 24px;
+          box-shadow: 0 6px 20px rgba(76, 29, 149, .07);
           transition:
             transform .3s ease,
             box-shadow .3s ease,
@@ -530,9 +494,8 @@ export default function TopicQuizzesPage() {
         }
 
         .mock-card:hover {
-          transform: translateY(-6px);
-          border-color: #E8A838;
-          box-shadow: 0 20px 45px rgba(27, 42, 74, .14);
+          transform: translateY(-4px);
+          box-shadow: 0 14px 30px rgba(76, 29, 149, .14);
         }
 
         /* GOLD CORNER */
@@ -540,12 +503,13 @@ export default function TopicQuizzesPage() {
         .mock-card::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          width: 145px;
-          height: 90px;
-          background: #FFC400;
+          top: -40px;
+          left: -40px;
+          width: 110px;
+          height: 80px;
+          background: #F7B500;
           border-radius: 0 0 100% 0;
+          transform: rotate(-12deg);
           z-index: 0;
         }
 
@@ -554,11 +518,11 @@ export default function TopicQuizzesPage() {
         .mock-card::after {
           content: '';
           position: absolute;
-          right: 0;
-          bottom: 0;
-          width: 95px;
-          height: 82px;
-          background: #9A64F4;
+          right: -50px;
+          bottom: -50px;
+          width: 110px;
+          height: 110px;
+          background: linear-gradient(135deg, #9333EA, #6D28D9);
           border-radius: 100% 0 0 0;
           z-index: 0;
         }
@@ -570,7 +534,7 @@ export default function TopicQuizzesPage() {
           flex-direction: column;
           width: 100%;
           min-width: 0;
-          padding: 52px 16px 20px;
+          padding: 28px 22px 22px;
         }
 
         .mock-card-top {
@@ -578,59 +542,31 @@ export default function TopicQuizzesPage() {
           flex: 1;
         }
 
-        .mock-category {
-          display: inline-block;
-          background: rgba(27, 42, 74, .05);
-          color: #1B2A4A;
-          border-radius: 20px;
-          padding: 6px 14px;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 1.5px;
-        }
-
         .mock-title {
-          color: #071C4B;
+          color: #0F1747;
           font-family: 'DM Sans', sans-serif;
-          font-size: clamp(24px, 2vw, 30px);
-          font-weight: 800;
+          font-size: 30px;
+          font-weight: 900;
           line-height: 1.2;
-          letter-spacing: -1px;
-          margin: 24px 0 16px;
+          letter-spacing: -.5px;
+          margin: 0;
           white-space: nowrap;
-        }
-
-        .mock-subtitle {
-          color: #0A2D69;
-          font-family: 'Playfair Display', serif;
-          font-style: italic;
-          font-size: clamp(12px, 1.1vw, 16px);
-          font-weight: 600;
-          line-height: 1.65;
-        }
-
-        .mock-subtitle-arrow {
-          display: inline-block;
-          margin: 0 8px;
-          font-family: 'DM Sans', sans-serif;
-          font-style: normal;
-          font-size: 23px;
         }
 
         .mock-gold-line {
           height: 5px;
-          width: 86%;
-          margin: 23px auto 16px;
-          background: #FFC400;
+          width: 70%;
+          margin: 6px auto 14px;
+          background: #F7B500;
           border-radius: 50%;
-          transform: rotate(-2deg);
         }
 
         .mock-original-title {
-          color: #667085;
-          font-size: 12px;
-          font-weight: 700;
-          margin-bottom: 27px;
+          color: #1238B4;
+          font-size: 22px;
+          font-weight: 900;
+          line-height: 1.2;
+          margin: 0 0 18px;
           overflow-wrap: anywhere;
         }
 
@@ -639,9 +575,9 @@ export default function TopicQuizzesPage() {
         .mock-stats {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          background: #F8F7F7;
+          background: #F6F5F9;
           border-radius: 18px;
-          padding: 18px 9px;
+          padding: 14px 8px;
           margin-bottom: 18px;
         }
 
@@ -724,18 +660,18 @@ export default function TopicQuizzesPage() {
           justify-content: space-around;
           gap: 9px;
           width: 100%;
-          min-height: 64px;
-          padding: 10px 12px;
+          min-height: 58px;
+          padding: 10px 16px;
           border: 0;
-          border-radius: 18px;
+          border-radius: 999px;
           color: #FFFFFF;
           text-decoration: none;
           cursor: pointer;
           font-family: 'DM Sans', sans-serif;
           font-size: clamp(18px, 1.6vw, 23px);
           font-weight: 900;
-          letter-spacing: -.5px;
-          box-shadow: 0 10px 18px rgba(0,0,0,.14);
+          letter-spacing: -.3px;
+          box-shadow: 0 6px 16px rgba(109, 40, 217, .3);
           transition:
             filter .2s ease,
             transform .2s ease;
@@ -757,8 +693,8 @@ export default function TopicQuizzesPage() {
         .mock-action-start {
           background: linear-gradient(
             180deg,
-            #8038F4,
-            #4311AE
+            #8B2CF5,
+            #5B12C9
           );
         }
 
@@ -806,22 +742,6 @@ export default function TopicQuizzesPage() {
           font-size: 24px;
         }
 
-        /* SMALL DESKTOP: THREE CARDS */
-
-        @media (max-width: 1200px) {
-          .mock-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        /* TABLET: TWO CARDS */
-
-        @media (max-width: 900px) {
-          .mock-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-          }
-        }
-
         /* MOBILE: COMPACT CARDS */
 
         @media (max-width: 680px) {
@@ -858,59 +778,21 @@ export default function TopicQuizzesPage() {
 
           .mock-card {
             width: 100%;
-            max-width: 330px;
+            max-width: 360px;
             margin: 0 auto;
-            border-radius: 18px;
-            box-shadow: 0 6px 16px rgba(27, 42, 74, .08);
-          }
-
-          .mock-card::before {
-            width: 84px;
-            height: 54px;
-          }
-
-          .mock-card::after {
-            width: 62px;
-            height: 50px;
           }
 
           .mock-card-content {
-            padding: 24px 13px 14px;
-          }
-
-          .mock-category {
-            font-size: 9px;
-            letter-spacing: .7px;
-            padding: 4px 10px;
+            padding: 24px 16px 16px;
           }
 
           .mock-title {
-            font-size: 22px;
-            line-height: 1.25;
-            letter-spacing: -.5px;
+            font-size: 26px;
             white-space: normal;
-            margin: 14px 0 8px;
-          }
-
-          .mock-subtitle {
-            font-size: 12px;
-            line-height: 1.45;
-          }
-
-          .mock-subtitle-arrow {
-            font-size: 16px;
-            margin: 0 4px;
-          }
-
-          .mock-gold-line {
-            width: 80%;
-            height: 3px;
-            margin: 12px auto 10px;
           }
 
           .mock-original-title {
-            font-size: 11px;
-            line-height: 1.5;
+            font-size: 19px;
             margin-bottom: 14px;
           }
 
@@ -942,8 +824,8 @@ export default function TopicQuizzesPage() {
           .mock-action {
             min-height: 47px;
             gap: 6px;
-            padding: 7px 10px;
-            border-radius: 12px;
+            padding: 7px 12px;
+            border-radius: 999px;
             font-size: 17px;
             box-shadow: 0 6px 12px rgba(0,0,0,.13);
           }

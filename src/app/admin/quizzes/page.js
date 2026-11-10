@@ -46,6 +46,7 @@ function blankQuiz() {
     description: '',
     mode: 'TOPIC',
     topicId: '',
+    order: '',
     durationMinutes: 20,
     accessType: 'FREE',
     explanationVideoKey: '',
@@ -182,6 +183,7 @@ export default function AdminQuizzesPage() {
       description: quiz.description || '',
       mode: quiz.mode || 'TOPIC',
       topicId: quiz.topicId || '',
+      order: quiz.order ?? '',
       durationMinutes: quiz.durationMinutes || 20,
       accessType: quiz.accessType || 'FREE',
       explanationVideoKey:
@@ -518,6 +520,20 @@ async function uploadVideo(file) {
                 </select>
               </label>
             )}
+
+            <label>
+              Order Number
+              <input
+                type="number"
+                min="1"
+                placeholder="e.g. 1 → Mock Test – 01"
+                style={input}
+                value={form.order}
+                onChange={e =>
+                  updateField('order', e.target.value)
+                }
+              />
+            </label>
 
             <label>
               Duration (Minutes)
@@ -1058,6 +1074,9 @@ Cloudflare R2. Large videos use multipart upload.
                 {quiz.mode === 'MOCK'
                   ? 'FULL MOCK TEST'
                   : quiz.topic?.name || 'TOPIC QUIZ'}
+                {quiz.order ? ` · #${String(quiz.order).padStart(2, '0')}` : ''}
+                {' · '}
+                {quiz.accessType === 'PREMIUM' ? '⭐ Premium' : 'Free'}
               </span>
 
               <h3 style={{

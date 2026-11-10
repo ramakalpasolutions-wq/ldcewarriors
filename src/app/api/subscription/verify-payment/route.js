@@ -70,6 +70,18 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Subscription record not found' }, { status: 404 })
     }
 
+    // ── Grant Join Family access (all access checks read these fields) ──
+    await prisma.user.update({
+      where: { id: decoded.userId },
+      data:  { isPremium: true, premiumExpiresAt: endDate },
+    })
+
+    // ── New membership period → reset Join Family video plays ──
+    await prisma.videoPlay.updateMany({
+      where: { userId: decoded.userId },
+      data:  { playCount: 0, lastPlayed: new Date(0) },
+    })
+
     console.log(`✅ Subscription activated for user ${decoded.userId} until ${endDate.toISOString()}`)
 
     // ── Send confirmation email (non-blocking) ──

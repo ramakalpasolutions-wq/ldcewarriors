@@ -66,9 +66,12 @@ export async function POST(req, { params }) {
       )
     }
 
-    // Everyone can see published quizzes.
-    // Only active Join Family members may start them.
-    if (!hasPremiumAccess(user)) {
+    // Free quizzes: any signed-in user.
+    // Premium quizzes: active Join Family members only.
+    if (
+      quiz.accessType === 'PREMIUM' &&
+      !hasPremiumAccess(user)
+    ) {
       return NextResponse.json(
         {
           success: false,

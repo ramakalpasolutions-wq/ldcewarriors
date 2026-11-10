@@ -25,20 +25,29 @@ export async function GET() {
     })
 
     const videoCounts = await prisma.video.groupBy({
-      by: ['topicId'],
+      by: ['topicId', 'type'],
       where: { isActive: true, topicId: { not: null } },
       _count: { id: true },
     })
 
+    // Total per topic, plus free / Join Family split for the public topic grid
     const countMap = {}
+    const freeMap = {}
+    const familyMap = {}
     videoCounts.forEach(vc => {
-      if (vc.topicId) countMap[vc.topicId] = vc._count.id
+      if (!vc.topicId) return
+      const n = vc._count.id
+      countMap[vc.topicId] = (countMap[vc.topicId] || 0) + n
+      if (vc.type?.toLowerCase() === 'free') freeMap[vc.topicId] = (freeMap[vc.topicId] || 0) + n
+      else familyMap[vc.topicId] = (familyMap[vc.topicId] || 0) + n
     })
 
     const enriched = topics.map(t => ({
       ...t,
       _id: t.id,
       videoCount: countMap[t.id] || 0,
+      freeVideoCount: freeMap[t.id] || 0,
+      familyVideoCount: familyMap[t.id] || 0,
     }))
 
     return NextResponse.json({ success: true, topics: enriched })

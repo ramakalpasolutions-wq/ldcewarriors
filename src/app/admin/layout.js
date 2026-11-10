@@ -24,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/admin/dashboard', label: 'Dashboard',    icon: '📊', desc: 'Overview & stats'      },
   { href: '/admin/videos',    label: 'Videos',        icon: '🎥', desc: 'Manage video content'  },
   { href: '/admin/articles',  label: 'Articles',      icon: '📰', desc: 'Blog & study material' },
+  { href: '/admin/materials', label: 'Materials',     icon: '📚', desc: 'Chapter PDFs'          },
   { href: '/admin/hero',      label: 'Hero Carousel', icon: '🎞️', desc: 'Homepage banners'      },
   {
   href: '/admin/quizzes',

@@ -30,13 +30,6 @@ const panel = {
   padding: 22,
 }
 
-const violationReasons = [
-  'TAB_HIDDEN',
-  'WINDOW_BLUR',
-  'PAGE_EXIT',
-  'FULLSCREEN_EXIT',
-]
-
 function ExplanationVideoPreview({ available, thumbnailUrl }) {
   if (!available) return null
 
@@ -112,8 +105,6 @@ export default function ExamPage() {
       setStatus('finishing')
 
       const attemptId = attemptRef.current
-      const securityViolation =
-        violationReasons.includes(reason)
 
       try {
         const response = await fetch(
@@ -141,11 +132,6 @@ export default function ExamPage() {
           )
         }
 
-        const destination =
-          data.status === 'SUBMITTED' && !securityViolation
-            ? 'explanation'
-            : 'results'
-
         if (document.fullscreenElement) {
           await document
             .exitFullscreen()
@@ -153,7 +139,7 @@ export default function ExamPage() {
         }
 
         router.replace(
-          `/exam/${id}/${destination}?attemptId=${encodeURIComponent(attemptId)}`
+          `/exam/${id}/results?attemptId=${encodeURIComponent(attemptId)}`
         )
       } catch (error) {
         console.error('Exam finish error:', error)
@@ -204,6 +190,15 @@ export default function ExamPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        if (response.status === 401 && data.loginRequired) {
+          if (document.fullscreenElement) {
+            await document.exitFullscreen().catch(() => {})
+          }
+
+          router.replace('/auth/login')
+          return
+        }
+
         if (
           response.status === 403 &&
           data.redirectTo === '/join-family'

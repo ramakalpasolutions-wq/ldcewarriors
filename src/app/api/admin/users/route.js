@@ -230,9 +230,18 @@ if (action === 'activate-premium') {
       },
     })
 
+  // New membership period → every Join Family video gets its full plays back
+  await prisma.videoPlay.updateMany({
+    where: { userId },
+    data: {
+      playCount: 0,
+      lastPlayed: new Date(0),
+    },
+  })
+
   return NextResponse.json({
   success: true,
-  message: 'Join Family membership deactivated',
+  message: 'Join Family membership activated',
   isPremium: updatedUser.isPremium,
   premiumExpiresAt: updatedUser.premiumExpiresAt,
 })

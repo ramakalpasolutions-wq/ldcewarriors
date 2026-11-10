@@ -6,7 +6,7 @@ const paths = [
     title: 'In-Depth Technical Classes',
     // description: 'Learn every topic with detailed lessons.',
     image: '/learning-classes.png',
-    href: '/classes',
+    href: '/classes/topics',
     button: 'Explore Classes',
   },
   {
@@ -15,6 +15,12 @@ const paths = [
     image: '/learning-quiz.png',
     href: '/quiz',
     button: 'Start Practicing',
+  },
+  {
+    title: 'Digital Textbook',
+    image: '/learning-materials.png',
+    href: '/materials',
+    button: 'Read Now',
   },
 ]
 
@@ -31,7 +37,7 @@ export default function LearningGateway() {
         />
       </div>
 
-      {/* TWO CARDS */}
+      {/* CARDS */}
       <div className="learning-gateway-grid">
         {paths.map(path => (
           <Link
@@ -92,13 +98,13 @@ export default function LearningGateway() {
           transform: none;
         }
 
-        /* TWO CARD GRID */
+        /* CARD GRID */
 
         .learning-gateway-grid {
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 20px;
-          max-width: 900px;
+          max-width: 1200px;
           width: 100%;
           margin: 0 auto;
         }
@@ -196,6 +202,13 @@ export default function LearningGateway() {
         }
 
         /* TABLET */
+
+        @media (max-width: 960px) {
+          .learning-gateway-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            max-width: 760px;
+          }
+        }
 
         @media (max-width: 768px) {
           .learning-gateway-grid {

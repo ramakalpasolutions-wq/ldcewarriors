@@ -1,23 +1,37 @@
 
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import {
+  currentQuizUser,
+  hasPremiumAccess,
+} from '@/lib/quizAuth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+// Quizzes with an order number come first (1, 2, 3…),
+// the rest follow in the order they were created.
+function byOrder(a, b) {
+  const ao = a.order ?? Infinity
+  const bo = b.order ?? Infinity
+  if (ao !== bo) return ao - bo
+  return new Date(a.createdAt) - new Date(b.createdAt)
+}
+
+export async function GET(req) {
   try {
+    const user = await currentQuizUser(req)
+    const hasFamily = hasPremiumAccess(user)
+
     const quizzes = await prisma.quiz.findMany({
       where: {
         isPublished: true,
         isArchived: false,
       },
 
-      orderBy: {
-        createdAt: 'desc',
-      },
-
       select: {
         id: true,
+        order: true,
+        createdAt: true,
         title: true,
         description: true,
         mode: true,
@@ -60,8 +74,10 @@ export async function GET() {
         ...publicQuiz,
         questionCount: questions.length,
         totalMarks,
+        // Premium quizzes are locked unless the user is an active family member
+        locked: quiz.accessType === 'PREMIUM' && !hasFamily,
       }
-    })
+    }).sort(byOrder)
 
     return NextResponse.json(
       {
@@ -70,7 +86,7 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': 'private, no-store',
         },
       }
     )

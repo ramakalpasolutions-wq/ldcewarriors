@@ -70,11 +70,20 @@ export default function Navbar() {
 
   const NAV_LINKS = [
   { href: '/', label: 'Home' },
-  { href: '/classes', label: 'Classes' },
+  { href: '/classes/topics', label: 'Classes', section: '/classes' },
   { href: '/articles', label: 'Articles' },
-  { href: '/quiz', label: 'Test Yourself' },
+  { href: '/materials', label: 'Digital Textbook' },
+  { href: '/quiz', label: 'Test Yourself', section: ['/quiz', '/exam'] },
   { href: '/contact', label: 'Contact' },
 ]
+
+  // A link stays highlighted on every page in its section
+  // (e.g. Classes on /classes, /classes/topics and a topic's videos)
+  function isLinkActive(link) {
+    if (link.href === '/') return pathname === '/'
+    const roots = [].concat(link.section || link.href)
+    return roots.some(root => pathname === root || pathname?.startsWith(`${root}/`))
+  }
 
   // Check if current user is active in Join Family
   const isFamilyMember = Boolean(
@@ -292,7 +301,7 @@ export default function Navbar() {
             `}</style>
 
             {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href
+              const isActive = isLinkActive(link)
               return (
                 <Link
                   key={link.href}
@@ -589,7 +598,7 @@ export default function Navbar() {
             )}
 
             {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href
+              const isActive = isLinkActive(link)
               return (
                 <Link
                   key={link.href}

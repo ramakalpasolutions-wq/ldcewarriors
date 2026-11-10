@@ -46,10 +46,14 @@ export async function GET(req, { params }) {
           id: attemptId,
           quizId: id,
           userId: user.id,
-          status: 'IN_PROGRESS',
-          expiresAt: {
-            gt: new Date(),
-          },
+          // During the exam (preview) or after a successful submission
+          OR: [
+            {
+              status: 'IN_PROGRESS',
+              expiresAt: { gt: new Date() },
+            },
+            { status: 'SUBMITTED' },
+          ],
         },
         select: {
           quiz: {
@@ -63,7 +67,7 @@ export async function GET(req, { params }) {
 
     if (!attempt) {
       return NextResponse.json(
-        { error: 'Active attempt not found' },
+        { error: 'Attempt not found' },
         { status: 403 }
       )
     }

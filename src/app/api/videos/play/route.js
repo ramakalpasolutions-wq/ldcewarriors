@@ -8,50 +8,6 @@ export const dynamic = 'force-dynamic'
 export async function POST(req) {
   try {
     /* ─────────────────────────────────────
-       AUTHENTICATION
-    ───────────────────────────────────── */
-
-    const token =
-      req.cookies.get('token')?.value ||
-      req.cookies.get('adminToken')?.value ||
-      req.cookies.get('admin_token')?.value
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          canPlay: false,
-          reason: 'unauthorized',
-          error: 'Unauthorized',
-        },
-        {
-          status: 401,
-        }
-      )
-    }
-
-    const decoded = verifyToken(token)
-
-    const userId =
-      decoded?.userId ||
-      decoded?.id ||
-      decoded?.adminId
-
-    if (!decoded || !userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          canPlay: false,
-          reason: 'invalid_token',
-          error: 'Invalid token',
-        },
-        {
-          status: 401,
-        }
-      )
-    }
-
-    /* ─────────────────────────────────────
        REQUEST
     ───────────────────────────────────── */
 
@@ -59,7 +15,7 @@ export async function POST(req) {
 
     const videoId = body?.videoId
 
-    if (!videoId) {
+    if (!videoId || !/^[a-f0-9]{24}$/i.test(String(videoId))) {
       return NextResponse.json(
         {
           success: false,
@@ -136,6 +92,51 @@ export async function POST(req) {
         streamUrl,
         isFree: true,
       })
+    }
+
+    /* ─────────────────────────────────────
+       AUTHENTICATION (Join Family videos only —
+       free videos above play without signing in)
+    ───────────────────────────────────── */
+
+    const token =
+      req.cookies.get('token')?.value ||
+      req.cookies.get('adminToken')?.value ||
+      req.cookies.get('admin_token')?.value
+
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          canPlay: false,
+          reason: 'unauthorized',
+          error: 'Unauthorized',
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
+    const decoded = verifyToken(token)
+
+    const userId =
+      decoded?.userId ||
+      decoded?.id ||
+      decoded?.adminId
+
+    if (!decoded || !userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          canPlay: false,
+          reason: 'invalid_token',
+          error: 'Invalid token',
+        },
+        {
+          status: 401,
+        }
+      )
     }
 
     /* ─────────────────────────────────────
@@ -392,10 +393,15 @@ export async function POST(req) {
        CONSUME EXACTLY ONE PLAY
     ───────────────────────────────────── */
 
-    const updated =
-      await prisma.videoPlay.update({
+    // Only increments while still under the limit, in one database step,
+    // so two clicks at the same moment can't use an extra play.
+    const consumed =
+      await prisma.videoPlay.updateMany({
         where: {
           id: playRecord.id,
+          playCount: {
+            lt: limit,
+          },
         },
 
         data: {
@@ -404,6 +410,29 @@ export async function POST(req) {
           },
 
           lastPlayed: now,
+        },
+      })
+
+    if (consumed.count === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          canPlay: false,
+          reason: 'play_limit_exceeded',
+          playCount: limit,
+          limit,
+          remaining: 0,
+        },
+        {
+          status: 403,
+        }
+      )
+    }
+
+    const updated =
+      await prisma.videoPlay.findUnique({
+        where: {
+          id: playRecord.id,
         },
       })
 

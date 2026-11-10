@@ -59,7 +59,8 @@ model Topic {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
 
-  videos Video[]
+  videos    Video[]
+  materials Material[]
 }
 
 model Video {
@@ -180,6 +181,7 @@ model Quiz {
   topicId     String? @db.ObjectId
   topic       Topic?  @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
+  order           Int?
   questions       Json
   durationMinutes Int    @default(20)
   accessType      String @default("FREE")
@@ -221,4 +223,25 @@ model QuizAttempt {
   finishedAt DateTime?
 
   @@index([userId, quizId, status])
+}
+
+model Material {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  chapterNo   Int?
+  description String?
+  topicId     String?  @db.ObjectId
+  topic       Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  pdfKey      String
+  fileName    String?
+  fileSize    Int?
+  pageCount   Int?
+  accessType  String   @default("FREE")
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished, topicId])
 }
