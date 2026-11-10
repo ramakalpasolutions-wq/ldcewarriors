@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
-import { deleteImage } from '@/lib/cloudinary'
+import { deleteImage } from '@/lib/media'
 import { deleteVideoFromR2, getSignedVideoUrl } from '@/lib/r2'
 
 export const dynamic = 'force-dynamic'

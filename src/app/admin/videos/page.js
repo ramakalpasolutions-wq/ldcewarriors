@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import adminFetch from '@/lib/adminFetch'
 import AdminTopicGrid, { AdminTopicBar, useAdminTopic, byOrderNumber } from '@/components/admin/AdminTopicGrid'
 import {
-  uploadImageToCloudinary,
+  uploadImageToR2,
   uploadVideoToR2Direct,
 } from '@/lib/clientUpload'
 
@@ -375,11 +375,11 @@ export default function AdminVideosPage() {
     setUploadStage('thumb')
 
     try {
-      // Step 1: Upload thumbnail directly to Cloudinary from browser
+      // Step 1: Upload thumbnail straight to Cloudflare R2 from the browser
       toast.loading('Uploading thumbnail…', { id: 'upload' })
       setUploadProgress(5)
 
-      const thumbResult = await uploadImageToCloudinary(form.thumbnail, 'ldce/thumbnails')
+      const thumbResult = await uploadImageToR2(form.thumbnail, 'ldce/thumbnails')
       setUploadProgress(20)
 
       // Step 2: Upload video directly to R2 from browser

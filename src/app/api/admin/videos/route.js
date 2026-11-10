@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
-import { deleteImage } from '@/lib/cloudinary'
+import { deleteImage } from '@/lib/media'
 import { deleteVideoFromR2 } from '@/lib/r2'
 
 function requireAdmin(req) {

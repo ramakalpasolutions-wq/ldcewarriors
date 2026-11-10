@@ -30,55 +30,44 @@ function authHeaders() {
 }
 
 /**
- * Upload image directly to Cloudinary from browser
+ * Upload an image straight from the browser to Cloudflare R2.
+ * Returns { url, publicId } — url is the site's /api/media/… address,
+ * publicId is the R2 key (used later to delete or replace it).
  */
-export async function uploadImageToCloudinary(file, folder) {
-  console.log(`📤 Uploading image: ${file.name} → ${folder}`)
+export async function uploadImageToR2(file, folder = 'images') {
+  const safeFolder =
+    'media/images/' +
+    (String(folder).replace(/^ldce\//, '').replace(/[^\w/-]/g, '').replace(/^\/+|\/+$/g, '') || 'misc')
 
-  const signRes = await fetch('/api/admin/cloudinary-sign', {
+  const presignRes = await fetch('/api/admin/r2-presign', {
     method:      'POST',
     headers:     authHeaders(),
     credentials: 'include',
-    body:        JSON.stringify({ folder }),
+    body:        JSON.stringify({
+      fileName: file.name || 'image.jpg',
+      fileType: file.type || 'image/jpeg',
+      folder:   safeFolder,
+    }),
   })
 
-  if (!signRes.ok) {
-    const err = await signRes.json().catch(() => ({}))
-    throw new Error(
-      `Cloudinary sign failed (${signRes.status}): ${err.error || 'Unknown error'}`
-    )
+  if (!presignRes.ok) {
+    const err = await presignRes.json().catch(() => ({}))
+    throw new Error(`Image upload failed (${presignRes.status}): ${err.error || 'Unknown error'}`)
   }
 
-  const { signature, timestamp, cloudName, apiKey, folder: signedFolder } =
-    await signRes.json()
+  const { presignedUrl, key } = await presignRes.json()
 
-  // Upload directly from browser to Cloudinary (bypasses Vercel)
-  const formData = new FormData()
-  formData.append('file',      file)
-  formData.append('signature', signature)
-  formData.append('timestamp', String(timestamp))
-  formData.append('api_key',   apiKey)
-  formData.append('folder',    signedFolder)
+  const putRes = await fetch(presignedUrl, {
+    method:  'PUT',
+    headers: { 'Content-Type': file.type || 'image/jpeg' },
+    body:    file,
+  })
 
-  const uploadRes = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    { method: 'POST', body: formData }
-  )
-
-  if (!uploadRes.ok) {
-    const err = await uploadRes.json().catch(() => ({}))
-    throw new Error(
-      `Cloudinary upload failed: ${err.error?.message || uploadRes.status}`
-    )
+  if (!putRes.ok) {
+    throw new Error(`Image upload failed (HTTP ${putRes.status})`)
   }
 
-  const data = await uploadRes.json()
-  console.log('✅ Cloudinary done:', data.public_id)
-
-  return {
-    url:      data.secure_url,
-    publicId: data.public_id,
-  }
+  return { url: `/api/media/${key}`, publicId: key }
 }
 
 /**

@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
+import { uploadImageToR2 } from '@/lib/clientUpload'
 
 export default function AdminTopicsPage() {
   const [topics,      setTopics     ] = useState([])
@@ -53,19 +54,14 @@ export default function AdminTopicsPage() {
     if (!['image/jpeg','image/png','image/webp','image/gif'].includes(file.type)) {
       toast.error('Use JPEG, PNG, WebP, or GIF'); return
     }
-    if (file.size > 5 * 1024 * 1024) { toast.error('Max file size is 5MB'); return }
     setPreviewUrl(URL.createObjectURL(file))
     setUploading(true)
     try {
-      const fd = new FormData(); fd.append('file', file)
-      const res  = await fetch('/api/admin/topics/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.success) {
-        setForm(prev => ({ ...prev, thumbnail: data.url, thumbnailPublicId: data.publicId }))
-        setPreviewUrl(data.url)
-        toast.success('Thumbnail uploaded!')
-      } else { toast.error(data.error || 'Upload failed'); setPreviewUrl('') }
-    } catch { toast.error('Upload failed'); setPreviewUrl('') }
+      const data = await uploadImageToR2(file, 'topics')
+      setForm(prev => ({ ...prev, thumbnail: data.url, thumbnailPublicId: data.publicId }))
+      setPreviewUrl(data.url)
+      toast.success('Thumbnail uploaded!')
+    } catch (err) { toast.error(err.message || 'Upload failed'); setPreviewUrl('') }
     setUploading(false)
   }
 
@@ -484,7 +480,7 @@ export default function AdminTopicsPage() {
                       <>
                         <span style={{ fontSize:'30px', marginBottom:'8px' }}>📷</span>
                         <span style={{ fontSize:'12px', color:'#6B7280', fontWeight:600 }}>Click to upload</span>
-                        <span style={{ fontSize:'11px', color:'#9CA3AF', marginTop:'4px' }}>JPEG, PNG, WebP • Max 5MB</span>
+                        <span style={{ fontSize:'11px', color:'#9CA3AF', marginTop:'4px' }}>JPEG, PNG or WebP</span>
                       </>
                     )}
                     {uploading && (

@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 
 import {
-  uploadImageToCloudinary,
+  uploadImageToR2,
   uploadVideoToR2Direct,
 } from '@/lib/clientUpload'
 
@@ -648,7 +648,7 @@ export default function AdminHeroPage() {
             `ldce/hero/${form.type}`
 
           const result =
-            await uploadImageToCloudinary(
+            await uploadImageToR2(
               form.media,
               folder
             )

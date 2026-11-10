@@ -1,6 +1,7 @@
 // src/app/api/articles/[id]/route.js
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { getMediaBuffer, keyFromMediaUrl } from '@/lib/media'
 
 export async function GET(req, { params }) {
   try {
@@ -22,22 +23,23 @@ export async function GET(req, { params }) {
 
     let htmlContent = ''
 
-    // ─── If DOCX article: fetch from Cloudinary and parse ──
+    // ─── If DOCX article: load the Word file and parse ──
     if (article.contentType === 'docx' && article.docxUrl) {
       try {
-        console.log(`📄 Fetching DOCX from Cloudinary for article: ${article.id}`)
-
-        // Fetch the DOCX file from Cloudinary
-        const docxResponse = await fetch(article.docxUrl, {
-          next: { revalidate: 3600 }, // Cache for 1 hour
-        })
-
-        if (!docxResponse.ok) {
-          throw new Error(`Failed to fetch DOCX: ${docxResponse.status}`)
+        // Word files live in R2 (media/…); older ones may still be full URLs
+        const r2Key = keyFromMediaUrl(article.docxUrl)
+        let buffer
+        if (r2Key) {
+          buffer = await getMediaBuffer(r2Key)
+        } else {
+          const docxResponse = await fetch(article.docxUrl, {
+            next: { revalidate: 3600 }, // Cache for 1 hour
+          })
+          if (!docxResponse.ok) {
+            throw new Error(`Failed to fetch DOCX: ${docxResponse.status}`)
+          }
+          buffer = Buffer.from(await docxResponse.arrayBuffer())
         }
-
-        const arrayBuffer = await docxResponse.arrayBuffer()
-        const buffer      = Buffer.from(arrayBuffer)
 
         // Parse DOCX to HTML
         const mammoth = await import('mammoth')

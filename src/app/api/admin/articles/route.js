@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { requireAdmin } from '@/lib/adminAuth'
-import { uploadImage, deleteImage, uploadRawFile, deleteRawFile } from '@/lib/cloudinary'
+import { uploadImage, deleteImage, uploadRawFile, deleteRawFile } from '@/lib/media'
 
 /* ─────────────────────────────────────────
    Helper: parse + upload DOCX

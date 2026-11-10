@@ -2,13 +2,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { verifyToken } from '@/lib/auth'
-import { v2 as cloudinary } from 'cloudinary'
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+import { deleteMedia } from '@/lib/media'
 
 function requireAdmin(req) {
   const token = req.cookies.get('adminToken')?.value
@@ -108,7 +102,7 @@ export async function PUT(req) {
 
     if (oldPublicId && thumbnailPublicId !== oldPublicId) {
       try {
-        await cloudinary.uploader.destroy(oldPublicId)
+        await deleteMedia(oldPublicId)
       } catch (err) {
         console.error('Failed to delete old thumbnail:', err)
       }
@@ -172,7 +166,7 @@ export async function DELETE(req) {
 
     if (topic?.thumbnailPublicId) {
       try {
-        await cloudinary.uploader.destroy(topic.thumbnailPublicId)
+        await deleteMedia(topic.thumbnailPublicId)
       } catch (err) {
         console.error('Failed to delete topic thumbnail:', err)
       }
