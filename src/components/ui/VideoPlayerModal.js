@@ -1,39 +1,12 @@
   // src/components/ui/VideoPlayerModal.js
   'use client'
   import { useEffect, useRef, useState } from 'react'
+  import MovingWatermark, { useViewerWatermark } from '@/components/ui/MovingWatermark'
 
   const tk = {
     navy: '#1B2A4A', navyLight: '#243656',
     gold: '#E8A838', goldDark: '#D4922A',
     teal: '#2A9D8F',
-  }
-
-  function FloatingWatermark({ text }) {
-    const [pos, setPos] = useState({ x: 15, y: 20 })
-    useEffect(() => {
-      const positions = [
-        { x:15, y:20 },{ x:55, y:65 },{ x:70, y:15 },
-        { x:20, y:70 },{ x:40, y:40 },{ x:75, y:55 },
-      ]
-      let idx = 0
-      const timer = setInterval(() => {
-        idx = (idx + 1) % positions.length
-        setPos(positions[idx])
-      }, 8000)
-      return () => clearInterval(timer)
-    }, [])
-    if (!text) return null
-    return (
-      <div style={{
-        position:'absolute', left:`${pos.x}%`, top:`${pos.y}%`,
-        transform:'translate(-50%,-50%)',
-        transition:'left 2s ease, top 2s ease',
-        color:'rgba(255,255,255,0.1)', fontSize:'clamp(9px,1.4vw,12px)',
-        fontWeight:700, letterSpacing:'0.5px',
-        pointerEvents:'none', userSelect:'none',
-        zIndex:5, whiteSpace:'nowrap',
-      }}>🔒 {text}</div>
-    )
   }
 
   function CaptureWarning({ onDismiss }) {
@@ -68,6 +41,8 @@
   }
 
   export default function VideoPlayerModal({ video, onClose, onPlayLimitExceeded, watermarkText }) {
+    // Student's name + phone over the video (screen captures can't be blocked on phones)
+    const viewerMark = useViewerWatermark()
     const videoRef         = useRef(null)
     const containerRef     = useRef(null)
     const controlsTimerRef = useRef(null)
@@ -506,7 +481,7 @@
                 onDoubleClick={toggleFullscreen}
               />
 
-              <FloatingWatermark text={watermarkText || video.watermark || null}/>
+              <MovingWatermark text={watermarkText || viewerMark || video.watermark || null} dark zIndex={5}/>
 
               {/* Loading */}
               {loading && !error && (

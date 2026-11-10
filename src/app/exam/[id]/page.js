@@ -10,6 +10,7 @@ import {
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import MovingWatermark, { useViewerWatermark } from '@/components/ui/MovingWatermark'
 
 import {
   FiVideo,
@@ -76,6 +77,8 @@ function ExplanationVideoPreview({ available, thumbnailUrl }) {
 export default function ExamPage() {
   const { id } = useParams()
   const router = useRouter()
+  // Student's name + phone across the exam screen
+  const viewerMark = useViewerWatermark()
 
   const [status, setStatus] = useState('ready')
   const [message, setMessage] = useState('')
@@ -540,6 +543,7 @@ export default function ExamPage() {
 
   return (
     <main className="ldce-exam-page">
+      <MovingWatermark text={viewerMark} mode="page" zIndex={9000} />
       <div className="ldce-exam-container">
         <header className="ldce-exam-header">
           <div>

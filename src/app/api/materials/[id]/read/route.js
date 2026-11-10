@@ -72,7 +72,7 @@ export async function POST(req, { params }) {
     const url = await getSignedVideoUrl(material.pdfKey, 60)
 
     const watermark = user
-      ? [user.fullName, user.email || user.mobile].filter(Boolean).join(' • ')
+      ? [user.fullName, user.mobile, user.email].filter(Boolean).join(' • ')
       : admin
         ? 'LDCE Warriors • Admin preview'
         : 'LDCE Warriors'

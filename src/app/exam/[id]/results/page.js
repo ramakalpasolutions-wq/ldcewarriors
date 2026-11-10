@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import MovingWatermark, { useViewerWatermark } from '@/components/ui/MovingWatermark'
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 
@@ -45,11 +46,34 @@ function Laurel({ flip }) {
   )
 }
 
-function ExplanationVideo({ quizId, attemptId, available, hasThumbnail }) {
+function ExplanationVideo({ quizId, attemptId, available, hasThumbnail, watermark }) {
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [thumbFailed, setThumbFailed] = useState(false)
+  const boxRef = useRef(null)
+  const videoRef = useRef(null)
+
+  // Full screen must include the watermark: enlarge the whole box instead of the
+  // bare video, and don't allow the phone's own full-screen video player (iOS).
+  useEffect(() => {
+    const v = videoRef.current
+    if (!url || !v) return
+    const onIosFullscreen = () => v.webkitExitFullscreen?.()
+    const onFullscreen = () => {
+      if (document.fullscreenElement === v) {
+        document.exitFullscreen?.()
+          .then(() => boxRef.current?.requestFullscreen?.())
+          .catch(() => {})
+      }
+    }
+    v.addEventListener('webkitbeginfullscreen', onIosFullscreen)
+    document.addEventListener('fullscreenchange', onFullscreen)
+    return () => {
+      v.removeEventListener('webkitbeginfullscreen', onIosFullscreen)
+      document.removeEventListener('fullscreenchange', onFullscreen)
+    }
+  }, [url])
 
   if (!available) return null
 
@@ -80,9 +104,10 @@ function ExplanationVideo({ quizId, attemptId, available, hasThumbnail }) {
   return (
     <section className="sc-section">
       <h2 className="sc-section-title">🎬 Explanation Video</h2>
-      <div className="sc-video">
+      <div className="sc-video" ref={boxRef}>
         {url ? (
           <video
+            ref={videoRef}
             key={url}
             src={url}
             poster={thumbnail || undefined}
@@ -90,11 +115,14 @@ function ExplanationVideo({ quizId, attemptId, available, hasThumbnail }) {
             autoPlay
             playsInline
             preload="auto"
-            controlsList="nodownload"
+            controlsList="nodownload noremoteplayback"
             disablePictureInPicture
+            disableRemotePlayback
             onContextMenu={e => e.preventDefault()}
           />
-        ) : (
+        ) : null}
+        {url && <MovingWatermark text={watermark} dark zIndex={4} />}
+        {url ? null : (
           <button
             type="button"
             className="sc-thumb"
@@ -181,6 +209,8 @@ function AnswerCard({ q, index }) {
 
 export default function QuizResultsPage() {
   const { id } = useParams()
+  // Student's name + phone over the scorecard, answer key and video
+  const viewerMark = useViewerWatermark()
   const [attemptId, setAttemptId] = useState('')
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
@@ -259,6 +289,7 @@ export default function QuizResultsPage() {
     <>
       <Navbar />
       <main className="sc-page">
+        <MovingWatermark text={viewerMark} mode="page" zIndex={900} />
         <div className="sc-wrap">
           {error && <p className="sc-error">{error}</p>}
           {!result && !error && <p className="sc-loading">Loading your scorecard…</p>}
@@ -319,6 +350,7 @@ export default function QuizResultsPage() {
                   attemptId={attemptId}
                   available={result.hasExplanationVideo}
                   hasThumbnail={result.hasExplanationThumbnail}
+                  watermark={viewerMark}
                 />
               )}
 
@@ -440,7 +472,7 @@ export default function QuizResultsPage() {
         /* SECTIONS */
         .sc-section { margin-top:28px; background:#fff; border:1px solid #E5E7EB; border-radius:22px; padding:clamp(16px,3vw,26px); }
         .sc-section-title { font-size:22px; font-weight:900; color:#0B1F5C; margin:0 0 16px; }
-        .sc-video { border-radius:16px; overflow:hidden; background:#12203A; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; }
+        .sc-video { position:relative; border-radius:16px; overflow:hidden; background:#12203A; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; }
         .sc-video video { width:100%; height:100%; display:block; background:#12203A; }
         .sc-thumb {
           position:relative; width:100%; height:100%; padding:0; border:0; cursor:pointer;

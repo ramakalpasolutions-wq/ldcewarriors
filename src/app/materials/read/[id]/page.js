@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { chapterLabel } from '@/components/materials/TextbookCard'
+import MovingWatermark from '@/components/ui/MovingWatermark'
 
 /*
   Protected in-site PDF reader.
@@ -307,6 +308,15 @@ export default function TextbookReaderPage() {
           </div>
         )}
       </main>
+
+      {/* Moving name + phone on top of the pages (printed watermark is on each page too) */}
+      {status === 'ready' && info?.watermark && (
+        <MovingWatermark
+          text={info.watermark.split(' • ').slice(0, 2).join(' • ')}
+          mode="page"
+          zIndex={10000}
+        />
+      )}
 
       {shielded && (
         <button className="rd-shield" onClick={() => setShielded(false)}>
