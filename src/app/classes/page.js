@@ -532,14 +532,9 @@ function ClassesPageInner() {
     async function load() {
       setLoading(true)
       try {
-        const [vRes, tRes] = await Promise.allSettled([
-          fetch('/api/videos?type=free&limit=20'),
+        const [tRes] = await Promise.allSettled([
           fetch('/api/admin/topics'),
         ])
-        if (vRes.status === 'fulfilled' && vRes.value.ok) {
-          const d = await vRes.value.json()
-          setFreeVideos(d.videos || [])
-        }
         if (tRes.status === 'fulfilled' && tRes.value.ok) {
           const d = await tRes.value.json()
           const list = d.topics || []
@@ -563,17 +558,24 @@ function ClassesPageInner() {
     }
   }, [searchParams, topics])
 
-  /* Fetch Join Family videos */
+  /* Fetch the selected topic's videos: its free ones and its Join Family ones */
+  const topicRequestRef = useRef(0)
   const fetchJoinFamilyVideos = useCallback(async (topicId) => {
     if (!topicId) return
+    const requestId = ++topicRequestRef.current
     setJoinFamilyLoading(true)
     try {
-      // Only Join Family videos here — free videos are listed in the free section
-      const res  = await fetch(`/api/videos?topicId=${topicId}&type=premium&limit=50`)
-      const data = await res.json()
-      if (data.success) setJoinFamilyVideos(data.videos || [])
+      const [freeRes, familyRes] = await Promise.all([
+        fetch(`/api/videos?topicId=${topicId}&type=free&limit=100`),
+        fetch(`/api/videos?topicId=${topicId}&type=premium&limit=100`),
+      ])
+      const [freeData, familyData] = await Promise.all([freeRes.json(), familyRes.json()])
+      // Ignore answers for a topic the user has already switched away from
+      if (requestId !== topicRequestRef.current) return
+      setFreeVideos(freeData.success ? freeData.videos || [] : [])
+      setJoinFamilyVideos(familyData.success ? familyData.videos || [] : [])
     } catch {}
-    setJoinFamilyLoading(false)
+    if (requestId === topicRequestRef.current) setJoinFamilyLoading(false)
   }, [])
 
   useEffect(() => {
@@ -1195,14 +1197,14 @@ function ClassesPageInner() {
                   }}>
                     <div>
                       <SectionLabel color={tk.teal} bg='rgba(42,157,143,0.09)' border='rgba(42,157,143,0.2)'>🎬 Free Samples</SectionLabel>
-                      <h2 style={{ fontFamily: 'Playfair Display,serif', fontWeight: 800, fontSize: isMobile ? '18px' : '22px', color: tk.text }}>Start Here — Free Videos</h2>
+                      <h2 style={{ fontFamily: 'Playfair Display,serif', fontWeight: 800, fontSize: isMobile ? '18px' : '22px', color: tk.text }}>{activeTopicData ? `Free Videos — ${activeTopicData.name}` : 'Start Here — Free Videos'}</h2>
                     </div>
                     <span style={{ fontSize: '11px', color: tk.faint, background: tk.card, border: `1px solid ${tk.border}`, padding: '5px 12px', borderRadius: '999px' }}>
-                      {loading ? '…' : `${freeVideos.length} video${freeVideos.length !== 1 ? 's' : ''}`}
+                      {loading || joinFamilyLoading ? '…' : `${freeVideos.length} video${freeVideos.length !== 1 ? 's' : ''}`}
                     </span>
                   </div>
 
-                  {loading ? (
+                  {loading || joinFamilyLoading ? (
                     <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: gridGap }}>
                       {[1, 2, 3].map(i => <SkeletonCard key={i}/>)}
                     </div>
@@ -1218,7 +1220,7 @@ function ClassesPageInner() {
                       ))}
                     </div>
                   ) : (
-                    <EmptyState icon="🎬" title="Free sample videos coming soon!" subtitle="Our team is preparing expert video lectures."/>
+                    <EmptyState icon="🎬" title={`No free videos for ${activeTopicData?.name || 'this topic'} yet`} subtitle="See the Join Family videos below, or pick another topic."/>
                   )}
                 </section>
               )}
@@ -1304,14 +1306,14 @@ function ClassesPageInner() {
                 }}>
                   <div>
                     <SectionLabel color={tk.teal} bg='rgba(42,157,143,0.09)' border='rgba(42,157,143,0.18)'>🎬 Free Samples</SectionLabel>
-                    <h2 style={{ fontFamily: 'Playfair Display,serif', fontWeight: 800, fontSize: 'clamp(20px,3vw,28px)', color: tk.text }}>Start Here — Free Videos</h2>
+                    <h2 style={{ fontFamily: 'Playfair Display,serif', fontWeight: 800, fontSize: 'clamp(20px,3vw,28px)', color: tk.text }}>{activeTopicData ? `Free Videos — ${activeTopicData.name}` : 'Start Here — Free Videos'}</h2>
                   </div>
                   <span style={{ fontSize: '12px', color: tk.faint, background: tk.card, border: `1px solid ${tk.border}`, padding: '6px 14px', borderRadius: '999px' }}>
-                    {loading ? '…' : `${freeVideos.length} video${freeVideos.length !== 1 ? 's' : ''}`}
+                    {loading || joinFamilyLoading ? '…' : `${freeVideos.length} video${freeVideos.length !== 1 ? 's' : ''}`}
                   </span>
                 </div>
 
-                {loading ? (
+                {loading || joinFamilyLoading ? (
                   <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: gridGap }}>
                     {[1, 2, 3].map(i => <SkeletonCard key={i}/>)}
                   </div>
@@ -1327,7 +1329,7 @@ function ClassesPageInner() {
                     ))}
                   </div>
                 ) : (
-                  <EmptyState icon="🎬" title="Free sample videos coming soon!" subtitle="Our team is preparing expert video lectures."/>
+                  <EmptyState icon="🎬" title={`No free videos for ${activeTopicData?.name || 'this topic'} yet`} subtitle="See the Join Family videos below, or pick another topic."/>
                 )}
               </section>
 
