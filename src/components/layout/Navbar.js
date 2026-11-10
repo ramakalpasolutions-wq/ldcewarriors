@@ -74,6 +74,7 @@ export default function Navbar() {
   { href: '/articles', label: 'Articles' },
   { href: '/materials', label: 'Digital Textbook' },
   { href: '/quiz', label: 'Test Yourself', section: ['/quiz', '/exam'] },
+  { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ]
 

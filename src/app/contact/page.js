@@ -115,11 +115,6 @@ export default function ContactPage() {
       value: 'Chat with us', sub: 'Quick replies on WhatsApp',
       href: 'https://wa.me/+919666887998',
     },
-    {
-      icon: '📍', label: 'Location',
-      value: 'NTR District, AP', sub: 'Andhra Pradesh, India',
-      href: null,
-    },
   ]
 
   return (
@@ -155,7 +150,7 @@ export default function ContactPage() {
         @media (max-width: 640px) {
           .contact-container { padding: 90px 16px 40px; }
           .form-two-col { grid-template-columns: 1fr !important; }
-          .contact-info-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .contact-info-grid { grid-template-columns: 1fr !important; }
         }
         @media (max-width: 400px) {
           .contact-info-grid { grid-template-columns: 1fr !important; }
@@ -210,7 +205,7 @@ export default function ContactPage() {
           {/* ── Contact Info Cards ── */}
           <div className="contact-info-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '14px',
             marginBottom: '40px',
             animation: 'fadeInUp 0.6s ease 0.1s both',

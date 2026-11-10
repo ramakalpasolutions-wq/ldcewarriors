@@ -35,6 +35,7 @@ const NAV_ITEMS = [
   { href: '/admin/topics',    label: 'Topics',        icon: '🏷️', desc: 'Course categories'     },
   // { href: '/admin/coupons',   label: 'Coupons',       icon: '🎟️', desc: 'Discount codes'        },
   { href: '/admin/users',     label: 'Users',         icon: '👥', desc: 'User management'       },
+  { href: '/admin/about',     label: 'About Us',      icon: '🏛️', desc: 'About Us page'         },
 ]
 
 export default function AdminLayout({ children }) {

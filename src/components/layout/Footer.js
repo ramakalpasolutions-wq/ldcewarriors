@@ -59,6 +59,7 @@ const QUICK_LINKS = [
   { href: '/articles', label: 'Articles', icon: '📰' },
   { href: '/join-family', label: 'Join Family', icon: '⭐' },
   { href: '/quiz', label: 'Test Yourself', icon: '📝' },
+  { href: '/about', label: 'About Us', icon: '🏛️' },
   { href: '/contact', label: 'Contact', icon: '📩' },
   { href: '/profile', label: 'My Profile', icon: '👤' },
 ]
@@ -67,7 +68,6 @@ const CONTACT_INFO = [
   { icon: '📧', label: 'Email', value: ' ldcewarriors@gmail.com', href: 'mailto: ldcewarriors@gmail.com' },
   { icon: '📱', label: 'Phone', value: '+91 91542 42141', href: 'tel:+919154242141' },
   { icon: '🕐', label: 'Support Hours', value: 'Mon–Sat, 9am–6pm IST', href: null },
-  { icon: '📍', label: 'Location', value: 'NTR District, AP-521241', href: null },
 ]
 
 export default function Footer() {
@@ -104,10 +104,6 @@ export default function Footer() {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
-        @keyframes footerRkGlow {
-          0%, 100% { box-shadow: 0 0 12px rgba(232, 168, 56, 0.15); }
-          50% { box-shadow: 0 0 24px rgba(232, 168, 56, 0.3); }
-        }
 
         .footer-link-item {
           color: rgba(255,255,255,0.5);
@@ -129,11 +125,6 @@ export default function Footer() {
         .footer-contact-item:hover {
           background: rgba(232, 168, 56, 0.06) !important;
           border-color: rgba(232, 168, 56, 0.15) !important;
-        }
-
-        .rk-badge:hover {
-          border-color: rgba(232, 168, 56, 0.35) !important;
-          background: rgba(232, 168, 56, 0.07) !important;
         }
 
         @media (max-width: 991px) {
@@ -161,10 +152,6 @@ export default function Footer() {
           }
           .footer-social-row {
             justify-content: flex-start !important;
-          }
-          .footer-rk-row {
-            flex-direction: column !important;
-            gap: 8px !important;
           }
         }
       `}</style>
@@ -454,56 +441,6 @@ export default function Footer() {
               ))}
             </div>
 
-            {/* Designed by Ramakalpa Solutions */}
-            <div className="footer-rk-row" style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-            }}>
-              <span style={{
-                fontSize: '11px',
-                color: 'rgba(255,255,255,0.2)',
-              }}>
-                Designed & Developed by
-              </span>
-              <a
-                href="https://www.ramakalpasolutions.in/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rk-badge"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '7px',
-                  padding: '6px 14px', borderRadius: '999px',
-                  background: 'rgba(232, 168, 56, 0.04)',
-                  border: '1px solid rgba(232, 168, 56, 0.15)',
-                  textDecoration: 'none',
-                  transition: 'all 0.25s ease',
-                  animation: 'footerRkGlow 4s ease infinite',
-                }}
-              >
-                <div style={{
-                  width: '18px', height: '18px', borderRadius: '5px',
-                  background: 'linear-gradient(135deg, #E8A838, #D4922A)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <span style={{
-                    fontFamily: 'Playfair Display, serif',
-                    fontSize: '10px', fontWeight: 800, color: '#1B2A4A',
-                    lineHeight: 1,
-                  }}>R</span>
-                </div>
-                <span style={{
-                  fontSize: '12px', fontWeight: 700,
-                  color: '#E8A838', letterSpacing: '0.3px',
-                }}>
-                  Ramakalpa Solutions
-                </span>
-                <svg width="10" height="10" fill="none" viewBox="0 0 24 24"
-                  stroke="#E8A838" style={{ opacity: 0.5 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
           </div>
         </div>
       </footer>
