@@ -2,6 +2,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
+import { uploadDocToR2, uploadImageToR2 } from '@/lib/clientUpload'
 
 const C = {
   red:'#C94A44', navy:'#1B2A4A', gold:'#E8A838',
@@ -14,6 +15,30 @@ const EMPTY_FORM = {
   title:'', content:'', excerpt:'', category:'',
   showOnHomepage:false, showInLiveScroll:false,
   thumbnail:null, thumbnailPreview:'', docxFile:null, docxFileName:'',
+}
+
+// Files go straight to Cloudflare R2 (no size limit); the server only
+// receives their storage names.
+async function uploadArticleFiles(docxFile, thumbnailFile) {
+  const out = {}
+  if (docxFile) {
+    toast.loading('Uploading Word file…', { id: 'article-upload' })
+    const doc = await uploadDocToR2(docxFile, 'articles')
+    out.docxKey = doc.key
+    out.docxName = docxFile.name
+  }
+  if (thumbnailFile) {
+    toast.loading('Uploading thumbnail…', { id: 'article-upload' })
+    const img = await uploadImageToR2(thumbnailFile, 'articles')
+    out.thumbnailUrl = img.url
+    out.thumbnailPublicId = img.publicId
+  }
+  toast.dismiss('article-upload')
+  return out
+}
+
+function appendUploaded(fd, uploaded) {
+  for (const [k, v] of Object.entries(uploaded)) fd.append(k, v)
 }
 
 export default function AdminArticlesPage() {
@@ -97,6 +122,7 @@ export default function AdminArticlesPage() {
         const hasNewThumb   = !!form.thumbnail
         const hasNewContent = uploadMode==='manual' && form.content.trim()
         if (hasNewDocx || hasNewThumb) {
+          const uploaded = await uploadArticleFiles(hasNewDocx ? form.docxFile : null, hasNewThumb ? form.thumbnail : null)
           const fd = new FormData()
           fd.append('id', editTarget._id)
           fd.append('title', form.title.trim())
@@ -104,8 +130,7 @@ export default function AdminArticlesPage() {
           fd.append('category', form.category.trim())
           fd.append('showOnHomepage', form.showOnHomepage.toString())
           fd.append('showInLiveScroll', form.showInLiveScroll.toString())
-          if (hasNewDocx)  fd.append('docxFile', form.docxFile)
-          if (hasNewThumb) fd.append('thumbnail', form.thumbnail)
+          appendUploaded(fd, uploaded)
           const res  = await fetch('/api/admin/articles', { method:'PATCH', credentials:'include', body:fd })
           const data = await res.json()
           if (!data.success) throw new Error(data.error || 'Update failed')
@@ -128,22 +153,25 @@ export default function AdminArticlesPage() {
         }
         toast.success('Article updated!')
       } else {
+        const uploaded = await uploadArticleFiles(
+          uploadMode==='docx' && form.docxFile ? form.docxFile : null,
+          form.thumbnail || null,
+        )
         const fd = new FormData()
         fd.append('title', form.title.trim())
         fd.append('excerpt', form.excerpt.trim())
         fd.append('category', form.category.trim())
         fd.append('showOnHomepage', form.showOnHomepage.toString())
         fd.append('showInLiveScroll', form.showInLiveScroll.toString())
-        if (uploadMode==='docx' && form.docxFile) fd.append('docxFile', form.docxFile)
-        else fd.append('content', form.content)
-        if (form.thumbnail) fd.append('thumbnail', form.thumbnail)
+        if (!(uploadMode==='docx' && form.docxFile)) fd.append('content', form.content)
+        appendUploaded(fd, uploaded)
         const res  = await fetch('/api/admin/articles', { method:'POST', credentials:'include', body:fd })
         const data = await res.json()
         if (!data.success) throw new Error(data.error || 'Failed to create article')
         toast.success('Article published!')
       }
       resetForm(); setShowForm(false); await fetchArticles()
-    } catch (err) { toast.error(err.message || 'Failed to save article') }
+    } catch (err) { toast.dismiss('article-upload'); toast.error(err.message || 'Failed to save article') }
     setSaving(false)
   }
 
@@ -184,7 +212,6 @@ export default function AdminArticlesPage() {
     if (!file) return
     const name = file.name || ''
     if (!name.endsWith('.docx') && !name.endsWith('.doc')) { toast.error('Only .docx files'); e.target.value=''; return }
-    if (file.size > 20*1024*1024) { toast.error('DOCX must be under 20MB'); e.target.value=''; return }
     setForm(prev => ({ ...prev, docxFile:file, docxFileName:name }))
     toast.success(`File selected: ${name}`)
   }
@@ -397,7 +424,7 @@ export default function AdminArticlesPage() {
                       <div>
                         <div style={{ fontSize:'26px', marginBottom:'6px' }}>📄</div>
                         <p style={{ color:C.text, fontWeight:600, fontSize:'13px' }}>Click to upload .docx</p>
-                        <p style={{ color:C.faint, fontSize:'11px', marginTop:'2px' }}>Max 20MB</p>
+                        <p style={{ color:C.faint, fontSize:'11px', marginTop:'2px' }}>Any size</p>
                         {isEdit && <p style={{ color:C.faint, fontSize:'11px', marginTop:'4px' }}>Leave empty to keep existing</p>}
                       </div>
                     )}
@@ -440,10 +467,9 @@ export default function AdminArticlesPage() {
                       onChange={e => {
                         const f = e.target.files[0]
                         if (!f) return
-                        if (f.size > 5*1024*1024) { toast.error('Image under 5MB'); return }
                         setForm({...form, thumbnail:f, thumbnailPreview:URL.createObjectURL(f)})
                       }} disabled={saving}/>
-                    <p style={{ fontSize:'11px', color:C.faint, marginTop:'4px' }}>JPG/PNG/WebP • Max 5MB</p>
+                    <p style={{ fontSize:'11px', color:C.faint, marginTop:'4px' }}>JPG/PNG/WebP</p>
                   </div>
                 </div>
               </div>

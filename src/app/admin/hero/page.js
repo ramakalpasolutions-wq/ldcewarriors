@@ -43,8 +43,7 @@ const TYPE_CONFIG = {
       color: '#3B82F6',
     },
     accept: 'image/*',
-    maxMB: 10,
-    hint: 'JPG, PNG, WEBP — Max 10MB',
+    hint: 'JPG, PNG or WEBP — any size',
   },
 
   video: {
@@ -55,8 +54,7 @@ const TYPE_CONFIG = {
       color: '#8B5CF6',
     },
     accept: 'video/*',
-    maxMB: 500,
-    hint: 'MP4, MOV, WEBM — Max 500MB',
+    hint: 'MP4, MOV or WEBM — any size',
   },
 
   article: {
@@ -67,8 +65,7 @@ const TYPE_CONFIG = {
       color: '#10B981',
     },
     accept: 'image/*',
-    maxMB: 10,
-    hint: 'JPG, PNG, WEBP — Max 10MB',
+    hint: 'JPG, PNG or WEBP — any size',
   },
 }
 
@@ -456,22 +453,6 @@ export default function AdminHeroPage() {
 
     if (!file) return
 
-    const config =
-      TYPE_CONFIG[form.type]
-
-    if (
-      file.size >
-      config.maxMB *
-        1024 *
-        1024
-    ) {
-      toast.error(
-        `File must be under ${config.maxMB}MB`
-      )
-
-      e.target.value = ''
-      return
-    }
 
     if (
       form.mediaPreview &&

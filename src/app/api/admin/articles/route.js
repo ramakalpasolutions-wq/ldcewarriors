@@ -2,34 +2,27 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { requireAdmin } from '@/lib/adminAuth'
-import { uploadImage, deleteImage, uploadRawFile, deleteRawFile } from '@/lib/media'
+import { deleteImage, deleteRawFile, getMediaBuffer, isMediaKey, mediaUrl } from '@/lib/media'
 
 /* ─────────────────────────────────────────
-   Helper: parse + upload DOCX
+   Files are uploaded by the browser straight to Cloudflare R2
+   (no size limit). The form sends only their storage names here.
 ───────────────────────────────────────── */
-async function processDocx(docxFile, existingPublicId = null) {
-  const fileName = docxFile.name || 'document.docx'
-  const isDocx =
-    docxFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-    fileName.endsWith('.docx') ||
-    fileName.endsWith('.doc')
+const isDocKey   = key => isMediaKey(key) && key.startsWith('media/docs/') && /\.(docx|doc)$/i.test(key)
+const isImageKey = key => isMediaKey(key) && key.startsWith('media/images/')
 
-  if (!isDocx) throw new Error('Only .docx files are supported')
-  if (docxFile.size > 20 * 1024 * 1024) throw new Error('DOCX file must be under 20MB')
+/* Helper: use an uploaded Word file (and read it for the excerpt) */
+async function processDocx(docxKey, existingPublicId = null) {
+  if (!isDocKey(docxKey)) throw new Error('Only .docx files are supported')
 
-  const arrayBuffer = await docxFile.arrayBuffer()
-  const buffer      = Buffer.from(arrayBuffer)
+  const buffer = await getMediaBuffer(docxKey)
 
-  // Delete old file from Cloudinary first
-  if (existingPublicId) {
+  // Remove the old file once the new one is in place
+  if (existingPublicId && existingPublicId !== docxKey) {
     await deleteRawFile(existingPublicId).catch(e =>
       console.warn('⚠️ Old DOCX delete failed (non-blocking):', e.message)
     )
   }
-
-  console.log(`📄 Uploading DOCX: "${fileName}" (${(docxFile.size / 1024).toFixed(1)} KB)`)
-  const uploadResult = await uploadRawFile(buffer, fileName, 'ldce/articles/documents')
-  console.log(`✅ DOCX uploaded: ${uploadResult.url}`)
 
   // Auto-excerpt
   let autoExcerpt = null
@@ -43,31 +36,24 @@ async function processDocx(docxFile, existingPublicId = null) {
   }
 
   return {
-    docxUrl:      uploadResult.url,
-    docxPublicId: uploadResult.publicId,
+    docxUrl:      mediaUrl(docxKey),
+    docxPublicId: docxKey,
     autoExcerpt,
   }
 }
 
-/* ─────────────────────────────────────────
-   Helper: upload thumbnail
-───────────────────────────────────────── */
-async function processThumbnail(thumbnailFile, existingPublicId = null) {
-  if (!thumbnailFile || thumbnailFile.size === 0) return null
-  if (thumbnailFile.size > 5 * 1024 * 1024) throw new Error('Thumbnail must be under 5MB')
+/* Helper: use an uploaded thumbnail */
+async function processThumbnail(thumbnailPublicId, existingPublicId = null) {
+  if (!thumbnailPublicId) return null
+  if (!isImageKey(thumbnailPublicId)) throw new Error('Invalid thumbnail upload')
 
-  // Delete old thumbnail
-  if (existingPublicId) {
+  if (existingPublicId && existingPublicId !== thumbnailPublicId) {
     await deleteImage(existingPublicId).catch(e =>
       console.warn('⚠️ Old thumbnail delete failed (non-blocking):', e.message)
     )
   }
 
-  const buffer  = await thumbnailFile.arrayBuffer()
-  const base64  = `data:${thumbnailFile.type};base64,${Buffer.from(buffer).toString('base64')}`
-  const result  = await uploadImage(base64, 'ldce/articles/thumbnails')
-  console.log(`✅ Thumbnail uploaded: ${result.url}`)
-  return { url: result.url, publicId: result.publicId }
+  return { url: mediaUrl(thumbnailPublicId), publicId: thumbnailPublicId }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -144,8 +130,8 @@ export async function POST(req) {
     const category       = formData.get('category')?.toString().trim() || null
     const showOnHomepage   = formData.get('showOnHomepage')   === 'true'
     const showInLiveScroll = formData.get('showInLiveScroll') === 'true'
-    const thumbnailFile  = formData.get('thumbnail')
-    const docxFile       = formData.get('docxFile')
+    const thumbnailKey   = formData.get('thumbnailPublicId')?.toString() || null
+    const docxKey        = formData.get('docxKey')?.toString() || null
     const manualContent  = formData.get('content')?.toString().trim() || ''
 
     if (!title) {
@@ -162,9 +148,9 @@ export async function POST(req) {
     let manualHtml     = null
 
     /* ── DOCX branch ── */
-    if (docxFile && docxFile.size > 0) {
+    if (docxKey) {
       try {
-        const result = await processDocx(docxFile)
+        const result = await processDocx(docxKey)
         docxUrl      = result.docxUrl
         docxPublicId = result.docxPublicId
         contentType  = 'docx'
@@ -195,9 +181,9 @@ export async function POST(req) {
     /* ── Thumbnail ── */
     let thumbnailUrl      = null
     let thumbnailPublicId = null
-    if (thumbnailFile && thumbnailFile.size > 0) {
+    if (thumbnailKey) {
       try {
-        const result      = await processThumbnail(thumbnailFile)
+        const result      = await processThumbnail(thumbnailKey)
         thumbnailUrl      = result?.url      ?? null
         thumbnailPublicId = result?.publicId ?? null
       } catch (err) {
@@ -352,8 +338,8 @@ export async function PATCH(req) {
       ? formData.get('showOnHomepage') === 'true' : undefined
     const showInLiveScroll = formData.has('showInLiveScroll')
       ? formData.get('showInLiveScroll') === 'true' : undefined
-    const docxFile       = formData.get('docxFile')
-    const thumbnailFile  = formData.get('thumbnail')
+    const docxKey        = formData.get('docxKey')?.toString() || null
+    const thumbnailKey   = formData.get('thumbnailPublicId')?.toString() || null
 
     if (!id) {
       return NextResponse.json(
@@ -381,9 +367,9 @@ export async function PATCH(req) {
     if (showInLiveScroll !== undefined) updateData.showInLiveScroll = showInLiveScroll
 
     /* ── Replace DOCX ── */
-    if (docxFile && docxFile.size > 0) {
+    if (docxKey) {
       try {
-        const result = await processDocx(docxFile, existing.docxPublicId)
+        const result = await processDocx(docxKey, existing.docxPublicId)
         updateData.docxUrl      = result.docxUrl
         updateData.docxPublicId = result.docxPublicId
         updateData.contentType  = 'docx'
@@ -400,9 +386,9 @@ export async function PATCH(req) {
     }
 
     /* ── Replace thumbnail ── */
-    if (thumbnailFile && thumbnailFile.size > 0) {
+    if (thumbnailKey) {
       try {
-        const result = await processThumbnail(thumbnailFile, existing.thumbnailPublicId)
+        const result = await processThumbnail(thumbnailKey, existing.thumbnailPublicId)
         if (result) {
           updateData.thumbnail         = result.url
           updateData.thumbnailPublicId = result.publicId
