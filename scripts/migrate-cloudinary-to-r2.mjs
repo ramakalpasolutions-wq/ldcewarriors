@@ -57,16 +57,53 @@ function extFor(url, contentType) {
   return m ? m[1].toLowerCase() : 'bin'
 }
 
+// Retry briefly when MongoDB reports a temporary write conflict (P2034)
+async function withRetry(fn, tries = 6) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (err?.code !== 'P2034' || i >= tries) throw err
+      await new Promise(r => setTimeout(r, 300 * i))
+    }
+  }
+}
+
 async function restore() {
   const backupPath = path.join('scripts', '.cloudinary-migration-backup.json')
   const rows = JSON.parse(fs.readFileSync(backupPath, 'utf8'))
+
+  // One update per record (articles have two fields), skipping ones already restored
+  const byRecord = new Map()
   for (const r of rows) {
-    await prisma[r.model].update({
-      where: { id: r.id },
-      data: { [r.field]: r.url, [r.idField]: r.publicId },
-    })
+    const key = `${r.model}:${r.id}`
+    if (!byRecord.has(key)) byRecord.set(key, { model: r.model, id: r.id, data: {}, fields: [] })
+    const rec = byRecord.get(key)
+    rec.data[r.field] = r.url
+    rec.data[r.idField] = r.publicId
+    rec.fields.push(r.field)
   }
-  console.log(`Restored ${rows.length} records to their Cloudinary links.`)
+
+  let restored = 0
+  let skipped = 0
+  let failed = 0
+  for (const rec of byRecord.values()) {
+    const current = await prisma[rec.model].findUnique({
+      where: { id: rec.id },
+      select: Object.fromEntries(rec.fields.map(f => [f, true])),
+    })
+    if (!current) { skipped++; continue }
+    if (rec.fields.every(f => current[f] === rec.data[f])) { skipped++; continue }
+    try {
+      await withRetry(() => prisma[rec.model].update({ where: { id: rec.id }, data: rec.data }))
+      restored++
+    } catch (err) {
+      failed++
+      console.log(`✗ ${rec.model} ${rec.id}: ${err.message.split('\n').pop()}`)
+    }
+  }
+  console.log(`Restored ${restored}, already done ${skipped}, failed ${failed}.`)
+  if (failed) console.log('Run the same command again to retry the failed ones.')
 }
 
 async function main() {
