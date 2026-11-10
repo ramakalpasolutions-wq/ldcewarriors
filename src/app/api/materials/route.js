@@ -30,9 +30,9 @@ export async function GET(req) {
             }),
         prisma.material.findMany({
           where: { isPublished: true, topicId: isGeneral ? null : topicParam },
-          orderBy: [{ order: 'asc' }, { chapterNo: 'asc' }, { createdAt: 'desc' }],
+          orderBy: [{ chapterNo: 'asc' }, { createdAt: 'desc' }],
           select: {
-            id: true, title: true, chapterNo: true, description: true,
+            id: true, title: true, chapterNo: true, description: true, order: true,
             pageCount: true, accessType: true, createdAt: true,
           },
         }),
@@ -45,6 +45,10 @@ export async function GET(req) {
 
       // Premium textbooks are locked unless the visitor is an active family member
       const hasFamily = Boolean(requireAdmin(req)) || hasPremiumAccess(user)
+      // Order number first (1, 2, 3…); textbooks without one follow
+      const byOrder = m => (m.order > 0 ? m.order : Infinity)
+      materials.sort((a, b) => byOrder(a) - byOrder(b))
+
       const withLock = materials.map(m => ({
         ...m,
         locked: m.accessType === 'PREMIUM' && !hasFamily,

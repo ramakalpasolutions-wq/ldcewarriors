@@ -107,7 +107,7 @@ export async function GET(req) {
        FETCH VIDEOS
     ───────────────────────────────────── */
 
-    const videos = await prisma.video.findMany({
+    let videos = await prisma.video.findMany({
       where,
 
       include: {
@@ -120,17 +120,18 @@ export async function GET(req) {
         },
       },
 
-      orderBy: [
-        {
-          order: 'asc',
-        },
-        {
-          createdAt: 'desc',
-        },
-      ],
-
-      take: limit,
+      orderBy: {
+        createdAt: 'desc',
+      },
     })
+
+    // Order number first (1, 2, 3…); videos without one follow, newest first
+    videos.sort((a, b) => {
+      const ao = a.order > 0 ? a.order : Infinity
+      const bo = b.order > 0 ? b.order : Infinity
+      return ao - bo
+    })
+    videos.splice(limit)
 
     /* ─────────────────────────────────────
        PROCESS VIDEOS

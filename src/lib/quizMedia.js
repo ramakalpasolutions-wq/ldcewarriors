@@ -61,10 +61,7 @@ export async function verifyQuizMedia(key, type) {
       'image/webp',
     ]
 
-    if (
-      !allowed.includes(info.ContentType) ||
-      size > 5 * 1024 * 1024
-    ) {
+    if (!allowed.includes(info.ContentType)) {
       throw new Error('Invalid question image')
     }
   }

@@ -375,65 +375,66 @@ export default function QuizResultsPage() {
         /* SCORECARD */
         .sc-card {
           background:#fff; border:2.5px solid #1D4ED8; border-radius:28px;
-          padding:28px clamp(14px,3vw,30px) 30px; text-align:center;
+          padding:18px clamp(12px,2.5vw,22px) 20px; text-align:center;
+          max-width:760px; margin:0 auto;
           box-shadow:0 10px 30px rgba(29,78,216,.12);
         }
         .sc-heading { display:flex; align-items:center; justify-content:center; gap:clamp(6px,2vw,18px); }
         .sc-heading h1 {
           font-family:'Playfair Display', Georgia, serif; font-weight:900; color:#0B1F5C;
-          font-size:clamp(28px,6vw,52px); line-height:1.1; margin:0;
+          font-size:clamp(22px,4.2vw,34px); line-height:1.1; margin:0;
         }
-        .sc-laurel { width:clamp(30px,6vw,56px); height:auto; flex-shrink:0; }
-        .sc-heading-line { display:block; width:clamp(90px,20vw,200px); height:4px; border-radius:4px; background:#E50914; margin:10px auto 18px; }
+        .sc-laurel { width:clamp(22px,4vw,36px); height:auto; flex-shrink:0; }
+        .sc-heading-line { display:block; width:clamp(90px,20vw,200px); height:3px; border-radius:4px; background:#E50914; margin:6px auto 10px; }
         .sc-quiz-title {
           font-family:'Playfair Display', Georgia, serif; font-weight:900; color:#E50914;
-          font-size:clamp(24px,5.4vw,46px); line-height:1.15; margin:0; overflow-wrap:anywhere;
+          font-size:clamp(19px,3.6vw,28px); line-height:1.15; margin:0; overflow-wrap:anywhere;
         }
-        .sc-rule { border:0; height:2px; background:#1D4ED8; opacity:.85; margin:24px 0; }
+        .sc-rule { border:0; height:2px; background:#1D4ED8; opacity:.85; margin:14px 0; }
 
-        .sc-tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+        .sc-tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
         .sc-tile {
-          border-radius:20px; padding:18px 10px; display:flex; flex-direction:column;
-          align-items:center; justify-content:center; gap:8px; min-height:130px;
+          border-radius:14px; padding:12px 8px; display:flex; flex-direction:column;
+          align-items:center; justify-content:center; gap:5px; min-height:92px;
         }
-        .sc-tile-label { font-family:'Playfair Display', Georgia, serif; font-weight:800; font-size:clamp(17px,2.4vw,24px); color:#0B1F5C; }
-        .sc-tile-value { font-family:'Playfair Display', Georgia, serif; font-weight:900; font-size:clamp(34px,6vw,58px); line-height:1; }
+        .sc-tile-label { font-family:'Playfair Display', Georgia, serif; font-weight:800; font-size:clamp(14px,1.8vw,17px); color:#0B1F5C; }
+        .sc-tile-value { font-family:'Playfair Display', Georgia, serif; font-weight:900; font-size:clamp(26px,4vw,38px); line-height:1; }
         .sc-tile-score { background:#FBF3E8; border:1.5px solid #E7D6C1; }
         .sc-tile-score .sc-tile-value { color:#D90A16; }
         .sc-tile-percent { background:#E5F2FD; border:1.5px solid #A9CFF2; }
         .sc-tile-percent .sc-tile-value { color:#0A1FD8; }
         .sc-tile-status { background:#EAF8E6; border:1.5px solid #8FD48A; }
         .sc-tile-ended { background:#FDECEC; border:1.5px solid #F3A6A6; }
-        .sc-status-line { display:flex; align-items:center; gap:8px; font-family:'Playfair Display', Georgia, serif; font-weight:800; font-size:clamp(14px,1.8vw,18px); color:#14532D; }
+        .sc-status-line { display:flex; align-items:center; gap:8px; font-family:'Playfair Display', Georgia, serif; font-weight:800; font-size:clamp(12px,1.4vw,14px); color:#14532D; }
         .sc-status-ended { color:#991B1B; }
         .sc-check, .sc-cross {
-          width:30px; height:30px; flex-shrink:0; border-radius:50%; color:#fff; font-size:17px; font-weight:900;
+          width:22px; height:22px; flex-shrink:0; border-radius:50%; color:#fff; font-size:13px; font-weight:900;
           display:flex; align-items:center; justify-content:center; font-family:sans-serif;
         }
         .sc-check { background:#16A34A; }
         .sc-cross { background:#DC2626; }
         .sc-ended-reason { font-size:13px; color:#7F1D1D; font-weight:600; }
         .sc-ribbon {
-          position:relative; display:inline-block; padding:8px 26px; color:#fff; font-weight:900;
-          font-family:'Playfair Display', Georgia, serif; font-size:clamp(18px,2.6vw,28px);
+          position:relative; display:inline-block; padding:5px 18px; color:#fff; font-weight:900;
+          font-family:'Playfair Display', Georgia, serif; font-size:clamp(15px,1.9vw,19px);
           border-radius:6px; transform:rotate(-2deg); text-shadow:0 2px 0 rgba(0,0,0,.2);
           white-space:nowrap; max-width:100%;
         }
         .sc-ribbon::before, .sc-ribbon::after {
-          content:''; position:absolute; top:10px; width:16px; height:100%; z-index:-1;
+          content:''; position:absolute; top:7px; width:12px; height:100%; z-index:-1;
           background:inherit; filter:brightness(.8);
         }
-        .sc-ribbon::before { left:-10px; clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%); }
-        .sc-ribbon::after { right:-10px; clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%); }
+        .sc-ribbon::before { left:-8px; clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%); }
+        .sc-ribbon::after { right:-8px; clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%); }
         .sc-ribbon-green { background:linear-gradient(180deg,#22C55E,#15803D); }
         .sc-ribbon-amber { background:linear-gradient(180deg,#F59E0B,#B45309); }
         .sc-ribbon-red { background:linear-gradient(180deg,#EF4444,#B91C1C); }
 
         .sc-best {
-          display:inline-block; padding:12px clamp(34px,8vw,90px); border-radius:999px;
-          background:linear-gradient(180deg,#E5101F,#8E0710); border:3px solid #F5C518;
+          display:inline-block; padding:7px clamp(26px,6vw,56px); border-radius:999px;
+          background:linear-gradient(180deg,#E5101F,#8E0710); border:2px solid #F5C518;
           color:#fff; font-family:'Playfair Display', Georgia, serif; font-style:italic; font-weight:900;
-          font-size:clamp(24px,4.6vw,44px); box-shadow:0 8px 18px rgba(142,7,16,.3);
+          font-size:clamp(19px,3vw,28px); box-shadow:0 6px 14px rgba(142,7,16,.28);
         }
 
         /* SECTIONS */
@@ -507,7 +508,7 @@ export default function QuizResultsPage() {
           .sc-card { border-radius:20px; }
           .sc-tiles { grid-template-columns:1fr 1fr; gap:10px; }
           .sc-tile-status, .sc-tile-ended { grid-column:span 2; min-height:auto; }
-          .sc-tile { min-height:110px; padding:14px 8px; }
+          .sc-tile { min-height:84px; padding:10px 6px; }
           .sc-q { padding:14px; }
           .sc-q-text { font-size:16px; }
           .sc-opt-tag { display:none; }

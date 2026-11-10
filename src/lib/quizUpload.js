@@ -235,12 +235,6 @@ export async function uploadQuizMedia(
       throw new Error('Use JPG, PNG or WebP images')
     }
 
-    if (file.size > 5 * MiB) {
-      throw new Error(
-        'Question image cannot exceed 5 MB'
-      )
-    }
-
     return uploadSingle(
       file,
       folder,

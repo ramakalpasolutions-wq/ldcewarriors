@@ -7,6 +7,7 @@ import ArticleCard from '@/components/home/ArticleCard'
 import LiveScrollSidebar from '@/components/home/LiveScrollSidebar'
 import HomeVideoSection from '@/components/home/HomeSections'
 import LearningGateway from '@/components/home/LearningGateway'
+import TopicCardGrid, { plural } from '@/components/topics/TopicCardGrid'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth'
 import prisma from '@/lib/db'
@@ -80,20 +81,6 @@ async function getData() {
 /* ─────────────────────────────────────────
    CONSTANTS
 ───────────────────────────────────────── */
-const TOPIC_ICONS = {
-  'office procedure': '📋',
-  'service rules': '⚖️',
-  'financial rules': '💰',
-  'acts & statutes': '📜',
-  'general knowledge': '🌐',
-  'english grammar': '✍️',
-  'current affairs': '📰',
-  'model q&a': '❓',
-}
-
-function getTopicIcon(name) {
-  return TOPIC_ICONS[name?.toLowerCase()] || '📚'
-}
 
 const t = {
   navy: '#1B2A4A',
@@ -224,164 +211,6 @@ function ViewAllBtn({
   )
 }
 
-/* ─────────────────────────────────────────
-   TOPIC CARD
-───────────────────────────────────────── */
-function TopicCard({ topic }) {
-  const hasThumbnail = !!topic.thumbnail
-  const icon = getTopicIcon(topic.name)
-
-  return (
-    <Link
-      href={`/classes?topic=${topic._id}`}
-      className="topic-card"
-      style={{
-        textDecoration: 'none',
-        color: 'inherit',
-      }}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          paddingTop: '56.25%',
-          overflow: 'hidden',
-          background: '#F0EDE8',
-          flexShrink: 0,
-        }}
-      >
-        {hasThumbnail ? (
-          <>
-            <img
-              src={topic.thumbnail}
-              alt={topic.name}
-              className="topic-card-img"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-                display: 'block',
-              }}
-            />
-
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '50%',
-                background:
-                  'linear-gradient(to top,rgba(0,0,0,0.38),transparent)',
-                pointerEvents: 'none',
-              }}
-            />
-          </>
-        ) : (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '44px',
-              background:
-                'linear-gradient(135deg,#F5F3EF,#EDE8E0)',
-            }}
-          >
-            {icon}
-          </div>
-        )}
-
-        {hasThumbnail && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '10px',
-              fontSize: '20px',
-              filter:
-                'drop-shadow(0 1px 4px rgba(0,0,0,0.55))',
-            }}
-          >
-            {icon}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          padding: '14px 16px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          flex: 1,
-        }}
-      >
-        <h3
-          style={{
-            fontFamily: 'Playfair Display,serif',
-            fontWeight: 700,
-            fontSize: '20px',
-            color: '#b91515',
-            lineHeight: 1.35,
-            textAlign: 'center',
-            margin: '0 0 4px',
-          }}
-        >
-          {topic.name}
-        </h3>
-
-        {topic.description && (
-          <p
-            style={{
-              color: t.muted,
-              fontSize: '12px',
-              lineHeight: 1.55,
-              textAlign: 'center',
-              margin: '0 0 10px',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}
-          >
-            {topic.description}
-          </p>
-        )}
-
-        <div
-          style={{
-            marginTop: 'auto',
-            paddingTop: '10px',
-            borderTop: `1px solid ${t.border}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }}
-        >
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: t.gold,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            View Videos →
-          </span>
-        </div>
-      </div>
-    </Link>
-  )
-}
 
 /* ─────────────────────────────────────────
    MARQUEE BANNER
@@ -736,60 +565,6 @@ export default async function HomePage() {
           }
         }
 
-        /* Topic grid */
-
-        .topics-grid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 20px;
-          align-items: stretch;
-        }
-
-        @media (max-width:1023px) {
-          .topics-grid {
-            grid-template-columns: repeat(2,1fr);
-            gap: 16px;
-          }
-        }
-
-        @media (max-width:639px) {
-          .topics-grid {
-            grid-template-columns: 1fr;
-            gap: 14px;
-          }
-        }
-
-        /* Topic card */
-
-        .topic-card {
-          border-radius: 14px;
-          overflow: hidden;
-          background: ${t.card};
-          border: 1px solid ${t.border};
-          display: flex;
-          flex-direction: column;
-          transition:
-            box-shadow .25s ease,
-            border-color .25s ease,
-            transform .25s ease;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-
-        .topic-card:hover {
-          border-color: ${t.gold};
-          transform: translateY(-4px);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.09);
-        }
-
-        .topic-card-img {
-          transition: transform .4s ease;
-          display: block;
-        }
-
-        .topic-card:hover .topic-card-img {
-          transform: scale(1.06);
-        }
-
         /* Article grid */
 
         .article-grid {
@@ -1007,14 +782,22 @@ export default async function HomePage() {
             </div>
 
             {topics.length > 0 ? (
-              <div className="topics-grid">
-                {topics.map(topic => (
-                  <TopicCard
-                    key={topic._id}
-                    topic={topic}
-                  />
-                ))}
-              </div>
+              <TopicCardGrid
+                buttonLabel="Watch Classes →"
+                items={topics.map(topic => {
+                  const total = topic.videoCount || 0
+                  const free = topic.freeVideoCount || 0
+                  return {
+                    id: topic._id,
+                    name: topic.name,
+                    thumbnail: topic.thumbnail,
+                    href: `/classes?topic=${topic._id}`,
+                    countLabel: total
+                      ? `🎬 ${plural(total, 'Video')}${free ? ` · ${free} free` : ''}`
+                      : '',
+                  }
+                })}
+              />
             ) : (
               <div className="empty-state">
                 <div

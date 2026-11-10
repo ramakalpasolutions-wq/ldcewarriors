@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { uploadVideoToR2Direct } from '@/lib/clientUpload'
+import AdminTopicGrid, { AdminTopicBar, useAdminTopic, byOrderNumber } from '@/components/admin/AdminTopicGrid'
 
 const tk = {
   navy: '#1B2A4A',
@@ -27,8 +28,6 @@ const EMPTY_FORM = {
   order: '0',
   isPublished: true,
 }
-
-const MAX_PDF_MB = 100
 
 // Best-effort page count read straight from the PDF bytes.
 // Works for most PDFs; admin can always correct it by hand.
@@ -92,11 +91,33 @@ export default function AdminMaterialsPage() {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  // Topic-first view: null = topic grid, 'none' = textbooks without a topic
+  const [topicSel, setTopicSel] = useAdminTopic()
+  const topicCounts = materials.reduce((acc, m) => {
+    const key = m.topicId || 'none'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const topicMaterials = materials
+    .filter(m => (m.topicId || 'none') === topicSel)
+    .sort(byOrderNumber())
+  const currentTopic =
+    topicSel === 'none'
+      ? { name: 'No topic', icon: '📦' }
+      : topics.find(t => (t._id || t.id) === topicSel)
+
+  // New textbooks go into the open topic, numbered after its last chapter
   function startCreate() {
     resetForm()
-    const nextChapter = materials.reduce((max, m) => Math.max(max, m.chapterNo || 0), 0) + 1
-    setForm({ ...EMPTY_FORM, chapterNo: String(nextChapter), order: String(nextChapter) })
+    const nextChapter = topicMaterials.reduce((max, m) => Math.max(max, m.chapterNo || 0, m.order || 0), 0) + 1
+    setForm({
+      ...EMPTY_FORM,
+      topicId: topicSel && topicSel !== 'none' ? topicSel : '',
+      chapterNo: String(nextChapter),
+      order: String(nextChapter),
+    })
     setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function startEdit(m) {
@@ -122,11 +143,6 @@ export default function AdminMaterialsPage() {
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
     if (!isPdf) {
       toast.error('Only PDF files are allowed')
-      e.target.value = ''
-      return
-    }
-    if (file.size > MAX_PDF_MB * 1024 * 1024) {
-      toast.error(`PDF must be under ${MAX_PDF_MB} MB`)
       e.target.value = ''
       return
     }
@@ -219,9 +235,9 @@ export default function AdminMaterialsPage() {
       <div className="am-header">
         <div>
           <h1>Digital Textbook</h1>
-          <p>Upload chapter PDFs that students can read on the Materials page.</p>
+          <p>Upload chapter PDFs that students read under Digital Textbook.</p>
         </div>
-        {!showForm && (
+        {!showForm && !topicSel && (
           <button className="am-btn am-btn-gold" onClick={startCreate}>+ Add Material</button>
         )}
       </div>
@@ -273,8 +289,8 @@ export default function AdminMaterialsPage() {
             </label>
 
             <label className="am-field">
-              <span>Display order</span>
-              <input type="number" min="0" value={form.order} onChange={set('order')} />
+              <span>Order No. <em>(1 = first)</em></span>
+              <input type="number" min="0" value={form.order} onChange={set('order')} placeholder="e.g. 1" />
             </label>
 
             <label className="am-field am-check">
@@ -304,19 +320,42 @@ export default function AdminMaterialsPage() {
         </form>
       )}
 
+      {!topicSel ? (
+        <AdminTopicGrid
+          topics={topics}
+          counts={topicCounts}
+          extraTiles={[{ id: 'none', name: 'No topic', icon: '📦' }]}
+          unit="textbooks"
+          loading={loading}
+          onSelect={setTopicSel}
+        />
+      ) : (
+      <>
+      <div style={{ marginBottom: 14 }}>
+        <AdminTopicBar
+          topic={currentTopic}
+          count={topicMaterials.length}
+          unit="textbooks"
+          onBack={() => { setTopicSel(null); resetForm() }}
+        >
+          {!showForm && (
+            <button className="am-btn am-btn-gold" onClick={startCreate}>+ Add textbook here</button>
+          )}
+        </AdminTopicBar>
+      </div>
       {loading ? (
         <div className="am-card am-empty">Loading…</div>
-      ) : materials.length === 0 ? (
-        <div className="am-card am-empty">No materials yet. Click “Add Material” to upload your first PDF.</div>
+      ) : topicMaterials.length === 0 ? (
+        <div className="am-card am-empty">No textbooks in this topic yet — use “+ Add textbook here”.</div>
       ) : (
         <div className="am-list">
-          {materials.map(m => (
+          {topicMaterials.map(m => (
             <div key={m.id} className="am-card am-row">
               <div className="am-badge">
                 {m.chapterNo ? String(m.chapterNo).padStart(2, '0') : 'PDF'}
               </div>
               <div className="am-info">
-                <h3>{m.title}</h3>
+                <h3>{m.order > 0 && <span className="am-order">#{m.order}</span>}{m.title}</h3>
                 <div className="am-meta">
                   {m.topic?.name && <span>🏷️ {m.topic.name}</span>}
                   {m.pageCount ? <span>📄 {m.pageCount} pages</span> : null}
@@ -347,6 +386,8 @@ export default function AdminMaterialsPage() {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
 
       <style>{`
@@ -386,6 +427,7 @@ export default function AdminMaterialsPage() {
         .am-badge { flex-shrink:0; width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center;
           background:linear-gradient(135deg,#7C3AED,#4C1D95); color:#fff; font-weight:900; font-size:18px; }
         .am-info { flex:1; min-width:0; }
+        .am-order { color:#D4922A; margin-right:6px; }
         .am-info h3 { margin:0 0 6px; font-size:15px; font-weight:800; color:${tk.navy}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .am-meta { display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px; color:${tk.muted}; align-items:center; }
         .am-pill { padding:2px 8px; border-radius:999px; background:${tk.bg}; font-weight:700; }

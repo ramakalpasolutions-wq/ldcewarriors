@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import toast from 'react-hot-toast'
 import adminFetch from '@/lib/adminFetch'
+import AdminTopicGrid, { AdminTopicBar, useAdminTopic, byOrderNumber } from '@/components/admin/AdminTopicGrid'
 import {
   uploadImageToCloudinary,
   uploadVideoToR2Direct,
@@ -35,7 +36,7 @@ function fmtDateShort(d) {
   })
 }
 
-function SkeletonRow({ cols = 8 }) {
+function SkeletonRow({ cols = 9 }) {
   const widths = [80, 60, 80, 70, 50, 40, 60, 50]
   return (
     <tr>
@@ -187,11 +188,11 @@ function MobileVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
             <span style={{
               display: 'inline-flex', alignItems: 'center', padding: '2px 7px', borderRadius: '999px',
               fontSize: '10px', fontWeight: 700,
-              background: video.type === 'join family' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)',
-              color: video.type === 'join family' ? tk.goldDark : tk.teal,
-              border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`,
+              background: video.type === 'premium' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)',
+              color: video.type === 'premium' ? tk.goldDark : tk.teal,
+              border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`,
             }}>
-              {video.type === 'join family' ? '⭐ join family' : '🎬 Free'}
+              {video.type === 'premium' ? '⭐ Join Family' : '🎬 Free'}
             </span>
             {video.showOnHomepage && (
               <span style={{ fontSize: '10px', fontWeight: 700, color: tk.teal, background: 'rgba(42,157,143,0.1)', border: '1px solid rgba(42,157,143,0.2)', padding: '2px 7px', borderRadius: '999px' }}>Home</span>
@@ -201,8 +202,8 @@ function MobileVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px', marginBottom: '10px', padding: '9px 11px', borderRadius: '9px', background: 'rgba(27,42,74,0.02)', border: `1px solid ${tk.border}` }}>
         {[
-          { lbl: 'TOPIC', val: video.topicName || '—' },
-          { lbl: 'PLAYS', val: video.type === 'join family' ? `🔒 ${video.playLimit || 3} max` : 'Unlimited' },
+          { lbl: 'ORDER NO.', val: video.order > 0 ? `#${video.order}` : '—' },
+          { lbl: 'PLAYS', val: video.type === 'premium' ? `🔒 ${video.playLimit || 3} max` : 'Unlimited' },
           { lbl: 'VIEWS', val: video.views || 0 },
           { lbl: 'ADDED', val: fmtDateShort(video.createdAt) },
         ].map(item => (
@@ -243,9 +244,9 @@ function TabletVideoCard({ video, onEdit, onDelete, onToggle, deleting }) {
       }
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
-          <p style={{ fontSize: '13px', fontWeight: 700, color: tk.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{video.title}</p>
-          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'join family' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)', color: video.type === 'join family' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`, flexShrink: 0 }}>
-            {video.type === 'join family' ? '⭐' : '🎬'}{' '}{video.type === 'join family' ? 'join family' : 'Free'}
+          <p style={{ fontSize: '13px', fontWeight: 700, color: tk.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{video.order > 0 && <span style={{ color: tk.gold, marginRight: '5px' }}>#{video.order}</span>}{video.title}</p>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'premium' ? 'rgba(232,168,56,0.12)' : 'rgba(42,157,143,0.1)', color: video.type === 'premium' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,0.25)' : 'rgba(42,157,143,0.2)'}`, flexShrink: 0 }}>
+            {video.type === 'premium' ? '⭐' : '🎬'}{' '}{video.type === 'premium' ? 'Join Family' : 'Free'}
           </span>
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -281,7 +282,7 @@ export default function AdminVideosPage() {
   const [uploadStage, setUploadStage]         = useState('thumb')
   const [deleting, setDeleting]               = useState(null)
   const [filter, setFilter]                   = useState('all')
-  const [topicFilt, setTopicFilt]             = useState('all')
+  const [topicFilt, setTopicFilt]             = useAdminTopic()
   const [editVideo, setEditVideo]             = useState(null)
   const [screenSize, setScreenSize]           = useState('desktop')
 
@@ -313,7 +314,12 @@ export default function AdminVideosPage() {
     try {
       const res  = await adminFetch('/api/admin/videos')
       const data = await res.json()
-      if (data.success) setVideos(data.videos || [])
+      if (data.success) {
+        setVideos((data.videos || []).map(v => ({
+          ...v,
+          type: ['premium', 'join family'].includes(v.type?.toLowerCase()) ? 'premium' : v.type,
+        })))
+      }
       else toast.error(data.error || 'Failed to load videos')
     } catch { toast.error('Network error loading videos') }
     setLoading(false)
@@ -329,15 +335,29 @@ export default function AdminVideosPage() {
 
   useEffect(() => { fetchVideos(); fetchTopics() }, [fetchVideos, fetchTopics])
 
-  const filtered = videos.filter(v => {
-    const typeOk  = filter    === 'all' || v.type    === filter
-    const topicOk = topicFilt === 'all' || v.topicId === topicFilt
-    return typeOk && topicOk
-  })
+  const topicVideos = videos.filter(v =>
+    topicFilt === 'none' ? !v.topicId : v.topicId === topicFilt
+  )
+  const filtered = topicVideos
+    .filter(v => filter === 'all' || v.type === filter)
+    .sort(byOrderNumber())
+
+  // Video counts per topic for the topic grid ('none' = no topic)
+  const topicCounts = videos.reduce((acc, v) => {
+    const key = v.topicId || 'none'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const currentTopic =
+    topicFilt === 'none'
+      ? { name: 'No topic', icon: '📦' }
+      : topics.find(t => t._id === topicFilt)
 
   function resetForm() {
     setForm({
-      title: '', description: '', type: 'free', topicId: '',
+      title: '', description: '', type: 'free',
+      // New videos go into the topic you're looking at
+      topicId: topicFilt && topicFilt !== 'none' ? topicFilt : '',
       order: 0, showOnHomepage: false, playLimit: 3,
       thumbnail: null, video: null, thumbPreview: '',
     })
@@ -510,9 +530,9 @@ export default function AdminVideosPage() {
   }
 
   const FILTER_TABS = [
-    { id: 'all',     label: 'All',                           count: videos.length },
-    { id: 'free',    label: isMobile ? '🎬' : '🎬 Free',    count: videos.filter(v => v.type === 'free').length },
-    { id: 'join family', label: isMobile ? '⭐' : '⭐ join family',  count: videos.filter(v => v.type === 'join family').length },
+    { id: 'all',     label: 'All',                           count: topicVideos.length },
+    { id: 'free',    label: isMobile ? '🎬' : '🎬 Free',    count: topicVideos.filter(v => v.type === 'free').length },
+    { id: 'premium', label: isMobile ? '⭐' : '⭐ Join Family',  count: topicVideos.filter(v => v.type === 'premium').length },
   ]
 
   const EmptyState = () => (
@@ -524,7 +544,7 @@ export default function AdminVideosPage() {
       <span style={{ fontSize: isMobile ? '36px' : '44px', display: 'block', marginBottom: '10px' }}>🎥</span>
       <p style={{ color: tk.muted, fontWeight: 600, marginBottom: '4px', fontSize: isMobile ? '13px' : '14px' }}>No videos found</p>
       <p style={{ color: tk.faint, fontSize: '12px' }}>
-        {filter !== 'all' || topicFilt !== 'all' ? 'Try changing filters' : 'Upload your first video above'}
+        {filter !== 'all' ? 'Try changing filters' : 'Use “+ Add video here” to upload the first one'}
       </p>
     </div>
   )
@@ -595,7 +615,7 @@ export default function AdminVideosPage() {
             <button onClick={fetchVideos} disabled={loading} className="adm-btn-secondary" title="Refresh">
               <span style={{ display: 'inline-block', animation: loading ? 'spin 1s linear infinite' : 'none' }}>🔄</span>
             </button>
-            <button onClick={() => { setShowForm(s => !s); if (showForm) resetForm() }} className="adm-btn-primary">
+            <button onClick={() => { resetForm(); setShowForm(s => !s) }} className="adm-btn-primary">
               {showForm ? '✕ Close' : `+ ${isMobile ? 'Upload' : 'Upload Video'}`}
             </button>
           </div>
@@ -606,7 +626,7 @@ export default function AdminVideosPage() {
           {[
             { val: videos.length, lbl: 'Total' },
             { val: videos.filter(v => v.type === 'free').length, lbl: 'Free' },
-            { val: videos.filter(v => v.type === 'join family').length, lbl: 'join family' },
+            { val: videos.filter(v => v.type === 'premium').length, lbl: 'Join Family' },
             { val: topics.length, lbl: 'Topics' },
             { val: videos.reduce((s, v) => s + (v.views || 0), 0), lbl: 'Views' },
           ].map(s => (
@@ -637,7 +657,7 @@ export default function AdminVideosPage() {
                   <label className="vp-lbl">Type <span style={{ color: tk.gold }}>*</span></label>
                   <select className="adm-input" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} disabled={uploading}>
                     <option value="free">🎬 Free</option>
-                    <option value="join family">⭐ join family</option>
+                    <option value="premium">⭐ Join Family</option>
                   </select>
                 </div>
               </div>
@@ -651,8 +671,8 @@ export default function AdminVideosPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="vp-lbl">Order</label>
-                  <input type="number" className="adm-input" value={form.order} min={0}
+                  <label className="vp-lbl">Order No. <span style={{ color: tk.faint, fontWeight: 400, marginLeft: '3px' }}>(1 = first)</span></label>
+                  <input type="number" className="adm-input" value={form.order || ''} min={0} placeholder="e.g. 1"
                     onChange={e => setForm({ ...form, order: parseInt(e.target.value) || 0 })} disabled={uploading} />
                 </div>
                 <div>
@@ -671,11 +691,11 @@ export default function AdminVideosPage() {
 
               {!editVideo && (
                 <div className="vp-fg2">
-                  <FileDropZone label="Thumbnail" accept="image/jpeg,image/png,image/webp" hint="Max 5MB"
-                    file={form.thumbnail} preview={form.thumbPreview} maxSizeMB={5} disabled={uploading}
+                  <FileDropZone label="Thumbnail" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP"
+                    file={form.thumbnail} preview={form.thumbPreview} disabled={uploading}
                     onChange={f => setForm({ ...form, thumbnail: f, thumbPreview: URL.createObjectURL(f) })} />
-                  <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="Max 500MB"
-                    file={form.video} maxSizeMB={500} disabled={uploading}
+                  <FileDropZone label="Video File" accept="video/mp4,video/webm,video/*" hint="MP4 or WebM — any size"
+                    file={form.video} disabled={uploading}
                     onChange={f => setForm({ ...form, video: f })} />
                 </div>
               )}
@@ -693,7 +713,7 @@ export default function AdminVideosPage() {
                     onChange={e => setForm({ ...form, showOnHomepage: e.target.checked })} disabled={uploading} />
                   <span>Show on Homepage</span>
                 </label>
-                {form.type === 'join family' && (
+                {form.type === 'premium' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '5px 11px', borderRadius: '9px', background: 'rgba(232,168,56,0.08)', border: '1px solid rgba(232,168,56,0.2)' }}>
                     <span>🔒</span>
                     <span style={{ fontSize: '12px', color: tk.muted, fontWeight: 500 }}>
@@ -723,6 +743,29 @@ export default function AdminVideosPage() {
           </div>
         )}
 
+        {!topicFilt ? (
+          <AdminTopicGrid
+            topics={topics}
+            counts={topicCounts}
+            extraTiles={[{ id: 'none', name: 'No topic', icon: '📦' }]}
+            unit="videos"
+            loading={loading}
+            onSelect={id => { setFilter('all'); setTopicFilt(id) }}
+          />
+        ) : (
+        <>
+        <AdminTopicBar
+          topic={currentTopic}
+          count={topicVideos.length}
+          unit="videos"
+          onBack={() => setTopicFilt(null)}
+        >
+          <button
+            onClick={() => { resetForm(); setShowForm(true); setTimeout(() => document.querySelector('.vp-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100) }}
+            className="adm-btn-primary"
+          >+ Add video here</button>
+        </AdminTopicBar>
+
         {/* Filter Bar */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -731,11 +774,6 @@ export default function AdminVideosPage() {
                 {f.label}<span className="vp-tab-count">{f.count}</span>
               </button>
             ))}
-            <select className="adm-input" style={{ width: 'auto', minWidth: isMobile ? '110px' : '130px', fontSize: '12px', padding: '6px 9px' }}
-              value={topicFilt} onChange={e => setTopicFilt(e.target.value)}>
-              <option value="all">All Topics</option>
-              {topics.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-            </select>
           </div>
           <span style={{ fontSize: '11px', color: tk.faint, whiteSpace: 'nowrap' }}>
             {filtered.length} video{filtered.length !== 1 ? 's' : ''}
@@ -765,6 +803,7 @@ export default function AdminVideosPage() {
               <table className="vp-table" style={{ minWidth: '750px' }}>
                 <thead>
                   <tr>
+                    <th style={{ width: '44px' }}>#</th>
                     <th style={{ minWidth: '200px' }}>Video</th>
                     <th>Type</th><th>Topic</th><th>Plays</th><th>Views</th>
                     <th>Active</th><th>Added</th>
@@ -775,9 +814,10 @@ export default function AdminVideosPage() {
                   {loading
                     ? [1,2,3,4,5].map(i => <SkeletonRow key={i} />)
                     : filtered.length === 0
-                      ? <tr><td colSpan={8}><EmptyState /></td></tr>
+                      ? <tr><td colSpan={9}><EmptyState /></td></tr>
                       : filtered.map(video => (
                         <tr key={video._id}>
+                          <td style={{ fontWeight: 800, color: video.order > 0 ? tk.navy : '#D1D5DB' }}>{video.order > 0 ? video.order : '—'}</td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               {video.thumbnail ? <img src={video.thumbnail} alt="" className="vp-thumb" /> : <div className="vp-thumb-ph">🎥</div>}
@@ -790,8 +830,8 @@ export default function AdminVideosPage() {
                             </div>
                           </td>
                           <td>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'join family' ? 'rgba(232,168,56,.12)' : 'rgba(42,157,143,.1)', color: video.type === 'join family' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'join family' ? 'rgba(232,168,56,.25)' : 'rgba(42,157,143,.2)'}` }}>
-                              {video.type === 'join family' ? '⭐ join family' : '🎬 Free'}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: video.type === 'premium' ? 'rgba(232,168,56,.12)' : 'rgba(42,157,143,.1)', color: video.type === 'premium' ? tk.goldDark : tk.teal, border: `1px solid ${video.type === 'premium' ? 'rgba(232,168,56,.25)' : 'rgba(42,157,143,.2)'}` }}>
+                              {video.type === 'premium' ? '⭐ Join Family' : '🎬 Free'}
                             </span>
                           </td>
                           <td>
@@ -800,8 +840,8 @@ export default function AdminVideosPage() {
                               : <span style={{ color: '#D1D5DB' }}>—</span>}
                           </td>
                           <td>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: video.type === 'join family' ? tk.gold : tk.faint }}>
-                              {video.type === 'join family' ? `🔒 ${video.playLimit || 3}` : '∞'}
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: video.type === 'premium' ? tk.gold : tk.faint }}>
+                              {video.type === 'premium' ? `🔒 ${video.playLimit || 3}` : '∞'}
                             </span>
                           </td>
                           <td>
@@ -829,6 +869,8 @@ export default function AdminVideosPage() {
               </table>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </>

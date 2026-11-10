@@ -69,17 +69,6 @@ export async function POST(req) {
       )
     }
 
-    // Question images retain a 5 MB limit.
-    if (
-      folder === 'quiz-questions' &&
-      size > 5 * 1024 * 1024
-    ) {
-      return NextResponse.json(
-        { error: 'Question image cannot exceed 5 MB' },
-        { status: 400 }
-      )
-    }
-
     const originalExt = String(fileName || '')
       .split('.')
       .pop()

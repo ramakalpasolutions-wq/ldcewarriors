@@ -9,6 +9,7 @@ import {
 
 import toast from 'react-hot-toast'
 import { uploadQuizMedia } from '@/lib/quizUpload'
+import AdminTopicGrid, { AdminTopicBar, useAdminTopic, byOrderNumber } from '@/components/admin/AdminTopicGrid'
 
 const navy = '#1B2A4A'
 const gold = '#E8A838'
@@ -97,6 +98,34 @@ export default function AdminQuizzesPage() {
 
   const busy =
     saving || videoUploading || thumbnailUploading || imageUploading !== null
+
+  // Topic-first view: null = topic grid, 'mock' = full mock tests
+  const [topicSel, setTopicSel] = useAdminTopic()
+  const quizTopicKey = quiz => (quiz.mode === 'MOCK' ? 'mock' : quiz.topicId || 'none')
+  const topicCounts = quizzes.reduce((acc, quiz) => {
+    const key = quizTopicKey(quiz)
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {})
+  const topicQuizzes = quizzes
+    .filter(quiz => quizTopicKey(quiz) === topicSel)
+    .sort(byOrderNumber())
+  const currentTopic =
+    topicSel === 'mock'
+      ? { name: 'Full Mock Tests', icon: '🏁' }
+      : topicSel === 'none'
+        ? { name: 'No topic', icon: '📦' }
+        : topics.find(t => (t.id || t._id) === topicSel)
+
+  // New quizzes start in the topic you're looking at, numbered after the last one
+  function newQuizForTopic() {
+    const base = blankQuiz()
+    if (topicSel === 'mock') base.mode = 'MOCK'
+    else if (topicSel && topicSel !== 'none') base.topicId = topicSel
+    const lastOrder = topicQuizzes.reduce((max, q) => Math.max(max, Number(q.order) || 0), 0)
+    if (topicSel) base.order = lastOrder + 1
+    return base
+  }
 
   const loadData = useCallback(async () => {
     try {
@@ -219,11 +248,8 @@ export default function AdminQuizzesPage() {
       return
     }
 
-    if (
-      file.size < 1 ||
-      file.size > 5 * 1024 * 1024
-    ) {
-      toast.error('Maximum image size is 5 MB')
+    if (file.size < 1) {
+      toast.error('This image file is empty')
       return
     }
 
@@ -299,8 +325,8 @@ async function uploadVideo(file) {
       return
     }
 
-    if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
-      toast.error('Maximum thumbnail size is 5 MB')
+    if (file.size <= 0) {
+      toast.error('This image file is empty')
       return
     }
 
@@ -434,6 +460,7 @@ async function uploadVideo(file) {
           disabled={busy}
           onClick={() => {
             resetForm()
+            setForm(newQuizForTopic())
             setFormOpen(true)
           }}
         >
@@ -1050,6 +1077,42 @@ Cloudflare R2. Large videos use multipart upload.
         </form>
       )}
 
+      {!topicSel ? (
+        <AdminTopicGrid
+          topics={topics}
+          counts={topicCounts}
+          extraTiles={[
+            { id: 'mock', name: 'Full Mock Tests', icon: '🏁' },
+            { id: 'none', name: 'No topic', icon: '📦' },
+          ]}
+          unit="quizzes"
+          loading={loading}
+          onSelect={setTopicSel}
+        />
+      ) : (
+      <>
+      <div style={{ marginBottom: 18 }}>
+        <AdminTopicBar
+          topic={currentTopic}
+          count={topicQuizzes.length}
+          unit="quizzes"
+          onBack={() => setTopicSel(null)}
+        >
+          <button
+            style={button}
+            disabled={busy}
+            onClick={() => {
+              resetForm()
+              setForm(newQuizForTopic())
+              setFormOpen(true)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+          >
+            + Add quiz here
+          </button>
+        </AdminTopicBar>
+      </div>
+
       {loading ? (
         <p>Loading quizzes...</p>
       ) : (
@@ -1061,7 +1124,7 @@ Cloudflare R2. Large videos use multipart upload.
             gap: 18,
           }}
         >
-          {quizzes.map(quiz => (
+          {topicQuizzes.map(quiz => (
             <article
               key={quiz.id}
               style={card}
@@ -1144,10 +1207,12 @@ Cloudflare R2. Large videos use multipart upload.
             </article>
           ))}
 
-          {quizzes.length === 0 && (
-            <p>No quizzes created yet.</p>
+          {topicQuizzes.length === 0 && (
+            <p>No quizzes in this topic yet — use “+ Add quiz here”.</p>
           )}
         </div>
+      )}
+      </>
       )}
     </main>
   )
