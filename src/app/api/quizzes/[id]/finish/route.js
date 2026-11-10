@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 
 import {
-  currentQuizUser,
+  currentQuizTaker,
   validObjectId,
   validatedAnswers,
   calculateScore,
@@ -18,9 +18,9 @@ const violations = [
 
 export async function POST(req, { params }) {
   const { id } = await params
-  const user = await currentQuizUser(req)
+  const taker = await currentQuizTaker(req)
 
-  if (!user) {
+  if (!taker) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -44,7 +44,7 @@ export async function POST(req, { params }) {
       where: {
         id: body.attemptId,
         quizId: id,
-        userId: user.id,
+        ...taker.owner,
       },
     })
 

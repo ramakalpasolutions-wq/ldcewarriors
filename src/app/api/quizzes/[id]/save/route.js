@@ -2,16 +2,16 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import {
-  currentQuizUser,
+  currentQuizTaker,
   validObjectId,
   validatedAnswers,
 } from '@/lib/quizAuth'
 
 export async function POST(req, { params }) {
   const { id } = await params
-  const user = await currentQuizUser(req)
+  const taker = await currentQuizTaker(req)
 
-  if (!user) {
+  if (!taker) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -35,7 +35,7 @@ export async function POST(req, { params }) {
       where: {
         id: attemptId,
         quizId: id,
-        userId: user.id,
+        ...taker.owner,
       },
     })
 
@@ -58,7 +58,7 @@ export async function POST(req, { params }) {
     const result = await prisma.quizAttempt.updateMany({
       where: {
         id: attemptId,
-        userId: user.id,
+        ...taker.owner,
         status: 'IN_PROGRESS',
         expiresAt: { gt: new Date() },
       },

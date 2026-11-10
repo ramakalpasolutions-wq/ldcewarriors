@@ -36,6 +36,49 @@ export async function currentQuizUser(req) {
   }
 }
 
+/* ─────────────────────────────────────────
+   Guests (free tests only)
+   A random id kept in an httpOnly cookie, so a visitor who isn't
+   signed in can take a free test and see only their own results.
+───────────────────────────────────────── */
+export const GUEST_COOKIE = 'quizGuest'
+
+export function validGuestId(id) {
+  return typeof id === 'string' && /^[a-f0-9]{32}$/.test(id)
+}
+
+export function newGuestId() {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/*
+  Who is taking the test: a signed-in student, or a guest.
+  owner is the database filter for "attempts that belong to this person".
+*/
+export async function currentQuizTaker(req) {
+  const user = await currentQuizUser(req)
+  if (user) return { user, owner: { userId: user.id }, isGuest: false }
+
+  const guestId = req.cookies.get(GUEST_COOKIE)?.value
+  if (validGuestId(guestId)) {
+    return { user: null, owner: { guestId }, isGuest: true, guestId }
+  }
+  return null
+}
+
+export function setGuestCookie(response, guestId) {
+  response.cookies.set(GUEST_COOKIE, guestId, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 30,
+  })
+  return response
+}
+
 export function hasPremiumAccess(user) {
   return Boolean(
     user?.isPremium &&

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 
 import {
-  currentQuizUser,
+  currentQuizTaker,
   validObjectId,
 } from '@/lib/quizAuth'
 
@@ -17,9 +17,9 @@ export const dynamic = 'force-dynamic'
 export async function GET(req, { params }) {
   const { id } = await params
 
-  const user = await currentQuizUser(req)
+  const taker = await currentQuizTaker(req)
 
-  if (!user) {
+  if (!taker) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -45,7 +45,7 @@ export async function GET(req, { params }) {
         where: {
           id: attemptId,
           quizId: id,
-          userId: user.id,
+          ...taker.owner,
           // During the exam (preview) or after a successful submission
           OR: [
             {

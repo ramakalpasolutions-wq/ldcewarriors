@@ -4,6 +4,10 @@ import prisma from '@/lib/db'
 
 import {
   currentQuizUser,
+  GUEST_COOKIE,
+  newGuestId,
+  setGuestCookie,
+  validGuestId,
   hasPremiumAccess,
   validObjectId,
   publicQuestion,
@@ -28,21 +32,8 @@ export async function POST(req, { params }) {
     )
   }
 
-  // Authenticate student
+  // Signed-in student (needed for Family tests). Free tests also allow guests.
   const user = await currentQuizUser(req)
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Please sign in to take the test',
-        loginRequired: true,
-      },
-      {
-        status: 401,
-      }
-    )
-  }
 
   try {
     // Load published quiz
@@ -66,8 +57,22 @@ export async function POST(req, { params }) {
       )
     }
 
-    // Free quizzes: any signed-in user.
-    // Premium quizzes: active Join Family members only.
+    // Family (Premium) tests: must be signed in…
+    if (quiz.accessType === 'PREMIUM' && !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Please sign in to take this test',
+          loginRequired: true,
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
+    // …and have an active Join Family membership.
+    // Free tests: anyone, signed in or not.
     if (
       quiz.accessType === 'PREMIUM' &&
       !hasPremiumAccess(user)
@@ -101,10 +106,17 @@ export async function POST(req, { params }) {
       )
     }
 
+    // Who owns this attempt: the student, or a guest id for free tests
+    const existingGuest = req.cookies.get(GUEST_COOKIE)?.value
+    const guestId = user
+      ? null
+      : validGuestId(existingGuest) ? existingGuest : newGuestId()
+    const owner = user ? { userId: user.id } : { guestId }
+
     // End any older unfinished attempt
     await prisma.quizAttempt.updateMany({
       where: {
-        userId: user.id,
+        ...owner,
         quizId: id,
         status: 'IN_PROGRESS',
       },
@@ -126,7 +138,7 @@ export async function POST(req, { params }) {
     // Create a new attempt
     const attempt = await prisma.quizAttempt.create({
       data: {
-        userId: user.id,
+        ...owner,
         quizId: quiz.id,
 
         snapshot,
@@ -154,7 +166,7 @@ export async function POST(req, { params }) {
         ? `/api/quizzes/${quiz.id}/explanation-thumbnail?attemptId=${attempt.id}`
         : null
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
 
@@ -186,6 +198,11 @@ export async function POST(req, { params }) {
         },
       }
     )
+
+    // Remember the guest so they can save, submit and see their own results
+    if (guestId) setGuestCookie(response, guestId)
+
+    return response
   } catch (error) {
     console.error('Start quiz error:', error)
 

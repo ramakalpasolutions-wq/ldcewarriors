@@ -203,12 +203,14 @@ model Quiz {
 }
 
 model QuizAttempt {
-  id     String @id @default(auto()) @map("_id") @db.ObjectId
-  quizId String @db.ObjectId
-  userId String @db.ObjectId
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  quizId  String  @db.ObjectId
+  // Signed-in student, or a guest (free tests only) identified by guestId
+  userId  String? @db.ObjectId
+  guestId String?
 
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   snapshot  Json
   answers   Json
@@ -223,6 +225,7 @@ model QuizAttempt {
   finishedAt DateTime?
 
   @@index([userId, quizId, status])
+  @@index([guestId, quizId, status])
 }
 
 model Material {
